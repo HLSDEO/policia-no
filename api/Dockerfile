@@ -32,10 +32,6 @@ RUN apt-get update \
     && rm -rf /var/lib/apt/lists/*
 
 COPY main.py .
-# tunel_app:app é o ASGI do serviço `tunel` (túnel NAT — docs/no_descentralizado.md); a imagem é
-# a mesma da API (mesmo contexto, cache de camadas dividido), mas o COPY é de arquivo único e
-# esquecê-lo aqui deixa o serviço em crash-loop ("Could not import module tunel_app")
-COPY tunel_app.py .
 COPY logging.json .
 # sitecustomize.py é importado pelo Python em todo interpretador — é o ÚNICO ponto que roda no
 # processo-PAI do uvicorn (--workers) antes de o supervisor nascer (main:app só é importado nos
