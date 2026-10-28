@@ -16,8 +16,14 @@ services:
       API_WORKERS: ${API_WORKERS:-1}
       TUNEL_NO_ATIVO: ${TUNEL_NO_ATIVO:-1}
       JOBS_NO_LIMITE: ${JOBS_NO_LIMITE:-1}
+      # CA emissora da rede PF (o central usa HTTPS com certificado emitido pela "PF SUBORDINATE
+      # CA 01", que o Python do container não conhece) — gere o bundle em ./certs/pf-ca-chain.pem.
+      # NO_CA_BUNDLE vazio = usa o feixe padrão do container (estações sem interceptação TLS).
+      REQUESTS_CA_BUNDLE: ${NO_CA_BUNDLE:-/etc/pf-certs/pf-ca-chain.pem}
+      SSL_CERT_FILE: ${NO_CA_BUNDLE:-/etc/pf-certs/pf-ca-chain.pem}
     volumes:
       - ./.env:/app/.env
+      - ./certs/pf-ca-chain.pem:/etc/pf-certs/pf-ca-chain.pem:ro
       - ./VERSION:/app/VERSION:ro
       - ./.deploy:/app/.deploy:ro
       - ./.deploy/controle:/app/.deploy/controle:rw
