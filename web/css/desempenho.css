@@ -1,0 +1,153 @@
+/* Tela Administração → Desempenho.
+ *
+ * Só variáveis de tema aqui — nenhuma cor literal. As duas paletas (dark e light) redefinem as
+ * mesmas variáveis em css/style.css, então usar var() é o que faz a tela nascer certa nos dois
+ * temas sem um bloco por tema neste arquivo. */
+
+/* ---------- Hardware detectado ---------- */
+
+.desemp-hardware {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  gap: 16px;
+  margin-top: 12px;
+}
+
+.desemp-metrica {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding: 12px 14px;
+  background: var(--bg-page);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+}
+
+.desemp-metrica-rotulo {
+  font-size: 12px;
+  text-transform: uppercase;
+  letter-spacing: .04em;
+  color: var(--text-muted);
+}
+
+.desemp-metrica-valor {
+  font-size: 22px;
+  line-height: 1.2;
+  color: var(--text-primary);
+}
+
+.desemp-metrica-detalhe {
+  font-size: 12px;
+  color: var(--text-secondary);
+}
+
+/* ---------- Tabela de parâmetros ---------- */
+
+.desemp-grupo-titulo {
+  margin: 22px 0 8px;
+  font-size: 14px;
+  text-transform: uppercase;
+  letter-spacing: .04em;
+  color: var(--text-secondary);
+}
+
+.desemp-grupo-titulo:first-child {
+  margin-top: 8px;
+}
+
+.desemp-tabela {
+  width: 100%;
+}
+
+/* A ajuda de cada parâmetro é texto corrido e ocupa a maior parte da linha; as três colunas de
+   valor ficam estreitas para o olho comparar "recomendado" com "em vigor" sem varrer a tela. */
+.desemp-tabela td:nth-child(2),
+.desemp-tabela td:nth-child(3) {
+  width: 130px;
+}
+
+.desemp-tabela td:nth-child(4) {
+  width: 190px;
+}
+
+.desemp-tabela td {
+  vertical-align: top;
+}
+
+.desemp-rotulo {
+  font-weight: 600;
+  color: var(--text-primary);
+  margin-bottom: 2px;
+}
+
+.desemp-num {
+  font-variant-numeric: tabular-nums;
+  color: var(--text-secondary);
+  white-space: nowrap;
+}
+
+.desemp-input {
+  width: 100%;
+  font-variant-numeric: tabular-nums;
+}
+
+/* ---------- Aviso de reinício pendente ---------- */
+
+.desemp-aviso {
+  margin-top: 16px;
+  padding: 14px 16px;
+  border-radius: 8px;
+  background: var(--tint-warning);
+  border: 1px solid var(--warning);
+  color: var(--text-primary);
+}
+
+.desemp-aviso strong {
+  display: block;
+  margin-bottom: 6px;
+  color: var(--tint-warning-text);
+}
+
+.desemp-aviso p {
+  margin: 0 0 10px;
+  font-size: 13px;
+  color: var(--text-secondary);
+}
+
+.desemp-comando {
+  display: inline-block;
+  padding: 6px 10px;
+  border-radius: 6px;
+  background: var(--bg-page);
+  border: 1px solid var(--border);
+  font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  font-size: 13px;
+  color: var(--text-primary);
+  user-select: all;
+}
+
+@media (max-width: 720px) {
+  /* Numa tela estreita a tabela de 4 colunas fica ilegível: cada parâmetro vira um bloco, com
+     os rótulos das colunas antepostos via ::before para não perder o significado dos números. */
+  .desemp-tabela thead {
+    display: none;
+  }
+
+  .desemp-tabela tr {
+    display: block;
+    padding: 12px 0;
+    border-bottom: 1px solid var(--border);
+  }
+
+  .desemp-tabela td {
+    display: block;
+    width: auto !important;
+    border: 0;
+    padding: 2px 0;
+  }
+
+  .desemp-tabela td.desemp-num::before {
+    content: attr(data-rotulo) ": ";
+    color: var(--text-muted);
+  }
+}

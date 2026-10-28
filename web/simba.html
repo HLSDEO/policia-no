@@ -1,0 +1,241 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Extrato bancário (SIMBA) · PolícIA</title>
+<script src="js/utils/boot_tema.js"></script>
+<link rel="icon" type="image/svg+xml" href="favicon.svg">
+<link rel="stylesheet" href="css/style.css">
+<link rel="stylesheet" href="css/entidades.css">
+<link rel="stylesheet" href="css/analise.css">
+<link rel="stylesheet" href="css/chat.css">
+<link rel="stylesheet" href="css/ia_flutuante.css">
+<style>
+  /* Só o que é específico da página do SIMBA (o resto mora em css/analise.css) */
+  .smb-painel .grupo-tabela td { padding:5px 10px; }
+  .smb-sub { display:block; font-size:11.5px; opacity:.7; }
+  .smb-clicavel { cursor:pointer; text-decoration:underline dotted; text-underline-offset:3px; }
+  .smb-badge.interno { background:rgba(220,38,38,.15); color:#dc2626; }
+  .smb-badge.credito { background:rgba(22,163,74,.15); color:#16a34a; }
+  .smb-badge.debito { background:rgba(220,38,38,.15); color:#dc2626; }
+  .smb-badge.neutro { background:rgba(127,127,127,.18); opacity:.85; }
+
+  /* Paginação dos lançamentos */
+  .smb-paginacao { display:flex; align-items:center; gap:10px; margin-top:12px; font-size:13px; flex-wrap:wrap; }
+  .smb-paginacao .btn { padding:4px 12px; font-size:12px; }
+
+  /* Gráfico mensal */
+  .smb-grafico-wrap { border:1px solid var(--border, rgba(127,127,127,.25)); border-radius:10px; padding:12px; margin-bottom:18px; overflow-x:auto; position:relative; }
+  .smb-grafico-titulo { font-size:13px; font-weight:600; margin-bottom:8px; }
+  .smb-grafico-legenda { font-size:12px; opacity:.7; margin-top:6px; display:flex; gap:14px; align-items:center; flex-wrap:wrap; }
+  .legenda-item { display:inline-flex; align-items:center; gap:4px; }
+  .legenda-cor { display:inline-block; width:10px; height:10px; border-radius:2px; }
+  #smb-grafico { display:block; min-width:640px; }
+  #smb-grafico rect { cursor:pointer; transition:filter .15s, opacity .15s; }
+  #smb-grafico rect:hover { filter:brightness(1.25); }
+  #smb-grafico .barra-credito { fill:#16a34a; }
+  #smb-grafico .barra-debito { fill:#dc2626; }
+  #smb-grafico .eixo { stroke:var(--border, rgba(127,127,127,.4)); stroke-width:1; }
+  #smb-grafico .rotulo { fill:currentColor; opacity:.65; font-size:9px; }
+  /* Tooltip flutuante do gráfico */
+  #smb-tooltip { position:absolute; pointer-events:none; z-index:10;
+    background:var(--bg-card,#1e1e1e); border:1px solid var(--border,rgba(127,127,127,.3));
+    border-radius:8px; padding:8px 12px; font-size:12px; white-space:nowrap;
+    box-shadow:0 2px 8px rgba(0,0,0,.3); display:none; }
+
+  /* Alertas */
+  .smb-alerta-bloco { border:1px solid var(--border, rgba(127,127,127,.25)); border-radius:10px; padding:14px; margin-bottom:16px; }
+  .smb-alerta-bloco h3 { margin:0 0 4px; font-size:15px; }
+  .smb-alerta-bloco .criterio { font-size:12px; opacity:.72; margin:0 0 12px; line-height:1.55; max-width:110ch; }
+  .smb-alerta-vazio { font-size:13px; opacity:.7; }
+  /* Sub-abas de alertas */
+  .smb-sub-abas { display:flex; gap:6px; flex-wrap:wrap; margin-bottom:12px; }
+  .smb-sub-aba { cursor:pointer; font-size:12px; padding:4px 14px; }
+  .smb-sub-aba.ativa { background:var(--accent,#2563eb); color:#fff; border-color:transparent; }
+  .smb-sub-painel { display:none; }
+  .smb-sub-painel.ativo { display:block; }
+  .smb-sub-paginacao { display:flex; align-items:center; gap:10px; margin-top:10px; font-size:12px; flex-wrap:wrap; }
+  .smb-sub-paginacao .btn { padding:3px 10px; font-size:11px; }
+</style>
+</head>
+<body>
+<div class="app">
+
+  <div class="main" style="width:100%;">
+    <header class="topbar">
+      <h1 class="page-title">Extrato bancário <span id="smb-arquivo" style="opacity:.7;font-weight:400;font-size:14px;"></span></h1>
+      <div class="topbar-actions">
+        <span class="grupo-total" id="total-registros" role="status"></span>
+        <a class="btn btn-secondary" id="abrir-grafo" href="#" title="Abrir o grafo deste extrato (tela própria, com filtros, foco e exportação para i2)" style="font-size:12px;padding:3px 8px;">Grafo →</a>
+        <span class="extracao-nav-container"></span>
+      </div>
+    </header>
+
+    <main class="content">
+      <div class="card" style="max-width:none;">
+
+        <div id="smb-estado"></div>
+
+        <div class="smb-resumo" id="smb-resumo"></div>
+
+        <div class="smb-grafico-wrap">
+          <div class="smb-grafico-titulo" id="smb-grafico-titulo">Movimentação por mês</div>
+          <svg id="smb-grafico" role="img" aria-label="Gráfico de barras: movimentação por mês, entradas (crédito) e saídas (débito)" preserveAspectRatio="none"></svg>
+          <div id="smb-tooltip"></div>
+          <p class="smb-grafico-legenda">
+            <span class="legenda-item"><span class="legenda-cor" style="background:#16a34a"></span> Entradas (crédito)</span>
+            <span class="legenda-item"><span class="legenda-cor" style="background:#dc2626"></span> Saídas (débito)</span>
+            <span style="opacity:.6">— Passe o mouse sobre as barras para detalhes; clique para filtrar lançamentos do mês.</span>
+          </p>
+        </div>
+
+        <div class="smb-abas" role="tablist" aria-label="Seções do extrato">
+          <button type="button" class="btn btn-secondary smb-aba ativa" role="tab" aria-selected="true" aria-controls="painel-contas" id="aba-contas" data-aba="contas">Contas</button>
+          <button type="button" class="btn btn-secondary smb-aba" role="tab" aria-selected="false" aria-controls="painel-lancamentos" id="aba-lancamentos" data-aba="lancamentos">Lançamentos</button>
+          <button type="button" class="btn btn-secondary smb-aba" role="tab" aria-selected="false" aria-controls="painel-contrapartes" id="aba-contrapartes" data-aba="contrapartes">Contrapartes</button>
+          <button type="button" class="btn btn-secondary smb-aba" role="tab" aria-selected="false" aria-controls="painel-alertas" id="aba-alertas" data-aba="alertas">Alertas</button>
+        </div>
+
+        <!-- Contas -->
+        <div class="smb-painel ativo" role="tabpanel" aria-labelledby="aba-contas" id="painel-contas" data-painel="contas">
+          <div class="smb-filtros">
+            <input type="search" id="f-cta-busca" placeholder="Buscar por titular, CPF/CNPJ, banco ou conta…" autocomplete="off">
+            <select id="f-cta-pessoa">
+              <option value="">PF e PJ</option>
+              <option value="PF">Só pessoas físicas</option>
+              <option value="PJ">Só pessoas jurídicas</option>
+            </select>
+            <select id="f-cta-banco"><option value="">Todos os bancos</option></select>
+            <select id="f-cta-ordem">
+              <option value="movimento">Ordem: maior movimentação</option>
+              <option value="credito">Maior crédito</option>
+              <option value="debito">Maior débito</option>
+              <option value="lancamentos">Mais lançamentos</option>
+              <option value="titular">Titular (A–Z)</option>
+            </select>
+            <span class="smb-filtro-info" id="f-cta-info"></span>
+          </div>
+          <div style="overflow-x:auto;">
+            <table class="grupo-tabela" id="tab-contas">
+              <thead>
+                <tr>
+                  <th scope="col" class="col-nome">Titular</th>
+                  <th scope="col" class="col-nome">CPF/CNPJ</th>
+                  <th scope="col" class="col-nome">Instituição</th>
+                  <th scope="col" class="col-nome">Agência / conta</th>
+                  <th scope="col" class="col-nome">Período da conta</th>
+                  <th scope="col" class="col-nome smb-valor">Lanç.</th>
+                  <th scope="col" class="col-nome smb-valor">Crédito (R$)</th>
+                  <th scope="col" class="col-nome smb-valor">Débito (R$)</th>
+                  <th scope="col" class="col-nome smb-valor">Saldo do fluxo</th>
+                  <th scope="col" class="col-nome">Ações</th>
+                </tr>
+              </thead>
+              <tbody id="corpo-contas"></tbody>
+            </table>
+          </div>
+          <p class="empty-hint" id="vazio-contas" style="display:none;">Nenhuma conta no extrato.</p>
+        </div>
+
+        <!-- Lançamentos -->
+        <div class="smb-painel" role="tabpanel" aria-labelledby="aba-lancamentos" id="painel-lancamentos" data-painel="lancamentos">
+          <div class="smb-filtros">
+            <input type="search" id="f-lan-busca" placeholder="Descrição, contraparte ou CPF/CNPJ…" autocomplete="off">
+            <select id="f-lan-conta"><option value="">Todas as contas</option></select>
+            <select id="f-lan-natureza">
+              <option value="">Crédito e débito</option>
+              <option value="C">Só entradas (crédito)</option>
+              <option value="D">Só saídas (débito)</option>
+              <option value="sem">Sem natureza definida</option>
+            </select>
+            <input type="date" id="f-lan-inicio" title="A partir de">
+            <input type="date" id="f-lan-fim" title="Até">
+            <input type="number" id="f-lan-valor" placeholder="Valor mín." min="0" step="100">
+            <span class="smb-filtro-info" id="f-lan-info"></span>
+          </div>
+          <div style="overflow-x:auto;">
+            <table class="grupo-tabela" id="tab-lancamentos">
+              <thead>
+                <tr>
+                  <th scope="col" class="col-nome">Data</th>
+                  <th scope="col" class="col-nome">Conta / titular</th>
+                  <th scope="col" class="col-nome">Descrição</th>
+                  <th scope="col" class="col-nome">Contraparte</th>
+                  <th scope="col" class="col-nome smb-valor">Valor (R$)</th>
+                  <th scope="col" class="col-nome">C/D</th>
+                  <th scope="col" class="col-nome smb-valor">Saldo (R$)</th>
+                  <th scope="col" class="col-nome">Ações</th>
+                </tr>
+              </thead>
+              <tbody id="corpo-lancamentos"></tbody>
+            </table>
+          </div>
+          <p class="empty-hint" id="vazio-lancamentos" style="display:none;">Nenhum lançamento com esses filtros.</p>
+          <div class="smb-paginacao" id="smb-paginacao"></div>
+        </div>
+
+        <!-- Contrapartes -->
+        <div class="smb-painel" role="tabpanel" aria-labelledby="aba-contrapartes" id="painel-contrapartes" data-painel="contrapartes">
+          <div class="smb-filtros">
+            <input type="search" id="f-cp-busca" placeholder="Nome ou CPF/CNPJ da contraparte…" autocomplete="off">
+            <select id="f-cp-conta"><option value="">Consolidado (todas as contas)</option></select>
+            <select id="f-cp-direcao">
+              <option value="">Entradas e saídas</option>
+              <option value="credito">Só quem creditou (entradas)</option>
+              <option value="debito">Só quem recebeu (saídas)</option>
+            </select>
+            <label class="smb-check"><input type="checkbox" id="f-cp-internas"> Só entre titulares do afastamento</label>
+            <span class="smb-filtro-info" id="f-cp-info"></span>
+          </div>
+          <div style="overflow-x:auto;">
+            <table class="grupo-tabela" id="tab-contrapartes">
+              <thead>
+                <tr id="cab-contrapartes"></tr>
+              </thead>
+              <tbody id="corpo-contrapartes"></tbody>
+            </table>
+          </div>
+          <p class="empty-hint" id="vazio-contrapartes" style="display:none;">Nenhuma contraparte com esses filtros.</p>
+        </div>
+
+        <!-- Alertas -->
+        <div class="smb-painel" role="tabpanel" aria-labelledby="aba-alertas" id="painel-alertas" data-painel="alertas">
+          <p class="card-hint" style="margin-top:0;">Leituras automáticas e determinísticas do extrato — nenhuma delas é conclusão, todas são pontos para conferir no lançamento original.</p>
+          <p class="empty-hint" id="vazio-alertas" style="display:none;"></p>
+          <div id="smb-alertas">
+            <div class="smb-resumo" id="smb-alertas-resumo"></div>
+            <div class="smb-sub-abas" id="smb-sub-abas" role="tablist" aria-label="Tipos de alerta"></div>
+            <div class="smb-sub-paineis" id="smb-sub-paineis"></div>
+          </div>
+        </div>
+
+      </div>
+    </main>
+  </div>
+
+</div>
+
+<script src="vendor/jquery-3.7.1.min.js"></script>
+<script src="js/utils/utils.js"></script>
+<script src="js/utils/icones.js"></script>
+<script src="js/utils/mapa_telas.js"></script>
+<script src="js/utils/toast.js"></script>
+<script src="js/utils/api.js"></script>
+<script src="js/utils/carregando.js"></script>
+<script src="js/utils/estados.js"></script>
+<script src="js/utils/estado_url.js"></script>
+<script src="js/utils/dialogo.js"></script>
+<script src="js/utils/theme.js"></script>
+<script src="js/utils/sidebar.js"></script>
+<script src="js/utils/auth.js"></script>
+<script src="js/utils/avisos_ia.js"></script>
+<script src="js/utils/entidades.js"></script>
+<script src="js/utils/exportar_excel.js"></script>
+<script src="js/utils/navegacao_inquerito.js"></script>
+<script src="js/simba.js"></script>
+<script src="js/utils/doc_trecho.js"></script>
+<script src="js/utils/evidencia_info.js"></script>
+<script src="js/utils/ia_flutuante.js"></script>
+</body>
+</html>

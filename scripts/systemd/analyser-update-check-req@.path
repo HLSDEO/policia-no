@@ -1,0 +1,14 @@
+[Unit]
+# Template @: a instancia e o caminho da instalacao escapado por `systemd-escape -p`.
+#   /mnt/dados/analyser  ->  analyser-update-check-req@mnt-dados-analyser.path
+Description=analyser (/%I) -- observa pedido de checagem sob demanda (botao "Verificar")
+
+[Path]
+# A API (container) grava checar.req ao clicar em "Verificar". Dispara o MESMO .service do
+# check periodico (Unit= abaixo, em vez do check-req@.service que nem existe); esse check
+# apaga o checar.req ao rodar, e o PathExists volta a disparar no proximo clique.
+PathExists=/%I/.deploy/controle/checar.req
+Unit=analyser-update-check@%i.service
+
+[Install]
+WantedBy=multi-user.target

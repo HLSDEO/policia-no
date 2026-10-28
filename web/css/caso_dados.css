@@ -1,0 +1,126 @@
+/* Tela "Dados do caso" (web/caso_dados.html): matriz entidade × documento
+   (heatmap) e métricas de qualidade das execuções. */
+
+.matriz-resumo {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-bottom: 12px;
+}
+
+.matriz-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 10px;
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  background: var(--bg-card);
+  font-size: 12.5px;
+  color: var(--text-secondary);
+}
+
+.matriz-chip strong {
+  color: var(--text-primary);
+}
+
+.matriz-legenda {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  margin-left: auto;
+}
+
+.matriz-legenda .matriz-celula {
+  display: inline-block;
+  width: 14px;
+  height: 14px;
+  border-radius: 3px;
+}
+
+.matriz-wrap {
+  max-height: 520px;
+  overflow: auto;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+}
+
+.matriz-tabela {
+  border-collapse: separate;
+  border-spacing: 0;
+  min-width: 100%;
+  width: max-content;
+}
+
+.matriz-tabela th,
+.matriz-tabela td {
+  border-bottom: 1px solid var(--border);
+  border-right: 1px solid var(--border);
+  font-size: 12px;
+}
+
+.matriz-tabela th {
+  position: sticky;
+  top: 0;
+  z-index: 2;
+  background: var(--bg-card);
+  color: var(--text-secondary);
+  font-weight: 600;
+  padding: 6px 8px;
+  text-align: center;
+  white-space: nowrap;
+  max-width: 150px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.matriz-tabela th.matriz-canto {
+  position: sticky;
+  left: 0;
+  z-index: 3;
+  text-align: left;
+  min-width: 150px;
+}
+
+.matriz-tabela td.matriz-rotulo {
+  position: sticky;
+  left: 0;
+  z-index: 1;
+  background: var(--bg-card);
+  padding: 6px 10px;
+  max-width: 320px;
+  min-width: 220px;
+  line-height: 1.35;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.matriz-tabela td.matriz-rotulo:hover {
+  white-space: normal;
+  overflow: visible;
+  background: var(--bg-card);
+}
+
+.matriz-tabela .matriz-multidoc {
+  font-weight: 600;
+}
+
+.matriz-celula {
+  width: 30px;
+  height: 26px;
+  text-align: center;
+  color: var(--text-primary);
+  cursor: default;
+}
+
+#matriz-paginacao,
+#matriz-paginacao .paginacao-ctrls {
+  align-items: center;
+}
+
+.buscas-erro {
+  font-size: 12px;
+  color: var(--text-secondary);
+  word-break: break-word;
+}

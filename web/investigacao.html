@@ -1,0 +1,271 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="description" content="PolícIA — Investigações: inquéritos, extrações, documentos e andamentos.">
+<meta name="theme-color" content="#0f1117">
+<meta name="color-scheme" content="dark light">
+<title>Investigações · PolícIA</title>
+<script src="js/utils/boot_tema.js"></script>
+<link rel="icon" type="image/svg+xml" href="favicon.svg">
+<link rel="stylesheet" href="css/style.css">
+<link rel="stylesheet" href="css/entidades.css">
+</head>
+<body>
+<div class="app">
+
+  <div class="main">
+    <a class="skip-link" href="#conteudo-principal">Pular para o conteúdo</a>
+    <header class="topbar">
+      <h1 class="page-title" id="investigacao-titulo">Investigações</h1>
+      <div class="topbar-actions">
+        <label for="investigacao-delegacia-select" class="inv-topbar-label">Delegacia:</label>
+        <select id="investigacao-delegacia-select" class="inv-filtro inv-filtro-delegacia">
+          <option value="">Todas as delegacias</option>
+        </select>
+      </div>
+    </header>
+
+    <main class="content" id="conteudo-principal" role="main" tabindex="-1">
+      <noscript><p class="empty-hint">Esta página precisa de JavaScript para listar as investigações.</p></noscript>
+      <nav id="investigacao-breadcrumb" class="breadcrumb hidden" aria-label="Navegação estrutural"><ol class="breadcrumb-lista"></ol></nav>
+      <div id="investigacao-detalhe-aviso" class="investigacao-aviso hidden" role="alert" aria-live="polite"></div>
+      <div id="investigacao-skeleton" class="investigacao-skeleton hidden" aria-hidden="true">
+        <div class="skeleton-bloco skeleton-linha-media"></div>
+        <div class="skeleton-bloco skeleton-linha-longa"></div>
+        <div class="skeleton-bloco skeleton-bloco-alto"></div>
+      </div>
+      <div aria-live="polite" aria-atomic="true" class="sr-only" id="investigacao-live"></div>
+      <div id="resumo-noturno" class="investigacao-resumo hidden" aria-live="polite"></div>
+      <div class="card card-fluido">
+        <div class="investigacoes-toolbar" id="investigacoes-toolbar">
+          <div class="inv-busca" id="inv-busca-wrap">
+            <svg class="inv-busca-icone" aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4.3-4.3"/></svg>
+            <input type="search" id="inq-busca" placeholder="Buscar por número do inquérito…" autocomplete="off" aria-label="Buscar por número do inquérito" aria-describedby="inv-total">
+            <button type="button" class="inv-limpar hidden" id="inq-limpar" aria-label="Limpar busca" title="Limpar busca">×</button>
+          </div>
+          <select id="inq-filtro-status" class="inv-filtro" aria-label="Filtrar por status">
+            <option value="todos">Todos os status</option>
+            <option value="andamento">Em andamento</option>
+            <option value="concluido">Concluídos</option>
+            <option value="sem">Sem extrações</option>
+          </select>
+          <select id="inq-ordenacao" class="inv-filtro" aria-label="Ordenar investigações">
+            <option value="recentes">Mais recentes</option>
+            <option value="az">Número (A–Z)</option>
+            <option value="andamento">Em andamento primeiro</option>
+          </select>
+          <select id="inq-por-pagina" class="inv-filtro" aria-label="Itens por página">
+            <option value="10">10 por página</option>
+            <option value="20">20 por página</option>
+            <option value="50">50 por página</option>
+          </select>
+          <button type="button" class="btn btn-secondary" id="ver-extracoes-btn">
+            <svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="8" y1="6" x2="21" y2="6"/><line x1="8" y1="12" x2="21" y2="12"/><line x1="8" y1="18" x2="21" y2="18"/><line x1="3" y1="6" x2="3.01" y2="6"/><line x1="3" y1="12" x2="3.01" y2="12"/><line x1="3" y1="18" x2="3.01" y2="18"/></svg>
+            Ver todas as extrações
+          </button>
+        </div>
+        <div class="toolbar-footer" id="inv-total-wrap">
+          <span class="inv-total" id="inv-total" aria-live="polite" aria-atomic="true"></span>
+        </div>
+        <div class="investigacoes-lista" id="investigacoes-lista"></div>
+        <div class="paginacao hidden" id="inq-paginacao"></div>
+      </div>
+    </main>
+  </div>
+
+</div>
+
+<div class="modal-overlay hidden" id="modal-permissoes" role="dialog" aria-modal="true" aria-labelledby="permissoes-titulo" aria-describedby="permissoes-desc">
+  <div class="modal modal-md">
+    <div class="modal-header">
+      <h2 id="permissoes-titulo">Gerenciar permissões — <span id="permissoes-inquerito-numero"></span></h2>
+      <button type="button" class="modal-close" id="permissoes-fechar" aria-label="Fechar">&times;</button>
+    </div>
+    <div class="modal-body">
+      <p class="card-hint" id="permissoes-desc">Quem pode ver este inquérito. O criador é automaticamente administrador.</p>
+      <div class="permissoes-lista" id="permissoes-lista"></div>
+      <p class="empty-hint hidden" id="permissoes-vazio">Ninguém além do criador tem acesso. O criador é automaticamente administrador.</p>
+      <div class="permissao-adicionar">
+        <div class="field">
+          <label for="permissao-select">Adicionar usuário</label>
+          <select id="permissao-select"></select>
+        </div>
+        <label class="permissao-admin-check">
+          <input type="checkbox" id="permissao-admin-checkbox">
+          Administrador
+        </label>
+        <button type="button" class="btn btn-primary" id="permissao-adicionar-btn">Adicionar</button>
+      </div>
+      <span class="form-status" id="permissoes-status"></span>
+    </div>
+  </div>
+</div>
+
+<div class="modal-overlay hidden" id="modal-delegacia" role="dialog" aria-modal="true" aria-labelledby="delegacia-titulo" aria-describedby="delegacia-desc">
+  <div class="modal modal-sm">
+    <div class="modal-header">
+      <h2 id="delegacia-titulo">Delegacia do inquérito</h2>
+      <button type="button" class="modal-close" id="delegacia-fechar" aria-label="Fechar">&times;</button>
+    </div>
+    <div class="modal-body">
+      <p class="card-hint" id="delegacia-desc">A delegacia associada a este inquérito. Aparece no card na página de Investigações.</p>
+      <div class="field">
+        <label for="delegacia-select">Delegacia</label>
+        <select id="delegacia-select"></select>
+      </div>
+      <div class="form-actions">
+        <button type="button" class="btn btn-primary" id="delegacia-salvar-btn">Salvar</button>
+        <span class="form-status" id="delegacia-status"></span>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="modal-overlay hidden" id="modal-extracoes" role="dialog" aria-modal="true" aria-labelledby="extracoes-titulo" aria-describedby="extracoes-desc">
+  <div class="modal modal-xl">
+    <div class="modal-header">
+      <h2 id="extracoes-titulo">Todas as extrações</h2>
+      <button type="button" class="modal-close" id="fechar-modal" aria-label="Fechar">&times;</button>
+    </div>
+    <div class="modal-body modal-scroll-x">
+      <p class="card-hint" id="extracoes-desc">Lista completa de extrações com status, período e responsável.</p>
+      <div class="inv-busca extracoes-busca">
+        <input type="search" id="extracoes-busca" placeholder="Filtrar por inquérito, arquivo ou dispositivo…" aria-label="Filtrar extrações">
+      </div>
+      <table class="grupo-tabela" id="extracoes-tabela">
+        <thead>
+          <tr>
+            <th scope="col" class="col-nome">Inquérito</th>
+            <th scope="col" class="col-nome">Arquivo</th>
+            <th scope="col" class="col-nome">Dispositivo</th>
+            <th scope="col" class="col-nome">Conversas</th>
+            <th scope="col" class="col-nome">Mensagens</th>
+            <th scope="col" class="col-nome">Status</th>
+            <th scope="col" class="col-nome">Início</th>
+            <th scope="col" class="col-nome">Finalização</th>
+            <th scope="col" class="col-nome">Registrado por</th>
+            <th scope="col" class="col-nome">Ações</th>
+          </tr>
+        </thead>
+        <tbody id="extracoes-corpo"></tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+<div class="modal-overlay hidden" id="modal-documentos" role="dialog" aria-modal="true" aria-labelledby="documentos-titulo" aria-describedby="documentos-desc">
+  <div class="modal modal-md">
+    <div class="modal-header">
+      <h2 id="documentos-titulo">Documentos do inquérito — <span id="documentos-inquerito-numero"></span></h2>
+      <button type="button" class="modal-close" id="documentos-fechar" aria-label="Fechar">&times;</button>
+    </div>
+    <div class="modal-body">
+      <p class="card-hint" id="documentos-desc">O texto destes documentos fica disponível para a IA nas conversas e buscas deste inquérito.</p>
+      <div class="permissoes-lista" id="documentos-lista"></div>
+      <p class="empty-hint hidden" id="documentos-vazio">Nenhum documento anexado — use "Extrair de PDF" na página.</p>
+    </div>
+  </div>
+</div>
+
+<div class="modal-overlay hidden" id="modal-documento-entidades" role="dialog" aria-modal="true" aria-labelledby="documento-entidades-titulo" aria-describedby="documento-entidades-resumo">
+  <div class="modal modal-lg">
+    <div class="modal-header">
+      <h2 id="documento-entidades-titulo">Entidades do documento</h2>
+      <button type="button" class="modal-close" id="documento-entidades-fechar" aria-label="Fechar">&times;</button>
+    </div>
+    <div class="modal-body">
+      <p class="card-hint hidden" id="documento-entidades-resumo"></p>
+      <h3 class="modal-subtitulo" id="documento-entidades-subtitulo"></h3>
+      <p class="empty-hint hidden" id="documento-entidades-vazio"></p>
+      <div class="documento-texto-container" id="documento-entidades-lista"></div>
+    </div>
+  </div>
+</div>
+
+<!-- "Informações da prova" dos blocos do card: arquivo original, data da importação, quem
+     importou, tipo, status e hashes. O conteúdo é montado linha a linha em js/investigacao.js
+     (itemInfoProva) — cada prova mostra só o que tem. -->
+<div class="modal-overlay hidden" id="modal-info-prova" role="dialog" aria-modal="true" aria-labelledby="info-prova-titulo">
+  <div class="modal modal-md">
+    <div class="modal-header">
+      <h2 id="info-prova-titulo">Informações da prova</h2>
+      <button type="button" class="modal-close" id="info-prova-fechar" aria-label="Fechar">&times;</button>
+    </div>
+    <div class="modal-body">
+      <div id="info-prova-lista" class="info-prova-lista"></div>
+    </div>
+  </div>
+</div>
+
+<template id="tpl-compartilhar-prova">
+  <div class="modal-overlay hidden" id="modal-compartilhar-prova" role="dialog" aria-modal="true" aria-labelledby="cp-titulo" aria-describedby="cp-desc">
+    <div class="modal modal-md">
+      <div class="modal-header"><h2 id="cp-titulo">Compartilhar prova</h2>
+      <button type="button" class="modal-close" id="cp-fechar" aria-label="Fechar">&times;</button></div>
+      <div class="modal-body">
+        <h3 class="modal-subtitulo" id="cp-aparelho"></h3>
+        <div class="field">
+          <label for="cp-destino">Copiar para o inquérito</label>
+          <select id="cp-destino"></select>
+          <p class="field-help" id="cp-desc">Os dados do aparelho são copiados para o inquérito escolhido, sem refazer a importação. O arquivo .ufdr não é duplicado no disco — os dois inquéritos leem os anexos do mesmo arquivo. O que o analista já anotou (Mesa, achados, marcações) fica só neste inquérito.</p>
+        </div>
+        <div class="form-actions">
+          <button type="button" class="btn btn-primary" id="cp-copiar-btn" disabled>Copiar prova</button>
+          <span class="form-status" id="cp-status" aria-live="polite"></span>
+        </div>
+      </div>
+    </div>
+  </div>
+</template>
+
+<template id="tpl-gerar-relatorio">
+  <div class="modal-overlay hidden" id="modal-gerar-relatorio" role="dialog" aria-modal="true" aria-labelledby="gr-titulo" aria-describedby="gr-desc">
+    <div class="modal modal-lg">
+      <div class="modal-header"><h2 id="gr-titulo">Gerar relatório — <span id="gr-inquerito"></span></h2>
+      <button type="button" class="modal-close" id="gr-fechar" aria-label="Fechar">&times;</button></div>
+      <div class="modal-body">
+        <p class="card-hint" id="gr-desc">Escolha o padrão, as seções e os registros que entram neste relatório.</p>
+        <div class="field">
+          <label for="gr-padrao-select">Padrão de relatório</label>
+          <select id="gr-padrao-select" aria-describedby="gr-desc"></select>
+          <p class="field-help" id="gr-sem-padrao" style="display:none;">Nenhum padrão ativo. Cadastre um em <a href="padroes_relatorio.html">Padrão de relatórios</a>.</p>
+          <p class="field-help hidden" id="gr-erro-padroes" role="alert"></p>
+        </div>
+        <div id="gr-detalhe" aria-live="polite"></div>
+        <p class="gr-resumo hidden" id="gr-resumo" aria-live="polite"></p>
+        <div class="gr-historico hidden" id="gr-historico">
+          <h3 class="modal-subtitulo">Últimos relatórios</h3>
+          <div id="gr-historico-lista"></div>
+        </div>
+        <div class="form-actions gr-footer">
+          <button type="button" class="btn btn-primary" id="gr-gerar-btn" disabled>Gerar relatório</button>
+          <button type="button" class="btn btn-secondary hidden" id="gr-baixar-btn">Baixar novamente</button>
+          <span class="form-status" id="gr-status" role="status" aria-live="polite"></span>
+        </div>
+      </div>
+    </div>
+  </div>
+</template>
+
+<script defer src="vendor/jquery-3.7.1.min.js"></script>
+<script defer src="js/utils/utils.js"></script>
+<script defer src="js/utils/icones.js"></script>
+<script defer src="js/utils/mapa_telas.js"></script>
+<script defer src="js/utils/toast.js"></script>
+<script defer src="js/utils/api.js"></script>
+<script defer src="js/utils/carregando.js"></script>
+<script defer src="js/utils/estados.js"></script>
+<script defer src="js/utils/estado_url.js"></script>
+<script defer src="js/utils/dialogo.js"></script>
+<script defer src="js/utils/theme.js"></script>
+<script defer src="js/utils/sidebar.js"></script>
+<script defer src="js/utils/auth.js"></script>
+<script defer src="js/utils/avisos_ia.js"></script>
+<script defer src="js/utils/entidades.js"></script>
+<script defer src="js/utils/doc_trecho.js"></script>
+<script defer src="js/utils/evidencia_info.js"></script>
+<script defer src="js/investigacao.js"></script>
+</body>
+</html>

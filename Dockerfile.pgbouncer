@@ -1,0 +1,24 @@
+# PgBouncer (pooler session-mode) — imagem original do analyser, adaptada ao OpenShift.
+# O entrypoint (pgbouncer/entrar.sh) materializa o ini do template trocando os placeholders
+# pelas credenciais injetadas por environment (Secret no openshift.yaml) e grava em /tmp —
+# gravável por qualquer UID, inclusive o UID arbitrário do OpenShift.
+# auth_type=any continua seguro aqui: o Service 6432 NÃO tem Route — só a rede interna do
+# cluster (pods) alcança o pooler, exatamente como a rede interna do compose.
+FROM alpine:3.20
+
+RUN apk add --no-cache pgbouncer
+
+COPY pgbouncer/pgbouncer.ini.tpl /etc/pgbouncer/pgbouncer.ini.tpl
+COPY pgbouncer/entrar.sh /usr/local/bin/entrar.sh
+RUN sed -i 's/\r$//' /usr/local/bin/entrar.sh \
+    && chmod +x /usr/local/bin/entrar.sh \
+    && chmod a+r /etc/pgbouncer/pgbouncer.ini.tpl
+
+# O pgbouncer recusa rodar como root. No OpenShift o SCC injeta um UID arbitrário
+# (não-root) de qualquer forma; este USER vale para docker run local.
+RUN adduser -S -D -H -h /tmp pgbouncer
+USER pgbouncer
+
+EXPOSE 6432
+
+CMD ["/usr/local/bin/entrar.sh"]

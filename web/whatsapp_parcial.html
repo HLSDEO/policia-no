@@ -1,0 +1,68 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>WhatsApp (parcial) · PolícIA</title>
+<script src="js/utils/boot_tema.js"></script>
+<link rel="icon" type="image/svg+xml" href="favicon.svg">
+<link rel="stylesheet" href="css/style.css">
+<link rel="stylesheet" href="css/whatsapp.css">
+<link rel="stylesheet" href="css/entidades.css">
+<link rel="stylesheet" href="css/whatsapp_parcial.css">
+</head>
+<body>
+
+<div class="wa-app wpp-app">
+  <aside class="wa-sidebar">
+    <div class="wa-sidebar-header">
+      <div class="wa-sidebar-topo">
+        <div class="wa-avatar wa-avatar-app">💬</div>
+        <div class="wa-sidebar-titulos">
+          <h1 id="wpp-titulo">WhatsApp (parcial)</h1>
+          <span id="wpp-subtitulo">mídia da nuvem — texto criptografado</span>
+        </div>
+      </div>
+      <div class="wa-busca">
+        <span class="wa-busca-icone">🔍</span>
+        <input type="text" id="wpp-busca" placeholder="Pesquisar por nome ou número">
+      </div>
+    </div>
+    <div class="wa-conversas" id="wpp-conversas"></div>
+  </aside>
+
+  <div class="wa-main">
+    <span class="extracao-nav-container" style="position:absolute;top:12px;right:16px;z-index:30;"></span>
+    <div class="wa-main-header" id="wpp-header"><span class="wa-main-header-vazio">Selecione uma conversa</span></div>
+    <div class="wpp-filtros hidden" id="wpp-filtros"></div>
+    <div class="wa-mensagens" id="wpp-mensagens">
+      <div class="wa-vazio">Aqui a mídia trocada com o contato, em ordem cronológica.</div>
+    </div>
+  </div>
+</div>
+
+<div class="modal-overlay hidden" id="wpp-modal-imagem">
+  <div class="modal wa-modal-midia wpp-modal-imagem">
+    <div class="modal-header">
+      <h2 id="wpp-modal-titulo">Imagem</h2>
+      <button class="modal-close" id="wpp-modal-fechar">&times;</button>
+    </div>
+    <div class="modal-body" id="wpp-modal-corpo"></div>
+  </div>
+</div>
+
+<script src="vendor/jquery-3.7.1.min.js"></script>
+<script src="js/utils/utils.js"></script>
+<script src="js/utils/icones.js"></script>
+<script src="js/utils/mapa_telas.js"></script>
+<script src="js/utils/toast.js"></script>
+<script src="js/utils/api.js"></script>
+<script src="js/utils/theme.js"></script>
+<script src="js/utils/sidebar.js"></script>
+<script src="js/utils/auth.js"></script>
+<script src="js/utils/entidades.js"></script>
+<script src="js/utils/navegacao_inquerito.js"></script>
+<script src="js/utils/midia_direta.js"></script>
+<script src="js/whatsapp_parcial.js"></script>
+</body>
+</html>

@@ -1,0 +1,115 @@
+.login-tela {
+  position: relative;
+  isolation: isolate;
+  overflow: hidden;
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--bg-page);
+}
+
+.login-card {
+  position: relative;
+  z-index: 1;
+  width: min(380px, 92vw);
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 28px;
+  box-shadow: var(--shadow);
+}
+
+.login-brand {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 4px;
+}
+
+.login-brand .brand-mark {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.login-brand .brand-mark img {
+  height: 36px;
+  width: auto;
+  display: block;
+}
+
+.login-brand .brand-name {
+  font-weight: 600;
+  font-size: 16px;
+}
+
+.brand-polic {
+  color: var(--text-primary);
+}
+
+.brand-ia {
+  color: var(--accent);
+}
+
+.login-card .card-hint {
+  margin: 4px 0 20px;
+  font-size: 13px;
+  color: var(--text-secondary);
+}
+
+/* ---------- Abas de provedor ---------- */
+/* Uma aba por forma de autenticação (PolícIA / API-PF), montadas por js/login.js a partir de
+ * GET /api/auth/provedores. Com um provedor só habilitado a faixa inteira some. */
+
+.login-provedores {
+  display: flex;
+  gap: 4px;
+  padding: 4px;
+  margin-bottom: 18px;
+  background: var(--bg-page);
+  border: 1px solid var(--border);
+  border-radius: var(--raio-md);
+}
+
+.login-provedor {
+  flex: 1;
+  padding: 8px 10px;
+  border: none;
+  background: transparent;
+  border-radius: var(--raio-sm);
+  color: var(--text-secondary);
+  font: inherit;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background-color 0.15s ease, color 0.15s ease;
+}
+
+.login-provedor:hover:not(:disabled) {
+  background: var(--bg-hover);
+  color: var(--text-primary);
+}
+
+.login-provedor.active {
+  background: var(--accent-solid);
+  color: var(--accent-contrast);
+}
+
+/* Provedor conhecido mas sem condição de funcionar (API-PF sem URL configurada): fica visível e
+ * desabilitado, com o motivo logo abaixo — melhor que sumir da tela e deixar o usuário achando
+ * que a opção não existe. */
+.login-provedor:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+
+.login-provedor-aviso {
+  margin: 0 0 16px;
+  padding: 10px 12px;
+  border-radius: var(--raio-md);
+  background: var(--tint-warning);
+  color: var(--tint-warning-text);
+  font-size: 12px;
+  line-height: 1.45;
+}

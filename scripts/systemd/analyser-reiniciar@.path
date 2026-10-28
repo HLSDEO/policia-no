@@ -1,0 +1,14 @@
+[Unit]
+# Template @: a instancia e o caminho da instalacao escapado por `systemd-escape -p`.
+#   /mnt/dados/analyser  ->  analyser-reiniciar@mnt-dados-analyser.path
+# %I desescapa de volta SEM a barra inicial (mnt/dados/analyser), por isso todo path usa /%I.
+Description=analyser (/%I) -- observa o pedido de reinicio da tela Desempenho
+
+[Path]
+# A API (container) grava este arquivo ao clicar em "Reiniciar servidor"; o .service (mesmo
+# nome/instancia, pareado automaticamente) o remove ao terminar, e o PathExists volta a
+# disparar no proximo pedido.
+PathExists=/%I/.deploy/controle/reiniciar.req
+
+[Install]
+WantedBy=multi-user.target

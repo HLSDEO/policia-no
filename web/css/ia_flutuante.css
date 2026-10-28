@@ -1,0 +1,171 @@
+/* Painel flutuante de IA (js/ia_flutuante.js) — acompanha o investigador na tela de
+ * WhatsApp/mensageiros, restringindo o contexto da conversa ao que está aberto (o mensageiro,
+ * ou a conversa específica se houver uma selecionada). Ver css/chat.css para as classes de
+ * bolha/markdown reaproveitadas (.chat-linha/.chat-bolha/.chat-md*). */
+
+.iaflt-botao {
+  position: fixed; right: 22px; bottom: 22px; z-index: 200;
+  width: 52px; height: 52px; border-radius: 50%; border: none; cursor: pointer;
+  background: var(--accent-solid); color: var(--accent-contrast, #fff);
+  display: flex; align-items: center; justify-content: center;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, .35);
+  transition: transform .15s ease;
+}
+.iaflt-botao:hover { transform: scale(1.06); }
+.iaflt-botao svg { width: 24px; height: 24px; }
+.iaflt-botao.hidden { display: none; }
+
+.iaflt-painel {
+  position: fixed; right: 22px; bottom: 86px; z-index: 199;
+  width: 380px; max-width: calc(100vw - 28px);
+  height: min(600px, calc(100vh - 116px));
+  min-width: 300px; min-height: 300px;
+  background: var(--bg-card); border: 1px solid var(--border); border-radius: 14px;
+  box-shadow: 0 10px 36px rgba(0, 0, 0, .4);
+  display: flex; flex-direction: column; overflow: hidden;
+  transform: translateY(14px) scale(.98); opacity: 0; pointer-events: none;
+  transition: transform .15s ease, opacity .15s ease;
+}
+.iaflt-painel.aberto { transform: translateY(0) scale(1); opacity: 1; pointer-events: auto; }
+
+.iaflt-resize {
+  position: absolute; background: transparent; z-index: 10;
+}
+.iaflt-resize-se { right: 0; bottom: 0; width: 18px; height: 18px; cursor: se-resize; }
+.iaflt-resize-sw { left: 0; bottom: 0; width: 18px; height: 18px; cursor: sw-resize; }
+.iaflt-resize-ne { right: 0; top: 0; width: 18px; height: 18px; cursor: ne-resize; }
+.iaflt-resize-nw { left: 0; top: 0; width: 18px; height: 18px; cursor: nw-resize; }
+.iaflt-resize-e { right: 0; top: 18px; bottom: 18px; width: 6px; cursor: e-resize; }
+.iaflt-resize-w { left: 0; top: 18px; bottom: 18px; width: 6px; cursor: w-resize; }
+.iaflt-resize-s { bottom: 0; left: 18px; right: 18px; height: 6px; cursor: s-resize; }
+.iaflt-resize-n { top: 0; left: 18px; right: 18px; height: 6px; cursor: n-resize; }
+
+.iaflt-resize-se::after {
+  content: ""; position: absolute; right: 3px; bottom: 3px; width: 12px; height: 12px;
+  border-right: 2px solid var(--border); border-bottom: 2px solid var(--border);
+  border-radius: 0 0 4px 0; opacity: .5;
+}
+.iaflt-resize-se:hover::after { opacity: 1; border-color: var(--accent); }
+
+body.iaflt-resizing { user-select: none; }
+body.iaflt-resizing * { cursor: inherit !important; }
+body.iaflt-resizing .iaflt-resize-se { cursor: se-resize !important; }
+body.iaflt-resizing .iaflt-resize-sw { cursor: sw-resize !important; }
+body.iaflt-resizing .iaflt-resize-ne { cursor: ne-resize !important; }
+body.iaflt-resizing .iaflt-resize-nw { cursor: nw-resize !important; }
+body.iaflt-resizing .iaflt-resize-e { cursor: e-resize !important; }
+body.iaflt-resizing .iaflt-resize-w { cursor: w-resize !important; }
+body.iaflt-resizing .iaflt-resize-s { cursor: s-resize !important; }
+body.iaflt-resizing .iaflt-resize-n { cursor: n-resize !important; }
+
+@media (max-width: 480px) {
+  .iaflt-resize-e, .iaflt-resize-w, .iaflt-resize-n, .iaflt-resize-s,
+  .iaflt-resize-ne, .iaflt-resize-nw { display: none; }
+  .iaflt-resize-se, .iaflt-resize-sw { width: 24px; height: 24px; }
+}
+
+.iaflt-cabecalho {
+  padding: 12px 8px 12px 14px; border-bottom: 1px solid var(--border);
+  display: flex; align-items: center; gap: 8px; flex-shrink: 0;
+}
+.iaflt-cabecalho-titulos { flex: 1; min-width: 0; }
+.iaflt-titulo {
+  font-weight: 600; font-size: 13.5px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+.iaflt-subtitulo {
+  font-size: 11.5px; opacity: .65; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+.iaflt-fechar,
+.iaflt-maximizar {
+  background: none; border: none; cursor: pointer; font-size: 20px; line-height: 1;
+  color: var(--text-secondary); padding: 6px 8px; border-radius: 6px;
+  display: inline-flex; align-items: center; justify-content: center;
+}
+.iaflt-fechar:hover, .iaflt-maximizar:hover { color: var(--text-primary); background: var(--bg-hover); }
+.iaflt-maximizar svg { width: 15px; height: 15px; }
+
+.iaflt-abas {
+  display: flex; gap: 6px; padding: 8px 10px 0; flex-shrink: 0;
+  overflow-x: auto; scrollbar-width: thin;
+}
+.iaflt-abas.hidden { display: none; }
+.iaflt-aba {
+  display: flex; align-items: center; gap: 6px; flex-shrink: 0;
+  padding: 5px 10px; border-radius: 999px; border: 1px solid var(--border);
+  background: var(--bg-page); color: var(--text-secondary); cursor: pointer;
+  font-size: 11.5px; max-width: 140px;
+}
+.iaflt-aba-rotulo { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.iaflt-aba.ativa { background: var(--accent-solid); color: var(--accent-contrast, #fff); border-color: var(--accent-solid); }
+.iaflt-aba-fechar {
+  display: inline-flex; align-items: center; justify-content: center;
+  width: 14px; height: 14px; border-radius: 50%; font-size: 13px; line-height: 1;
+  opacity: .75;
+}
+.iaflt-aba-fechar:hover { opacity: 1; background: rgba(0, 0, 0, .15); }
+
+.iaflt-escopo-banner {
+  padding: 6px 14px; font-size: 11px; line-height: 1.4;
+  background: var(--accent-solid); color: var(--accent-contrast, #fff); flex-shrink: 0;
+}
+
+.iaflt-mensagens {
+  flex: 1; overflow-y: auto; padding: 14px; display: flex; flex-direction: column; gap: 10px;
+  min-height: 0;
+}
+.iaflt-mensagens .chat-bolha { max-width: 85%; font-size: 13px; }
+
+.iaflt-vazio {
+  flex: 1; display: flex; align-items: center; justify-content: center; text-align: center;
+  padding: 20px; font-size: 12.5px; color: var(--text-muted); line-height: 1.5;
+}
+
+.iaflt-digitando { font-size: 11.5px; color: var(--text-muted); padding: 0 14px 6px; flex-shrink: 0; }
+
+.iaflt-cancelar-btn {
+  display: block; margin: 0 14px 6px; padding: 4px 10px; font-size: 11px;
+  color: var(--danger); background: transparent; border: 1px solid var(--danger);
+  border-radius: 6px; cursor: pointer; align-self: flex-start;
+}
+.iaflt-cancelar-btn:hover:not(:disabled) { background: var(--danger-solid, var(--danger)); color: #fff; }
+
+.iaflt-form { display: flex; gap: 8px; padding: 10px 12px; border-top: 1px solid var(--border); flex-shrink: 0; }
+.iaflt-form textarea {
+  flex: 1; resize: none; border-radius: 8px; border: 1px solid var(--border);
+  background: var(--bg-page); color: var(--text-primary); padding: 8px 10px;
+  font-size: 13px; font-family: inherit; outline: none; max-height: 90px;
+}
+.iaflt-form textarea:focus { border-color: var(--accent); box-shadow: var(--focus-ring); }
+.iaflt-form textarea:disabled { opacity: .6; }
+.iaflt-enviar {
+  border: none; border-radius: 8px; background: var(--accent-solid); color: var(--accent-contrast, #fff);
+  width: 36px; height: 36px; display: flex; align-items: center; justify-content: center;
+  cursor: pointer; flex-shrink: 0;
+}
+.iaflt-enviar:disabled { opacity: .5; cursor: not-allowed; }
+.iaflt-enviar svg { width: 16px; height: 16px; }
+
+/* Filtro do grafo proposto pela IA (marcador [filtro:{...}] — ver js/utils/ia_flutuante.js).
+   Fica dentro da bolha da resposta, abaixo do texto: primeiro o que vai mudar na tela, depois o
+   botão que muda. Nada é aplicado sem clique. */
+.iaflt-filtro {
+  margin-top: 8px; padding: 8px 10px; border: 1px solid var(--border); border-radius: 8px;
+  background: var(--bg-page); display: flex; flex-direction: column; gap: 6px;
+}
+.iaflt-filtro-desc { font-size: 11.5px; line-height: 1.45; color: var(--text-muted); }
+.iaflt-filtro-acoes { display: flex; gap: 6px; flex-wrap: wrap; }
+.iaflt-filtro-btn {
+  padding: 4px 10px; font-size: 11.5px; border-radius: 6px; cursor: pointer;
+  border: 1px solid var(--accent-solid); background: var(--accent-solid); color: var(--accent-contrast, #fff);
+}
+.iaflt-filtro-btn:hover:not(:disabled) { filter: brightness(1.08); }
+.iaflt-filtro-btn:disabled { opacity: .5; cursor: not-allowed; }
+.iaflt-filtro-btn.secundario { background: transparent; color: var(--text-primary); border-color: var(--border); }
+.iaflt-filtro-btn.secundario:hover { background: var(--bg-hover); }
+.iaflt-filtro-status { font-size: 11px; line-height: 1.4; color: var(--text-muted); }
+.iaflt-filtro-status.com-aviso { color: var(--danger); }
+
+@media (max-width: 480px) {
+  .iaflt-painel { right: 10px; left: 10px; width: auto; bottom: 78px; }
+  .iaflt-botao { right: 14px; bottom: 14px; }
+}

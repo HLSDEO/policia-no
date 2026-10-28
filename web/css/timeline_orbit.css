@@ -1,0 +1,502 @@
+html:not([data-theme="orbit"]) .tl-orbit-view-switch,
+html:not([data-theme="orbit"]) .tl-orbit-map-toggle,
+html:not([data-theme="orbit"]) .tl-orbit-analytics,
+html:not([data-theme="orbit"]) .tl-orbit-modebar,
+html:not([data-theme="orbit"]) .tl-orbit-clear-filters,
+html:not([data-theme="orbit"]) .tl-orbit-panel-scrim,
+html:not([data-theme="orbit"]) .tl-orbit-detail-panel {
+  display: none !important;
+}
+
+html[data-theme="orbit"] .content { padding-top: 14px; }
+
+html[data-theme="orbit"] .tl-filtros {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 10px;
+  flex-wrap: nowrap;
+}
+
+html[data-theme="orbit"] .tl-filtros .arq-busca {
+  flex: 1 1 420px;
+  min-width: 230px;
+}
+
+html[data-theme="orbit"] .tl-filtros #filtro-extracao {
+  flex: 1 1 340px;
+  min-width: 250px;
+}
+
+html[data-theme="orbit"] .tl-filtros > #filtro-conjunto,
+html[data-theme="orbit"] .tl-filtros > #filtro-categoria,
+html[data-theme="orbit"] .tl-filtros > #filtro-periodo { flex: 0 1 175px; min-width: 145px; }
+html[data-theme="orbit"] .tl-filtros > .arq-datas { flex: 0 0 auto; }
+
+html[data-theme="orbit"] .tl-orbit-clear-filters {
+  flex: 0 0 auto;
+  min-height: 35px;
+  padding: 0 11px;
+  border: 1px solid rgba(125, 137, 164, .28);
+  border-radius: 7px;
+  background: #1a1f2c;
+  color: #aeb8cc;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, .18);
+  font: 600 11px/1.2 var(--font-sans, Inter, sans-serif);
+  white-space: nowrap;
+  cursor: pointer;
+  transition: color .18s ease, border-color .18s ease, background .18s ease, transform .18s ease;
+}
+
+html[data-theme="orbit"] .tl-orbit-clear-filters:hover,
+html[data-theme="orbit"] .tl-orbit-clear-filters:focus-visible {
+  color: #fff;
+  border-color: rgba(139, 124, 246, .72);
+  background: #242a3a;
+  outline: none;
+}
+
+html[data-theme="orbit"] .tl-orbit-sticky-header {
+  position: relative;
+}
+
+html[data-theme="orbit"] body.tl-orbit-com-mapa .tl-orbit-sticky-header {
+  position: sticky;
+  top: 0;
+  z-index: 30;
+  background: #0f131c;
+  margin-left: -24px;
+  margin-right: -24px;
+  padding: 6px 24px 6px;
+  border-bottom: 1px solid rgba(148, 163, 184, .18);
+  box-shadow: 0 10px 24px -4px rgba(0, 0, 0, .55);
+}
+
+html[data-theme="orbit"] body.has-topnav.tl-orbit-com-mapa .tl-orbit-sticky-header {
+  top: 56px;
+}
+
+html[data-theme="orbit"] .tl-orbit-modebar {
+  margin: 0 0 8px;
+  display: flex;
+  align-items: center;
+  justify-content: flex-start;
+}
+
+html[data-theme="orbit"] .tl-orbit-map-toggle {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  cursor: pointer;
+  user-select: none;
+  font: 600 12px/1.2 var(--font-sans, Inter, sans-serif);
+  color: #8f9bb2;
+  padding: 4px 6px;
+  border-radius: 6px;
+  transition: color .2s ease;
+}
+
+html[data-theme="orbit"] .tl-orbit-map-toggle:hover {
+  color: #e8edff;
+}
+
+html[data-theme="orbit"] .tl-orbit-map-toggle input {
+  position: absolute;
+  opacity: 0;
+  width: 0;
+  height: 0;
+  pointer-events: none;
+}
+
+html[data-theme="orbit"] .tl-orbit-toggle-slider {
+  position: relative;
+  display: inline-block;
+  width: 32px;
+  height: 18px;
+  background-color: #171d2b;
+  border: 1px solid rgba(148, 163, 184, .25);
+  border-radius: 20px;
+  transition: background-color .2s ease, border-color .2s ease;
+}
+
+html[data-theme="orbit"] .tl-orbit-toggle-slider::after {
+  content: "";
+  position: absolute;
+  top: 2px;
+  left: 2px;
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  background-color: #8f9bb2;
+  transition: transform .2s cubic-bezier(.22, 1, .36, 1), background-color .2s ease;
+}
+
+html[data-theme="orbit"] .tl-orbit-map-toggle input:checked + .tl-orbit-toggle-slider {
+  background: linear-gradient(135deg, rgba(99, 102, 241, .9), rgba(114, 76, 230, .88));
+  border-color: rgba(99, 102, 241, .6);
+  box-shadow: 0 2px 10px rgba(79, 70, 229, .25);
+}
+
+html[data-theme="orbit"] .tl-orbit-map-toggle input:checked + .tl-orbit-toggle-slider::after {
+  transform: translateX(14px);
+  background-color: #ffffff;
+}
+
+html[data-theme="orbit"] .tl-orbit-map-toggle input:checked ~ .tl-orbit-toggle-label {
+  color: #ffffff;
+  font-weight: 700;
+}
+
+html[data-theme="orbit"] .tl-orbit-analytics {
+  margin: 0 0 16px;
+  padding: 0 14px 6px;
+  border: 1px solid rgba(119, 128, 156, .2);
+  border-radius: 12px;
+  background: rgba(12, 15, 22, .88);
+  box-shadow: 0 10px 30px rgba(0, 0, 0, .25);
+}
+
+html[data-theme="orbit"] .tl-orbit-kpis article > span {
+  color: #8da0c5;
+  font-size: 8px;
+  font-weight: 700;
+  letter-spacing: .13em;
+}
+
+html[data-theme="orbit"] .tl-orbit-kpis {
+  display: grid;
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+  min-height: 42px;
+  border-bottom: 1px solid rgba(148, 163, 184, .12);
+}
+
+html[data-theme="orbit"] .tl-orbit-kpis article {
+  min-width: 0;
+  display: flex;
+  align-items: baseline;
+  justify-content: center;
+  gap: 8px;
+  padding: 8px 10px;
+  border-right: 1px solid rgba(148, 163, 184, .12);
+}
+
+html[data-theme="orbit"] .tl-orbit-kpis article:last-child { border-right: 0; }
+html[data-theme="orbit"] .tl-orbit-kpis strong {
+  margin: 0;
+  color: #f7f8ff;
+  font-size: clamp(14px, 1.25vw, 18px);
+  font-weight: 600;
+  letter-spacing: -.02em;
+  font-variant-numeric: tabular-nums;
+}
+
+html[data-theme="orbit"] .tl-orbit-kpis article:nth-child(1) strong { color: #c49aff; }
+html[data-theme="orbit"] .tl-orbit-kpis article:nth-child(2) strong { color: #5eead4; }
+html[data-theme="orbit"] .tl-orbit-kpis article:nth-child(3) strong { color: #7dd3fc; }
+html[data-theme="orbit"] .tl-orbit-kpis article:nth-child(5) strong { color: #f2b84b; }
+html[data-theme="orbit"] .tl-orbit-kpis small { color: #6f7b92; font-size: 9px; white-space: nowrap; }
+html[data-theme="orbit"] .tl-orbit-kpis article:not(:last-child) small { display: none; }
+
+html[data-theme="orbit"] .tl-orbit-chart-controls {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 14px;
+  min-height: 36px;
+  padding: 4px 0 2px;
+}
+
+html[data-theme="orbit"] .tl-orbit-control-groups {
+  display: flex;
+  align-items: center;
+  gap: 15px;
+}
+
+html[data-theme="orbit"] .tl-orbit-chart-actions {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  flex-wrap: wrap;
+  gap: 9px 18px;
+}
+
+html[data-theme="orbit"] .tl-orbit-layout-toggle,
+html[data-theme="orbit"] .tl-orbit-segments {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 13px;
+}
+
+html[data-theme="orbit"] .tl-orbit-layout-toggle { gap: 7px; }
+html[data-theme="orbit"] .tl-orbit-layout-toggle span { color: #465068; }
+html[data-theme="orbit"] .tl-orbit-segment-label {
+  color: #59667f;
+  font-size: 9px;
+  font-weight: 700;
+  letter-spacing: .08em;
+  text-transform: uppercase;
+}
+html[data-theme="orbit"] .tl-orbit-layout-toggle button,
+html[data-theme="orbit"] .tl-orbit-segment {
+  padding: 2px 0;
+  border: 0;
+  border-bottom: 1px solid transparent;
+  background: transparent;
+  color: #707d96;
+  font: 500 11px/1.4 var(--font-sans, Inter, sans-serif);
+  cursor: pointer;
+  transition: color .18s ease, border-color .18s ease;
+}
+
+html[data-theme="orbit"] .tl-orbit-layout-toggle button:hover,
+html[data-theme="orbit"] .tl-orbit-segment:hover { color: #dce3f5; }
+html[data-theme="orbit"] .tl-orbit-layout-toggle button.active,
+html[data-theme="orbit"] .tl-orbit-segment.active {
+  color: #fff;
+  border-color: #a78bfa;
+}
+
+html[data-theme="orbit"] .tl-orbit-zoom {
+  flex: 0 0 auto;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 3px 6px 3px 10px;
+  border: 1px solid rgba(148, 163, 184, .2);
+  border-radius: 8px;
+  background: rgba(16, 20, 29, .88);
+  box-shadow: 0 2px 6px rgba(0, 0, 0, .28);
+}
+
+html[data-theme="orbit"] #tl-orbit-zoom-range {
+  min-width: 90px;
+  color: #9cb0ce;
+  font: 500 11px/1.2 var(--font-sans, Inter, sans-serif);
+  white-space: nowrap;
+  letter-spacing: .01em;
+  text-align: center;
+}
+
+html[data-theme="orbit"] .tl-orbit-zoom-buttons {
+  display: inline-flex;
+  align-items: center;
+  gap: 2px;
+  background: rgba(255, 255, 255, .04);
+  padding: 2px;
+  border-radius: 6px;
+  border: 1px solid rgba(148, 163, 184, .14);
+}
+
+html[data-theme="orbit"] .tl-orbit-zoom-buttons button {
+  min-width: 25px;
+  height: 23px;
+  padding: 0 6px;
+  border: 0;
+  border-radius: 4px;
+  background: transparent;
+  color: #c2ccdf;
+  font: 600 13px/1 var(--font-sans, Inter, sans-serif);
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  transition: color .15s ease, background .15s ease;
+}
+
+html[data-theme="orbit"] .tl-orbit-zoom-buttons button[data-zoom="reset"] {
+  font-size: 11px;
+  padding: 0 7px;
+  font-weight: 500;
+}
+
+html[data-theme="orbit"] .tl-orbit-zoom-buttons button:hover {
+  color: #fff;
+  background: rgba(139, 124, 246, .24);
+}
+
+html[data-theme="orbit"] .tl-orbit-zoom-buttons button:disabled {
+  color: #434b5d;
+  background: transparent;
+  cursor: default;
+}
+
+html[data-theme="orbit"] .tl-orbit-chart-wrap {
+  position: relative;
+  min-height: 160px;
+  overflow: hidden;
+  cursor: grab;
+  user-select: none;
+  -webkit-user-select: none;
+  /* rolagem vertical segue no navegador; pan horizontal e pinca sao do timeline_orbit.js
+     (touchstart/touchmove com preventDefault condicional) */
+  touch-action: pan-y;
+}
+
+html[data-theme="orbit"] .tl-orbit-chart-wrap:active,
+html[data-theme="orbit"] .tl-orbit-chart-wrap.arrastando {
+  cursor: grabbing;
+}
+
+html[data-theme="orbit"] .tl-orbit-chart-wrap.arrastando * {
+  cursor: grabbing !important;
+}
+
+html[data-theme="orbit"] #tl-orbit-chart {
+  display: block;
+  width: 100%;
+  min-height: 160px;
+  overflow: visible;
+  transition: height 350ms cubic-bezier(.22, 1, .36, 1);
+}
+
+html[data-theme="orbit"] .tl-orbit-axis-line,
+html[data-theme="orbit"] .tl-orbit-row-line { stroke: rgba(148, 163, 184, .15); stroke-width: 1; }
+html[data-theme="orbit"] .tl-orbit-axis-label,
+html[data-theme="orbit"] .tl-orbit-row-meta { fill: #68758e; font-size: 10px; }
+html[data-theme="orbit"] .tl-orbit-row-label { fill: #dfe5f5; font-size: 12px; font-weight: 600; }
+html[data-theme="orbit"] .tl-orbit-dot {
+  cursor: pointer;
+  opacity: .82;
+  stroke: rgba(255, 255, 255, .24);
+  stroke-width: 1.2;
+  transform-box: fill-box;
+  transform-origin: center;
+  will-change: transform;
+  transition: opacity .22s ease, stroke-width .2s ease, filter .2s ease, transform .18s ease;
+}
+html[data-theme="orbit"] .tl-orbit-dot:hover,
+html[data-theme="orbit"] .tl-orbit-dot:focus { stroke: #fff; stroke-width: 2.4; outline: none; transform: translateY(-3px); }
+html[data-theme="orbit"] .tl-orbit-dot.dimmed { opacity: .13; }
+html[data-theme="orbit"] .tl-orbit-dot.selected { opacity: 1; stroke: #fff; stroke-width: 2.6; filter: drop-shadow(0 0 7px rgba(196, 154, 255, .7)); }
+
+html[data-theme="orbit"] .tl-orbit-tooltip {
+  position: absolute;
+  z-index: 4;
+  pointer-events: none;
+  min-width: 178px;
+  padding: 10px 12px;
+  border: 1px solid rgba(167, 139, 250, .3);
+  border-radius: 9px;
+  background: rgba(18, 22, 32, .96);
+  box-shadow: 0 12px 28px rgba(0, 0, 0, .4);
+  color: #dbe3f5;
+  font-size: 11px;
+}
+html[data-theme="orbit"] .tl-orbit-tooltip strong { display: block; margin-bottom: 5px; color: #fff; font-size: 12px; }
+html[data-theme="orbit"] .tl-orbit-tooltip span { display: block; margin-top: 2px; color: #8e9bb4; }
+
+html[data-theme="orbit"] .tl-orbit-chart-empty {
+  position: absolute;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  color: #7f8ba2;
+  font-size: 12px;
+}
+
+html[data-theme="orbit"] .tl-orbit-chart-caption {
+  margin: -3px 0 0;
+  color: #65728b;
+  font-size: 10px;
+  text-align: center;
+}
+
+html[data-theme="orbit"] .tl-orbit-panel-scrim {
+  display: none !important;
+}
+
+html[data-theme="orbit"] .tl-orbit-detail-panel {
+  position: fixed;
+  z-index: 200;
+  top: 60px;
+  right: 18px;
+  bottom: 24px;
+  width: min(390px, 92vw);
+  box-sizing: border-box;
+  padding: 24px 22px;
+  border: 1px solid rgba(167, 139, 250, .3);
+  border-radius: 14px;
+  background: rgba(13, 16, 23, .95);
+  backdrop-filter: blur(16px);
+  box-shadow: -14px 18px 50px rgba(0, 0, 0, .58);
+  color: #edf1fb;
+  overflow-y: auto;
+  animation: tl-orbit-panel-in .3s cubic-bezier(.22, 1, .36, 1) both;
+}
+
+html[data-theme="orbit"] .tl-orbit-detail-close {
+  position: absolute;
+  top: 14px;
+  right: 16px;
+  width: 32px;
+  height: 32px;
+  border: 0;
+  background: transparent;
+  color: #78849b;
+  font-size: 24px;
+  cursor: pointer;
+}
+
+html[data-theme="orbit"] .tl-orbit-detail-close:hover { color: #fff; }
+html[data-theme="orbit"] .tl-orbit-detail-kicker {
+  display: block;
+  margin: 2px 38px 6px 0;
+  color: #9c8cf5;
+  font-size: 9px;
+  font-weight: 700;
+  letter-spacing: .16em;
+}
+html[data-theme="orbit"] .tl-orbit-detail-panel h2 { margin: 0 40px 18px 0; font-size: 20px; line-height: 1.15; }
+html[data-theme="orbit"] .tl-orbit-detail-total { font-size: 36px; font-weight: 500; letter-spacing: -.03em; font-variant-numeric: tabular-nums; }
+html[data-theme="orbit"] .tl-orbit-detail-total-label { margin-left: 6px; color: #7f8ba2; font-size: 11px; }
+html[data-theme="orbit"] .tl-orbit-detail-meta { margin: 20px 0 18px; border-top: 1px solid #252b38; }
+html[data-theme="orbit"] .tl-orbit-detail-meta div { display: grid; grid-template-columns: 140px 1fr; gap: 10px; padding: 10px 0; border-bottom: 1px solid #202632; }
+html[data-theme="orbit"] .tl-orbit-detail-meta dt,
+html[data-theme="orbit"] .tl-orbit-detail-intensity > span { color: #77839a; font-size: 9px; text-transform: uppercase; letter-spacing: .1em; }
+html[data-theme="orbit"] .tl-orbit-detail-meta dd { margin: 0; color: #dce3f3; font-size: 11px; text-align: right; }
+html[data-theme="orbit"] .tl-orbit-detail-intensity > div { height: 5px; margin-top: 8px; overflow: hidden; border-radius: 4px; background: #202635; }
+html[data-theme="orbit"] .tl-orbit-detail-intensity i { display: block; width: 0; height: 100%; border-radius: inherit; background: linear-gradient(90deg, #665cf1, #cf7df4); transition: width .35s ease; }
+html[data-theme="orbit"] .tl-orbit-detail-open-list { width: 100%; margin-top: 22px; }
+/* body.tl-orbit-panel-open não bloqueia o overflow para o usuário continuar rolando a lista */
+html[data-theme="orbit"] body.tl-orbit-panel-open { overflow: auto; }
+
+@keyframes tl-orbit-panel-in { from { opacity: 0; transform: translateX(38px); } to { opacity: 1; transform: none; } }
+@keyframes tl-orbit-fade-in { from { opacity: 0; } to { opacity: 1; } }
+
+html[data-theme="orbit"] body.tl-orbit-lista .tl-list-view,
+html[data-theme="orbit"] .tl-list-view { display: block; }
+html[data-theme="orbit"] .tl-orbit-analytics { display: none; }
+html[data-theme="orbit"] body.tl-orbit-com-mapa .tl-orbit-analytics { display: block; }
+@media (max-width: 700px) {
+  html[data-theme="orbit"] body.tl-orbit-com-mapa .tl-orbit-sticky-header {
+    margin-left: -12px;
+    margin-right: -12px;
+    padding: 6px 12px 6px;
+  }
+}
+
+@media (max-width: 920px) {
+  html[data-theme="orbit"] .tl-filtros { flex-wrap: wrap; }
+  html[data-theme="orbit"] .tl-filtros .arq-busca,
+  html[data-theme="orbit"] .tl-filtros #filtro-extracao { min-width: 220px; }
+  html[data-theme="orbit"] .tl-orbit-analytics { padding: 0 12px 8px; }
+  html[data-theme="orbit"] .tl-orbit-kpis { grid-template-columns: repeat(2, 1fr); }
+  html[data-theme="orbit"] .tl-orbit-kpis article:nth-child(2) { border-right: 0; }
+  html[data-theme="orbit"] .tl-orbit-kpis article:nth-child(-n+2) { border-bottom: 1px solid rgba(148, 163, 184, .14); }
+  html[data-theme="orbit"] .tl-orbit-chart-controls { align-items: flex-start; flex-direction: column; gap: 7px; padding: 8px 0; }
+  html[data-theme="orbit"] .tl-orbit-chart-actions { align-items: flex-start; justify-content: flex-start; }
+  html[data-theme="orbit"] .tl-orbit-chart-wrap { overflow-x: auto; }
+  html[data-theme="orbit"] #tl-orbit-chart { min-width: 780px; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  html[data-theme="orbit"] .tl-orbit-dot,
+  html[data-theme="orbit"] .tl-orbit-view-btn,
+  html[data-theme="orbit"] .tl-orbit-detail-panel,
+  html[data-theme="orbit"] .tl-orbit-panel-scrim { animation: none; transition: none; }
+}
+
+@media (max-width: 1320px) {
+  html[data-theme="orbit"] .tl-filtros { flex-wrap: wrap; }
+}

@@ -1,0 +1,33 @@
+-- IA própria de unidades superiores e delegacias — elo do meio da hierarquia de conexão de IA
+-- .env → unidade → delegacia → usuário (ver docs/unidades_prompts.md e db/init/39_config_ia_usuario.sql).
+-- Espelho imperativo do bloco CONFIG_IA_ENTIDADE no 39. Idempotente.
+
+SET search_path TO SEGURANCA, PUBLIC;
+
+CREATE TABLE IF NOT EXISTS CONFIG_IA_ENTIDADE (
+    ID_CONFIG             BIGINT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
+    TP_NIVEL              VARCHAR(10) NOT NULL,
+    ID_ENTIDADE           BIGINT NOT NULL,
+    IN_ATIVA              BOOLEAN NOT NULL DEFAULT true,
+    CO_PROVEDOR           VARCHAR(30) NOT NULL,
+    NO_MODELO             VARCHAR(200) NOT NULL,
+    TX_API_URL            VARCHAR(500) NOT NULL,
+    TX_API_KEY            TEXT,
+    TX_CA_CERT            TEXT,
+    CO_ESFORCO_RACIOCINIO VARCHAR(10),
+    QT_CONTEXTO           INTEGER,
+    ID_USUARIO_AUTOR      BIGINT,
+    DT_CRIACAO            TIMESTAMP NOT NULL DEFAULT now(),
+    DT_ATUALIZACAO        TIMESTAMP NOT NULL DEFAULT now(),
+    CONSTRAINT CK34_CONFIG_IA_ENT_NIVEL CHECK (TP_NIVEL IN ('unidade', 'delegacia')),
+    CONSTRAINT FK424_CONFIG_IA_ENT_AUTOR FOREIGN KEY (ID_USUARIO_AUTOR)
+        REFERENCES USR_TB01_USUARIOS (ID_USUARIO)
+);
+
+CREATE UNIQUE INDEX IF NOT EXISTS UX114_CONFIG_IA_ENT_ATIVA
+    ON CONFIG_IA_ENTIDADE (TP_NIVEL, ID_ENTIDADE)
+    WHERE IN_ATIVA;
+
+CREATE INDEX IF NOT EXISTS IX432_CONFIG_IA_ENT_ENTIDADE ON CONFIG_IA_ENTIDADE (TP_NIVEL, ID_ENTIDADE);
+
+RESET search_path;

@@ -1,0 +1,814 @@
+/* Tela do documento (web/documento.html, js/documento.js).
+   Layout de duas colunas em altura cheia, como whatsapp.html: sumário de páginas fixo à esquerda,
+   folhas roláveis à direita. O texto extraído é monoespaçado de propósito — ele preserva o
+   alinhamento de tabela e de carimbo do papel, que fonte proporcional embaralha. */
+
+.doc-app {
+  display: flex;
+  height: 100vh;
+  overflow: hidden;
+  background: var(--bg-page);
+  color: var(--text-primary);
+}
+
+/* O menu horizontal é injetado por js/utils/sidebar.js DENTRO de .doc-app (que se declara como
+   layout próprio lá, ao lado de .wa-app e .chat-app): a coluna vira vertical e o resto do layout
+   ocupa a altura que sobra. Mesmo arranjo de .wa-app.has-topnav em css/whatsapp.css. */
+.doc-app.has-topnav {
+  flex-direction: column;
+}
+
+.doc-app.has-topnav > .topnav {
+  flex-shrink: 0;
+  position: sticky;
+  top: 0;
+  z-index: 250;
+}
+
+/* ---------------------------------------------------------------- sumário */
+
+.doc-sumario {
+  width: 270px;
+  flex: 0 0 270px;
+  display: flex;
+  flex-direction: column;
+  border-right: 1px solid var(--border);
+  background: var(--bg-sidebar);
+  min-height: 0;
+}
+
+.doc-sumario-topo {
+  padding: 12px 12px 10px;
+  border-bottom: 1px solid var(--border);
+}
+
+.doc-sumario-titulo {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+  margin-bottom: 10px;
+  font-size: 13px;
+  font-weight: 600;
+}
+
+.doc-sumario-contagem {
+  font-size: 11px;
+  font-weight: 400;
+  color: var(--text-secondary);
+}
+
+.doc-busca {
+  position: relative;
+}
+
+.doc-busca-icone {
+  position: absolute;
+  left: 9px;
+  top: 50%;
+  transform: translateY(-50%);
+  font-size: 12px;
+  opacity: .6;
+  pointer-events: none;
+}
+
+.doc-busca input {
+  width: 100%;
+  box-sizing: border-box;
+  padding: 7px 10px 7px 28px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: var(--bg-page);
+  color: var(--text-primary);
+  font-size: 12.5px;
+}
+
+.doc-busca input:focus {
+  outline: none;
+  border-color: var(--accent);
+  box-shadow: var(--focus-ring);
+}
+
+.doc-busca-info {
+  margin-top: 6px;
+  font-size: 11.5px;
+  color: var(--text-secondary);
+  min-height: 14px;
+}
+
+/* O que o filtro de busca está escondendo, com um clique para desfazer. Link discreto
+   de propósito: é escape do filtro, não mais uma ação competindo com a busca. */
+.doc-busca-filtro {
+  margin-top: 4px;
+  border: 0;
+  background: none;
+  padding: 0;
+  text-align: left;
+  font: inherit;
+  font-size: 11.5px;
+  color: var(--accent);
+  cursor: pointer;
+}
+
+.doc-busca-filtro:hover {
+  text-decoration: underline;
+}
+
+/* A+/A− do texto extraído. A preferência vive em --doc-fonte (localStorage
+   "analyser-doc-fonte"), aplicada na raiz por js/documento.js. */
+.doc-fonte-ctrl {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.doc-fonte-ctrl button {
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  background: transparent;
+  color: var(--text-secondary);
+  font-size: 12px;
+  line-height: 1;
+  padding: 5px 8px;
+  cursor: pointer;
+}
+
+.doc-fonte-ctrl button:hover {
+  background: var(--bg-hover);
+  color: var(--text-primary);
+}
+
+/* Modos de leitura (Texto | PDF | Lado a lado). O botão "apertado" é o modo corrente — o
+   restante da UI da tela não diz isso em nenhum outro lugar, então o estado precisa aparecer
+   aqui (aria-pressed é o par acessível do visual). */
+.doc-modo-ctrl {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.doc-modo-ctrl button {
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  background: transparent;
+  color: var(--text-secondary);
+  font-size: 12px;
+  line-height: 1;
+  padding: 5px 8px;
+  cursor: pointer;
+}
+
+.doc-modo-ctrl button:hover {
+  background: var(--bg-hover);
+  color: var(--text-primary);
+}
+
+.doc-modo-ctrl button[aria-pressed="true"] {
+  background: var(--tint-accent);
+  border-color: var(--accent);
+  color: var(--text-primary);
+  font-weight: 600;
+}
+
+.doc-sumario-lista {
+  flex: 1;
+  overflow-y: auto;
+  padding: 6px;
+}
+
+.doc-sumario-item {
+  display: block;
+  width: 100%;
+  text-align: left;
+  border: 1px solid transparent;
+  border-radius: 8px;
+  background: transparent;
+  color: inherit;
+  padding: 7px 9px;
+  margin-bottom: 3px;
+  cursor: pointer;
+  font: inherit;
+}
+
+.doc-sumario-item:hover {
+  background: var(--bg-hover);
+}
+
+.doc-sumario-item.atual {
+  background: var(--tint-accent);
+  border-color: var(--accent);
+}
+
+.doc-sumario-item-num {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 12px;
+  font-weight: 600;
+}
+
+/* Quantas ocorrências da busca (ou do trecho citado) caíram nesta página — é o que permite pular
+   direto para a folha certa em vez de rolar atrás do realce. */
+.doc-sumario-item-hits {
+  margin-left: auto;
+  font-size: 10.5px;
+  font-weight: 600;
+  padding: 1px 6px;
+  border-radius: 999px;
+  background: var(--tint-warning);
+  color: var(--tint-warning-text);
+}
+
+.doc-sumario-item.atual .doc-sumario-item-hits {
+  background: var(--accent-solid);
+  color: var(--accent-contrast);
+}
+
+.doc-sumario-item-previa {
+  margin-top: 3px;
+  font-size: 11px;
+  line-height: 1.4;
+  color: var(--text-secondary);
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+.doc-sumario-item.vazia .doc-sumario-item-previa {
+  font-style: italic;
+  opacity: .7;
+}
+
+/* ---------------------------------------------------------------- coluna principal */
+
+.doc-principal {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  min-height: 0;
+}
+
+.doc-topbar {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  flex-wrap: wrap;
+}
+
+.doc-cabecalho {
+  min-width: 0;
+}
+
+.doc-topbar .page-title {
+  margin: 0;
+  font-size: 16px;
+  word-break: break-word;
+}
+
+.doc-meta {
+  margin-top: 2px;
+  font-size: 11.5px;
+  color: var(--text-secondary);
+}
+
+/* ---------------------------------------------------------------- barra da citação */
+
+.doc-citacao {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 8px 16px;
+  border-bottom: 1px solid var(--border);
+  background: var(--tint-accent);
+  font-size: 12.5px;
+}
+
+.doc-citacao-rotulo {
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+.doc-citacao-texto {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-style: italic;
+  color: var(--text-secondary);
+}
+
+.doc-citacao-nav {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  white-space: nowrap;
+  color: var(--text-secondary);
+}
+
+.doc-citacao-nav button,
+.doc-citacao-fechar {
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  background: transparent;
+  color: var(--text-secondary);
+  font-size: 14px;
+  line-height: 1;
+  padding: 2px 7px;
+  cursor: pointer;
+}
+
+.doc-citacao-nav button:hover,
+.doc-citacao-fechar:hover {
+  background: var(--bg-hover);
+  color: var(--text-primary);
+}
+
+.doc-citacao-fechar {
+  border-color: transparent;
+  font-size: 16px;
+}
+
+.doc-aviso {
+  padding: 9px 16px;
+  border-bottom: 1px solid var(--border);
+  background: var(--tint-warning);
+  color: var(--tint-warning-text);
+  font-size: 12.5px;
+}
+
+.doc-aviso .btn {
+  margin-left: 10px;
+}
+
+/* ---------------------------------------------------------------- folhas */
+
+.doc-conteudo {
+  flex: 1;
+  min-height: 0;
+  overflow: hidden;
+  display: flex;
+}
+
+/* overflow dos dois eixos: a planilha larga (CDR de operadora) estoura a folha e o painel é
+   quem rola na horizontal — é contra este scrollport que o <th> fixo e a primeira coluna
+   congelada se ancoram. No texto puro nada estoura, então a barra horizontal não aparece. */
+.doc-painel {
+  display: none;
+  flex: 1;
+  min-width: 0;
+  overflow: auto;
+  padding: 16px;
+}
+
+.doc-painel.ativo {
+  display: block;
+}
+
+/* ---------------------------------------------------------------- painel do PDF (js/documento_pdf.js) */
+
+/* No "lado a lado" os dois painéis dividem a largura e rolam cada um por si — a costura entre
+   eles é a borda, não uma moldura: são duas leituras do MESMO documento, não dois painéis
+   independentes. */
+.doc-painel-pdf {
+  border-left: 1px solid var(--border);
+  background: var(--bg-page);
+}
+
+.doc-pdf-folha {
+  max-width: 900px;
+  margin: 0 auto 16px;
+  scroll-margin-top: 8px; /* mesma folga do scrollIntoView das folhas de texto */
+}
+
+.doc-pdf-rotulo {
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--text-secondary);
+  margin: 0 2px 4px;
+}
+
+/* A moldura segura o espaço da página (aspect-ratio vem das medidas reais, página a página)
+   enquanto o canvas não chega — sem ela o lazy-render faria o scroll encolher/crescer sob os
+   pés do leitor. O fundo branco é do papel, não do tema: PDF claro se lê em papel claro. */
+.doc-pdf-quadro {
+  background: #fff;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  overflow: hidden;
+  aspect-ratio: 210 / 297; /* A4 até a medida real chegar */
+}
+
+.doc-pdf-quadro canvas {
+  display: block;
+  width: 100%;
+  height: auto;
+}
+
+.doc-pdf-aviso {
+  max-width: 640px;
+  margin: 40px auto;
+  text-align: center;
+  color: var(--text-secondary);
+  font-size: 13px;
+}
+
+/* Cada página é uma folha: o enquadramento é o que dá a noção de "estou na página 7 de 214" que o
+   <pre> corrido de antes não dava. */
+.doc-folha {
+  max-width: 900px;
+  margin: 0 auto 18px;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  background: var(--bg-card);
+  /* o cabeçalho da folha é sticky: sem esta folga, o scrollIntoView de um salto enterra a
+     primeira linha do texto embaixo dele */
+  scroll-margin-top: 8px;
+  overflow: hidden;
+}
+
+/* overflow:clip recorta os cantos arredondados SEM criar scrollport — e é justamente um
+   scrollport intermediário o que mata o position:sticky do cabeçalho da folha (e o <th> fixo da
+   planilha): com hidden, o sticky se ancorava na própria folha, que nunca rola, e o cabeçalho
+   ia embora com o scroll. Sem @supports (navegador velho) fica no hidden de sempre — sticky
+   quebrado como antes, nada pior. */
+@supports (overflow: clip) {
+  .doc-folha {
+    overflow: clip;
+  }
+}
+
+/* A folha de planilha é a única que pode ficar mais larga que a tela (CDR com 20+ colunas):
+   ela cresce com a tabela (width:max-content) e o painel rola; o min-width mantém a folha
+   "de tamanho normal" quando a aba é estreita. overflow clip aqui é o do bloco acima — sem o
+   clip velho (hidden) o sticky congelaria na folha de novo. */
+.doc-folha.doc-folha-planilha {
+  width: max-content;
+  min-width: min(100%, 900px);
+  max-width: none;
+}
+
+.doc-folha-planilha .doc-folha-tabela {
+  overflow: visible;
+}
+
+.doc-folha-planilha .doc-folha-tabela table {
+  width: max-content;
+  min-width: 100%;
+}
+
+.doc-folha-cabecalho {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 12px;
+  border-bottom: 1px solid var(--border);
+  background: var(--bg-elevated);
+  font-size: 11.5px;
+  font-weight: 600;
+  color: var(--text-secondary);
+  position: sticky;
+  top: 0;
+  /* acima do <th> fixo da planilha (2) e da primeira coluna congelada (1): ao rolar, o nome da
+     aba/ página é a última coisa que o leitor ainda tem */
+  z-index: 4;
+}
+
+.doc-folha-contagem {
+  font-weight: 400;
+  opacity: .75;
+}
+
+.doc-folha-vazia {
+  font-weight: 400;
+  font-style: italic;
+  opacity: .8;
+}
+
+.doc-folha-copiar,
+.doc-folha-csv {
+  margin-left: 8px;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  background: transparent;
+  color: var(--text-secondary);
+  font: inherit;
+  font-weight: 400;
+  font-size: 10.5px;
+  line-height: 1;
+  padding: 3px 8px;
+  cursor: pointer;
+}
+
+.doc-folha-contagem + .doc-folha-copiar,
+.doc-folha-copiar:first-of-type {
+  margin-left: auto;
+}
+
+.doc-folha-copiar:hover,
+.doc-folha-csv:hover {
+  background: var(--bg-hover);
+  color: var(--text-primary);
+}
+
+.doc-folha-copiar:disabled,
+.doc-folha-csv:disabled {
+  cursor: default;
+  opacity: .7;
+}
+
+.doc-folha-texto {
+  margin: 0;
+  padding: 14px 16px;
+  font-family: ui-monospace, SFMono-Regular, Consolas, "Liberation Mono", Menlo, monospace;
+  font-size: var(--doc-fonte, 12.5px);
+  line-height: 1.6;
+  white-space: pre-wrap;
+  word-wrap: break-word;
+  color: var(--text-primary);
+}
+
+/* ---------------------------------------------------------------- docx em blocos */
+
+/* O .docx (texto com tabelas, e o modo "Formatado" inteiro) é desenhado em blocos — parágrafo,
+   título, lista, tabela. Fonte proporcional de propósito: aqui se lê a forma do documento, não o
+   alinhamento de carimbo (esse continua no <pre> dos outros formatos). O tamanho acompanha o
+   A+/A− (--doc-fonte) para o bloco inteiro continuar uma leitura só. */
+.doc-folha-blocos {
+  padding: 12px 18px 14px;
+  font-size: var(--doc-fonte, 12.5px);
+  line-height: 1.6;
+  color: var(--text-primary);
+}
+
+.doc-folha-blocos .doc-bloco-para {
+  margin: 0 0 .65em;
+  overflow-wrap: break-word;
+}
+
+.doc-folha-blocos .doc-bloco-titulo {
+  margin: .9em 0 .45em;
+  line-height: 1.3;
+  font-weight: 700;
+}
+
+.doc-folha-blocos h1.doc-bloco-titulo { font-size: 1.45em; }
+.doc-folha-blocos h2.doc-bloco-titulo { font-size: 1.3em; }
+.doc-folha-blocos h3.doc-bloco-titulo { font-size: 1.18em; }
+.doc-folha-blocos h4.doc-bloco-titulo,
+.doc-folha-blocos h5.doc-bloco-titulo,
+.doc-folha-blocos h6.doc-bloco-titulo { font-size: 1.06em; }
+
+.doc-folha-blocos .doc-bloco-para:first-child,
+.doc-folha-blocos .doc-bloco-titulo:first-child {
+  margin-top: 0;
+}
+
+.doc-folha-blocos .doc-bloco-lista {
+  margin: 0 0 .65em;
+  padding-left: 1.6em;
+}
+
+.doc-folha-blocos .doc-bloco-lista li {
+  margin-bottom: .2em;
+}
+
+/* A tabela da folha de docx não é a estrela da página (como a aba de uma CDR): ela rola dentro
+   do próprio bloco e mantém o respiro do texto em volta. */
+.doc-folha-blocos .doc-bloco-tabela {
+  margin: 0 0 6px;
+}
+
+.doc-folha-blocos .doc-bloco-tabela table {
+  font-size: .95em;
+}
+
+.doc-bloco-csv {
+  display: inline-block;
+  margin: 0 0 12px;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  background: transparent;
+  color: var(--text-secondary);
+  font: inherit;
+  font-size: 10.5px;
+  line-height: 1;
+  padding: 3px 8px;
+  cursor: pointer;
+}
+
+.doc-bloco-csv:hover {
+  background: var(--bg-hover);
+  color: var(--text-primary);
+}
+
+/* ---------------------------------------------------------------- painel do HTML renderizado */
+
+/* O iframe é o documento inteiro — sem padding, sem moldura: o HTML anexado se lê como a página
+   que ele é. O fundo branco é do documento (muitos nascem com o próprio), não do tema. */
+.doc-painel.doc-painel-render {
+  padding: 0;
+  overflow: hidden;
+}
+
+#doc-render-iframe {
+  display: block;
+  width: 100%;
+  height: 100%;
+  min-height: 60vh;
+  border: 0;
+  background: #fff;
+}
+
+/* ---------------------------------------------------------------- planilhas */
+
+/* A folha de CSV/XLS/XLSX é uma <table> de verdade (ver parsearPlanilha em js/documento.js):
+   fonte proporcional, porque aqui se lê valor de célula, não alinhamento de carimbo. */
+.doc-folha-tabela {
+  overflow-x: auto;
+}
+
+.doc-folha-tabela table {
+  border-collapse: collapse;
+  width: 100%;
+  font-size: 12.5px;
+  line-height: 1.5;
+}
+
+.doc-folha-tabela th,
+.doc-folha-tabela td {
+  border: 1px solid var(--border);
+  padding: 5px 9px;
+  text-align: left;
+  vertical-align: top;
+  word-break: break-word;
+  min-width: 90px;
+}
+
+/* O cabeçalho da tabela acompanha a rolagem da planilha; o top em px vem do JS (altura do
+   cabeçalho da folha, que também é sticky) — fixo no CSS quebraria com nome de aba em duas
+   linhas. O scrollport é o painel (ver .doc-folha-planilha): com o wrapper deixando de ser
+   `overflow-x:auto`, o <th> agora GRUDA de verdade — antes o wrapper engolia o sticky.
+   Empilhamento: cabeçalho da folha 4 > th da 1ª coluna 3 > th 2 > td da 1ª coluna 1. */
+.doc-folha-tabela th {
+  background: var(--bg-elevated);
+  font-weight: 600;
+  position: sticky;
+  z-index: 2;
+}
+
+/* Primeira coluna congelada: numa CDR de 20+ colunas é ela que diz QUEM é a linha enquanto se
+   rola as colunas de dados. Fundo opaco (senão o resto desliza por baixo) e o zebra respeitado. */
+.doc-folha-tabela td:first-child,
+.doc-folha-tabela th:first-child {
+  position: sticky;
+  left: 0;
+}
+
+.doc-folha-tabela td:first-child {
+  background: var(--bg-card);
+  z-index: 1;
+}
+
+.doc-folha-tabela tbody tr:nth-child(even) td:first-child {
+  background: var(--bg-hover);
+}
+
+.doc-folha-tabela th:first-child {
+  z-index: 3;
+}
+
+/* A linha sob o cursor — num CDR de mil linhas, é o que evita ler a linha vizinha. O tint é
+   diferente do zebra de propósito: senão o hover desapareceria nas linhas pares. */
+.doc-folha-tabela tbody tr:hover td {
+  background: var(--tint-accent);
+}
+
+.doc-folha-tabela tbody tr:hover td:first-child {
+  background: var(--tint-accent);
+}
+
+/* Formatação de leitura SEM mexer no texto: o que a busca realça e a IA lê continua sendo a
+   string extraída — só o alinhamento/nowrap dizem "isto é número / isto é data". */
+.doc-folha-tabela .doc-cel-num {
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+}
+
+.doc-folha-tabela .doc-cel-data {
+  white-space: nowrap;
+}
+
+/* Célula vazia precisa de conteúdo senão a borda colapsa e a coluna some entre as vizinhas. */
+.doc-folha-tabela td:empty::after {
+  content: "\00a0";
+}
+
+.doc-folha-tabela tbody tr:nth-child(even) td {
+  background: var(--bg-hover);
+}
+
+/* A nota "_[planilha truncada…]" que o extrator grava quando a aba estourou o orçamento. */
+.doc-tabela-nota {
+  padding: 8px 12px;
+  font-size: 11.5px;
+  font-style: italic;
+  color: var(--text-secondary);
+}
+
+/* Realce do trecho citado / da busca. O "atual" é o que a navegação traz para o centro — num
+   documento com muitas ocorrências, sem ele não dá para saber qual delas está sendo olhada. */
+mark.doc-trecho {
+  background: var(--tint-warning);
+  color: var(--tint-warning-text);
+  border-radius: 3px;
+  padding: 1px 0;
+}
+
+mark.doc-trecho.atual {
+  background: var(--accent-solid);
+  color: var(--accent-contrast);
+}
+
+/* O termo buscado também acende na prévia do sumário; sem o respiro do <pre>, o realce ali
+   é só a mancha de referência, não o alvo em si. */
+.doc-sumario-item-previa mark.doc-trecho {
+  padding: 0;
+}
+
+.doc-vazio {
+  max-width: 640px;
+  margin: 40px auto;
+  text-align: center;
+  color: var(--text-secondary);
+  font-size: 13px;
+  line-height: 1.6;
+}
+
+@media (max-width: 900px) {
+  /* Empilhar .doc-app não basta: ao injetar o topnav, js/utils/sidebar.js embrulha o sumário e a
+     leitura num .wa-content-wrapper que é ele próprio um flex em linha. Sem virar esse wrapper
+     também, os dois continuam lado a lado numa largura onde não cabem — e a coluna de leitura
+     fica com zero de largura. */
+  .doc-app,
+  .doc-app.has-topnav > .wa-content-wrapper {
+    flex-direction: column;
+  }
+
+  .doc-app {
+    height: auto;
+    overflow: visible;
+  }
+
+  .doc-sumario {
+    width: auto;
+    flex: none;
+    max-height: 230px;
+    border-right: 0;
+    border-bottom: 1px solid var(--border);
+  }
+
+  .doc-conteudo,
+  .doc-painel {
+    overflow: visible;
+  }
+
+  /* "Lado a lado" na largura de um celular não é lado a lado: as duas colunas viram uma em cima
+     da outra e a página toda passa a rolar junta (a sincronização de scroll continua valendo —
+     ela fala com os dois painéis, não com uma direção). */
+  .doc-conteudo {
+    flex-direction: column;
+  }
+
+  .doc-painel-pdf {
+    border-left: 0;
+    border-top: 1px solid var(--border);
+  }
+
+  /* No celular o painel não rola (rola a página toda) — a folha larga volta ao arranjo de
+     sempre: rolagem horizontal dentro do wrapper. A primeira coluna congelada continua
+     funcionando (o scrollport passou a ser o próprio wrapper); o <th> fixo se perde, como já
+     se perdia antes — não há scroll vertical próprio pra ele grudar. */
+  .doc-folha.doc-folha-planilha {
+    width: auto;
+    min-width: 0;
+    max-width: 900px;
+    overflow: hidden;
+  }
+
+  .doc-folha-planilha .doc-folha-tabela {
+    overflow-x: auto;
+  }
+
+  .doc-folha-planilha .doc-folha-tabela table {
+    width: auto;
+    min-width: 100%;
+  }
+
+  /* com o painel deixando de ter altura própria, o iframe precisa de altura fixa — 100% de um
+     bloco que cresce com o conteúdo colapsaria para o min-height em qualquer documento */
+  #doc-render-iframe {
+    height: 75vh;
+  }
+}

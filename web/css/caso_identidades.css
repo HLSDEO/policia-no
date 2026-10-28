@@ -1,0 +1,160 @@
+/* Tela "Identificações do caso" (web/caso_identidades.html): resolução dos
+    nós "Possível identidade" criados pela IA (confirmar/mesclar/rejeitar),
+    com trilha de auditoria. */
+
+/* Garante layout em linha dos KPIs mesmo que caso_graficos.css falhe ao carregar */
+.kpi-tiles {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  gap: 16px;
+}
+.kpi-tile {
+  text-align: center;
+}
+.kpi-tile .card-stat {
+  margin: 4px 0 4px;
+}
+
+.ident-lista {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(420px, 1fr));
+  gap: 12px;
+}
+
+.ident-card {
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  background: var(--bg-card);
+  padding: 12px 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  min-width: 0;
+}
+
+.ident-card.resolvida {
+  opacity: 0.85;
+}
+
+.ident-cabecalho {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.ident-origem {
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 0.3px;
+  text-transform: uppercase;
+}
+
+.ident-origem.tse {
+  color: var(--accent);
+}
+
+.ident-origem.serasa {
+  color: var(--success);
+}
+
+.ident-origem.outra {
+  color: var(--text-secondary);
+}
+
+.ident-doc {
+  margin-left: auto;
+  font-size: 12px;
+  color: var(--text-secondary);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.ident-comentario {
+  font-size: 13px;
+  line-height: 1.45;
+  color: var(--text-primary);
+  word-break: break-word;
+  max-height: 180px;
+  overflow-y: auto;
+}
+
+.ident-pessoa {
+  border: 1px dashed var(--border);
+  border-radius: 8px;
+  padding: 8px 10px;
+  background: var(--bg-page);
+  font-size: 12.5px;
+  line-height: 1.4;
+  color: var(--text-secondary);
+  max-height: 130px;
+  overflow-y: auto;
+}
+
+.ident-pessoa strong {
+  color: var(--text-primary);
+  font-size: 12.5px;
+}
+
+.ident-acoes {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+  margin-top: auto;
+}
+
+.ident-historico {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  font-size: 12px;
+  color: var(--text-secondary);
+}
+
+.ident-historico .linha {
+  display: flex;
+  gap: 6px;
+  align-items: baseline;
+  flex-wrap: wrap;
+}
+
+.ident-resolucao-meta {
+  font-size: 12px;
+  color: var(--text-secondary);
+}
+
+.ident-observacao {
+  font-size: 12px;
+  font-style: italic;
+  color: var(--text-secondary);
+  background: var(--bg-page);
+  border-left: 3px solid var(--border);
+  padding: 6px 10px;
+  border-radius: 4px;
+  word-break: break-word;
+}
+
+.ident-detalhe-codigo {
+  font-size: 12px;
+  color: var(--text-secondary);
+  white-space: pre-wrap;
+  word-break: break-word;
+  background: var(--bg-page);
+  border-radius: 6px;
+  padding: 8px 10px;
+  max-height: 150px;
+  overflow-y: auto;
+}
+
+#ident-lote-bar {
+  transition: opacity 0.15s ease;
+}
+
+.ident-card input[type="checkbox"] {
+  accent-color: var(--accent);
+}
+
+.ident-card .ident-cabecalho label {
+  user-select: none;
+}

@@ -1,0 +1,306 @@
+/* Coluna de entidade fixa na borda direita das tabelas de dados — sem isso, em
+ * tabelas largas (ligações, notificações) ela fica fora da área visível e só
+ * aparece com scroll horizontal, o que ninguém descobre sozinho. */
+#dados-tabela th:last-child,
+#dados-tabela td:last-child {
+  position: sticky;
+  right: 0;
+  background: var(--bg-card);
+  text-align: center;
+  box-shadow: -6px 0 6px -6px rgba(0, 0, 0, 0.3);
+}
+
+.ent-botao {
+  border: none;
+  background: transparent;
+  color: var(--text-muted);
+  cursor: pointer;
+  font-size: 13px;
+  line-height: 1;
+  padding: 3px 5px;
+  border-radius: 6px;
+  opacity: 0.55;
+}
+
+.ent-botao:hover {
+  opacity: 1;
+  background: var(--bg-hover);
+}
+
+.ent-botao.tem-comentario {
+  opacity: 1;
+  color: var(--accent);
+}
+
+.ent-modal {
+  width: min(480px, 92vw);
+}
+
+.ent-lista {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-bottom: 14px;
+  max-height: 220px;
+  overflow-y: auto;
+}
+
+.ent-item {
+  padding: 8px 10px;
+  border-radius: 8px;
+  background: var(--bg-hover);
+  border: 1px solid var(--border);
+}
+
+.ent-item-texto {
+  font-size: 13px;
+  white-space: pre-wrap;
+}
+
+.ent-item-rodape {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-top: 6px;
+  font-size: 11px;
+  color: var(--text-muted);
+}
+
+.ent-item-rodape button {
+  border: none;
+  background: transparent;
+  color: var(--text-muted);
+  cursor: pointer;
+  font-size: 11px;
+  padding: 0;
+}
+
+.ent-item-rodape button:hover {
+  color: var(--danger);
+}
+
+#ent-comentario {
+  width: 100%;
+  padding: 10px 12px;
+  border-radius: 8px;
+  border: 1px solid var(--border);
+  background: var(--bg-page);
+  color: var(--text-primary);
+  font-size: 13px;
+  font-family: inherit;
+  resize: vertical;
+  outline: none;
+}
+
+#ent-comentario:focus {
+  border-color: var(--accent);
+  box-shadow: var(--focus-ring);
+}
+
+/* Grupo com os botões de ação de cada registro (seleção em lote + entidade + marcar p/ relatório) */
+.acoes-registro {
+  display: inline-flex;
+  align-items: center;
+  gap: 2px;
+  white-space: nowrap;
+}
+
+.lote-checkbox {
+  cursor: pointer;
+  margin: 0 2px 0 0;
+  accent-color: var(--accent);
+}
+
+/* Barra flutuante "N registros selecionados", exibida enquanto houver seleção em lote */
+.lote-barra {
+  position: fixed;
+  left: 50%;
+  bottom: 24px;
+  transform: translateX(-50%);
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  padding: 10px 16px;
+  border-radius: 10px;
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.35);
+  z-index: 1000;
+  font-size: 13px;
+}
+
+.lote-barra.hidden {
+  display: none;
+}
+
+.lote-barra-acoes {
+  display: inline-flex;
+  gap: 8px;
+}
+
+.ent-botao.rel-botao.tem-marcacao {
+  opacity: 1;
+  color: var(--accent);
+}
+
+.rel-comentario-textarea {
+  width: 100%;
+  padding: 10px 12px;
+  border-radius: 8px;
+  border: 1px solid var(--border);
+  background: var(--bg-page);
+  color: var(--text-primary);
+  font-size: 13px;
+  font-family: inherit;
+  resize: vertical;
+  outline: none;
+}
+
+.rel-comentario-textarea:focus {
+  border-color: var(--accent);
+  box-shadow: var(--focus-ring);
+}
+
+/* Seletor de cores (bolinhas) no modal "Marcar para o relatório" */
+.rel-cores {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-bottom: 4px;
+}
+
+.rel-cor-bola {
+  display: inline-block;
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  cursor: pointer;
+  border: 2px solid transparent;
+  transition: border-color 0.15s, transform 0.15s;
+  flex-shrink: 0;
+}
+
+.rel-cor-bola:hover {
+  transform: scale(1.2);
+}
+
+.rel-cor-bola.selecionada {
+  border-color: var(--text-primary);
+  transform: scale(1.25);
+  box-shadow: 0 0 0 2px var(--bg-card);
+}
+
+/* Marcadores nomeados (as "tags" do IPED) — chips selecionáveis no modal de marcação.
+   A cor deixou de ser o rótulo: ela agora acompanha o NOME, aqui e no relatório. */
+.mrc-lista {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-bottom: 10px;
+  max-height: 160px;
+  overflow-y: auto;
+}
+
+.mrc-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 5px 10px;
+  border-radius: 999px;
+  border: 1px solid var(--border);
+  background: var(--bg-card);
+  color: var(--text-primary);
+  font-size: 13px;
+  cursor: pointer;
+  transition: border-color 0.15s, background 0.15s;
+}
+
+.mrc-chip:hover { border-color: var(--accent); }
+
+.mrc-chip.selecionado {
+  border-color: var(--accent);
+  background: var(--bg-hover, rgba(127, 127, 127, 0.14));
+  font-weight: 600;
+}
+
+.mrc-bola {
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+.mrc-chip-qt {
+  opacity: 0.65;
+  font-size: 11px;
+}
+
+/* linha "novo marcador": nome + paleta + criar, tudo numa linha que quebra em telas estreitas */
+.mrc-novo {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+}
+
+.mrc-novo input[type="text"] {
+  flex: 1 1 200px;
+  min-width: 0;
+}
+
+.mrc-novo-cores { margin-bottom: 0; }
+
+/* Aviso "este registro já está marcado" — o mesmo registro marcado duas vezes saía duplicado
+   no relatório, e quem marca não tem como perceber isso semanas depois; o aviso precisa
+   competir com o texto normal do modal, por isso a tarja de cor. */
+.rel-ja-marcado {
+  color: var(--warning);
+  border-left: 3px solid var(--warning);
+  padding-left: 8px;
+  margin-bottom: 10px;
+}
+
+/* Indicador de cor no item da lista de marcações */
+.ent-item-header {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+}
+
+.rel-cor-indicator {
+  display: inline-block;
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  flex-shrink: 0;
+  margin-top: 3px;
+}
+
+/* Texto extraído de um documento anexado (modal "Ver texto extraído" em investigacao.html) */
+.documento-texto-container {
+  max-height: 55vh;
+  overflow-y: auto;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: var(--bg-page);
+  margin-bottom: 12px;
+}
+
+.documento-texto-container pre {
+  margin: 0;
+  padding: 12px 14px;
+  font-family: ui-monospace, SFMono-Regular, Consolas, "Liberation Mono", Menlo, monospace;
+  font-size: 12.5px;
+  line-height: 1.55;
+  white-space: pre-wrap;
+  word-wrap: break-word;
+  color: var(--text-primary);
+}
+
+/* Subtítulo de seção dos modais (ex.: "Pessoas citadas (12)" no modal de entidades do documento) */
+.modal-subtitulo {
+  margin: 4px 0 8px;
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--text-secondary);
+}

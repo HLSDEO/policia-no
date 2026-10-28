@@ -1,0 +1,245 @@
+/* Verde/vermelho de crédito e débito por tema: os tons de fundo escuro davam 3.3:1 e 2.9:1
+ * sobre as superfícies claras. */
+:root,
+:root[data-theme="dark"] {
+  --gf-credito: #34d399;
+  --gf-debito: #f87171;
+}
+
+:root[data-theme="light"] {
+  --gf-credito: #15803d;
+  --gf-debito: #b91c1c;
+}
+
+/* Telas de grafo de fluxo financeiro — grafo_rif.html e grafo_simba.html.
+ *
+ * Vale para as duas: a barra de filtros, a gaveta de detalhe e o SVG do desenho. O que é do
+ * grafo genérico (nó, aresta, foco, gaveta) mora em mesa.css, herdado da Mesa de Inquérito;
+ * aqui ficam só os acréscimos destas telas. Ver js/utils/grafo_fluxo.js para o contrato de ids.
+ */
+
+/* ---------- barra de filtros ----------
+   Dois blocos: "quem entra no grafo" (busca/banco/tipo) e "quanto/quando" (período e faixas de
+   R$). Cada faixa "de → até" fica num campo único, com uma borda só, em vez de dois campos
+   soltos disputando espaço na mesma linha. */
+.gf-filtros {
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 12px 14px;
+  background: var(--bg-card);
+  margin: 6px 0 12px;
+}
+.gf-filtros-linha { display: flex; flex-wrap: wrap; gap: 10px 14px; align-items: flex-end; }
+.gf-filtros-linha + .gf-filtros-linha {
+  margin-top: 12px;
+  padding-top: 12px;
+  border-top: 1px solid var(--border);
+}
+.gf-campo { display: flex; flex-direction: column; gap: 4px; flex: 1 1 200px; min-width: 170px; }
+.gf-campo > span { font-size: 11.5px; opacity: .72; font-weight: 600; letter-spacing: .01em; }
+.gf-campo > span em { font-style: normal; font-weight: 400; opacity: .75; }
+.gf-campo > span.credito { color: var(--gf-credito); opacity: .95; }
+.gf-campo > span.debito { color: var(--gf-debito); opacity: .95; }
+.gf-filtros input[type=search],
+.gf-filtros input[type=date],
+.gf-filtros input[type=text],
+.gf-filtros select {
+  padding: 7px 10px;
+  border-radius: 8px;
+  border: 1px solid var(--border);
+  background: var(--bg-page);
+  color: inherit;
+  font-size: 13px;
+  width: 100%;
+  min-width: 0;
+}
+.gf-filtros input:focus,
+.gf-filtros select:focus { outline: none; box-shadow: var(--focus-ring); border-color: var(--accent); }
+.gf-campo-busca { flex: 2 1 260px; }
+.gf-campo-largo { flex: 2 1 280px; }
+/* faixa "de → até": os dois campos dentro de uma moldura só */
+.gf-faixa {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: var(--bg-page);
+  padding: 2px 8px;
+}
+.gf-faixa input { border: none !important; background: transparent !important; padding: 5px 2px !important; }
+.gf-faixa input:focus { box-shadow: none !important; }
+.gf-faixa i { font-style: normal; font-size: 11.5px; opacity: .5; flex: 0 0 auto; }
+.gf-faixa:focus-within { border-color: var(--accent); box-shadow: var(--focus-ring); }
+.gf-campo-check {
+  flex: 0 0 auto;
+  align-self: center;
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  gap: 7px;
+  font-size: 12.5px;
+  cursor: pointer;
+  padding-bottom: 7px;
+  white-space: nowrap;
+}
+.gf-campo-check input { width: auto; }
+.gf-filtros-acoes { display: flex; gap: 6px; flex: 0 0 auto; }
+.gf-filtros-resumo { margin-top: 10px; font-size: 12px; opacity: .7; }
+
+/* ---------- modo de exibição (Resumido / Detalhado) ----------
+   Controle segmentado compartilhado pelas duas telas de grafo (ver GrafoFluxo.controleModo).
+   Resumido é o padrão: grafo de investigação, só entidades e relações agregadas. */
+.gf-modo {
+  flex: 0 0 auto;
+  align-self: center;
+  display: flex;
+  align-items: center;
+  padding-bottom: 7px;
+  white-space: nowrap;
+}
+.gf-modo-rotulo { font-size: 11.5px; font-weight: 600; opacity: .72; margin-right: 8px; }
+.gf-modo-opcao {
+  border: 1px solid var(--border);
+  background: var(--bg-page);
+  color: inherit;
+  font-size: 12.5px;
+  padding: 6px 12px;
+  cursor: pointer;
+}
+.gf-modo-opcao + .gf-modo-opcao { border-left: none; }
+.gf-modo-opcao:first-of-type { border-radius: 8px 0 0 8px; }
+.gf-modo-opcao:last-of-type { border-radius: 0 8px 8px 0; }
+.gf-modo-opcao.ativo {
+  background: var(--accent, #8285ff);
+  border-color: var(--accent, #8285ff);
+  color: #fff;
+  font-weight: 600;
+}
+.gf-modo-opcao:focus-visible { outline: none; box-shadow: var(--focus-ring); position: relative; z-index: 1; }
+
+/* ---------- layout: grafo + painel de achados ----------
+   O grafo continua mandando no espaço; o painel à direita é uma coluna fixa estreita (o rascunho
+   do investigador: GRAFO | kpi kpi kpi). Em tela estreita o painel desce para baixo do desenho. */
+.gf-lay { display: flex; gap: 10px; align-items: stretch; }
+.gf-lay .mesa-grafo-wrap { flex: 1 1 auto; min-width: 0; }
+
+/* gaveta expandida (botão ⤢): o dobro de largura no lugar, sem modal — o desenho segue atrás */
+.mesa-drawer.gf-drawer-larga { width: min(680px, 96%); }
+.gf-drawer-btns { display: flex; align-items: center; gap: 2px; flex: 0 0 auto; }
+
+/* painel de achados (GrafoFluxo.renderKPIs) */
+.gf-kpis { flex: 0 0 244px; display: flex; flex-direction: column; gap: 8px; min-width: 0; }
+.gf-kpis.recolhido { flex: 0 0 auto; }
+.gf-kpis.recolhido .gf-kpis-body { display: none; }
+.gf-kpis-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 6px;
+  font-size: 11.5px;
+  font-weight: 700;
+  letter-spacing: .02em;
+  opacity: .8;
+}
+.gf-kpis-toggle {
+  border: 1px solid var(--border);
+  background: var(--bg-page);
+  color: inherit;
+  border-radius: 6px;
+  font-size: 11px;
+  padding: 2px 7px;
+  cursor: pointer;
+}
+.gf-kpis-body { display: flex; flex-direction: column; gap: 8px; overflow-y: auto; max-height: 70vh; padding-right: 2px; }
+.gf-kpi {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  text-align: left;
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 9px 11px;
+  cursor: pointer;
+  color: inherit;
+}
+.gf-kpi:hover:not(:disabled) { border-color: var(--accent, #8285ff); background: var(--bg-hover); }
+.gf-kpi:disabled { cursor: default; opacity: .7; }
+.gf-kpi:focus-visible { outline: none; box-shadow: var(--focus-ring); }
+.gf-kpi-rotulo { font-size: 10.5px; text-transform: uppercase; letter-spacing: .03em; opacity: .65; font-weight: 700; }
+.gf-kpi-valor { font-size: 13px; font-weight: 600; line-height: 1.25; }
+.gf-kpi-nota { font-size: 11.5px; opacity: .7; font-variant-numeric: tabular-nums; }
+.gf-kpis-vazio { font-size: 12px; opacity: .6; margin: 0; }
+@media (max-width: 1100px) {
+  .gf-lay { flex-direction: column; }
+  .gf-kpis { flex: 0 0 auto; }
+  .gf-kpis-body { max-height: none; flex-direction: row; flex-wrap: wrap; }
+  .gf-kpi { flex: 1 1 190px; }
+}
+
+/* ---------- nós ---------- */.mesa-no.pep-no { stroke: #d946ef; stroke-width: 3.5; }
+.mesa-no-anel-titular { fill: none; stroke: var(--accent, #8285ff); stroke-width: 2.2; opacity: .9; }
+/* o anel do titular acompanha o desbotamento do foco (fica fora do <g> só no z-order) */
+.mesa-grafo-com-foco .mesa-no-grupo.fora-do-foco .mesa-no-anel-titular { opacity: .12; }
+
+/* ---------- gaveta ---------- */
+.gf-drawer-sub { margin: 0 0 10px; font-size: 12px; opacity: .7; line-height: 1.45; }
+/* cada ligação é um botão que leva o foco para o vizinho */
+.gf-lig {
+  display: block;
+  width: 100%;
+  text-align: left;
+  background: none;
+  border: none;
+  color: inherit;
+  font: inherit;
+  padding: 3px 6px;
+  margin: 0 -6px;
+  border-radius: 6px;
+  cursor: pointer;
+}
+.gf-lig:hover:not(:disabled) { background: var(--bg-hover); }
+.gf-lig:disabled { opacity: .45; cursor: default; }
+.gf-lig:focus-visible { outline: none; box-shadow: var(--focus-ring); }
+/* mesma linha, mas sem clique (a ligação ENTRE dois selecionados não leva a lugar nenhum) */
+.gf-lig-estatico { cursor: default; }
+.gf-lig-estatico:hover { background: none; }
+
+/* ---------- multisseleção (Shift+clique) ----------
+   As linhas e os botõezinhos reaproveitam .mesa-relacao-item/.mesa-relacao-btn de mesa.css,
+   que estas telas já carregam; só falta a bolinha da cor do tipo do nó. */
+.gf-selecao-cor {
+  width: 9px;
+  height: 9px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+#gf-drawer-acoes:empty { display: none; }
+#gf-drawer-acoes { display: flex; flex-wrap: wrap; gap: 8px; padding-top: 10px; border-top: 1px solid var(--border); }
+
+/* ---------- desenho ---------- */
+#gf-grafo { width: 100%; height: 100%; display: block; cursor: grab; touch-action: none; }
+#gf-grafo:active { cursor: grabbing; }
+/* Opacidade base da aresta (antes era inline, o que vencia o CSS e impedia o foco de apagar
+   as arestas dos nós ocultos — o style inline ganha de qualquer classe fora-do-foco). */
+#gf-grafo .mesa-aresta { opacity: .8; }
+/* Precisa do #gf-grafo junto para vencer a regra base acima (id pesa mais que classe). */
+#gf-grafo.mesa-grafo-com-foco .mesa-aresta.fora-do-foco { opacity: .07; }
+/* linha invisível e grossa por cima da aresta: alvo de clique da relação agregada (modo Resumido) */
+#gf-grafo .mesa-aresta-hit { cursor: pointer; }
+/* halo atrás dos rótulos, para permanecerem legíveis quando linhas/nós passam por trás */
+#gf-grafo .mesa-no-rotulo {
+  paint-order: stroke;
+  stroke: var(--bg-page);
+  stroke-width: 3px;
+  stroke-linejoin: round;
+  font-size: 9px;
+}
+#gf-grafo .mesa-aresta-rotulo {
+  paint-order: stroke;
+  stroke: var(--bg-page);
+  stroke-width: 2.5px;
+  stroke-linejoin: round;
+}
+.gf-dica { font-size: 12px; opacity: .6; margin: 6px 2px 0; }

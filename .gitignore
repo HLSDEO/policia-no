@@ -1,0 +1,25 @@
+.env
+/db/data
+/data
+/.claude
+*.pyc
+*.log
+
+# Estado de runtime do atualizador (token do GitHub, espelho git, tarballs guardados para
+# rollback, arquivos de controle API<->host). Criado por scripts/instalar-host.sh. Ver
+# docs/atualizacao.md. Os scripts em si são versionados, em scripts/.
+/.deploy
+/logs
+/.cache
+
+# Material de TLS: PFX original (vem com a chave privada embutida, protegida por senha) e o
+# extrato em PEM usado pelo nginx. Nada disso vai para o git — a chave privada nunca é versionada.
+/nginx/policia-es.pfx
+/nginx/ssl/
+
+# Dumps do sidecar de backup (ver docs/backup.md) - nunca vao para o git: dao o conteudo inteiro do banco.
+/backups
+
+# Segredo do deploy OpenShift (copia preenchida do env.openshift.example) e cache de teste.
+openshift.env.local
+.pytest_cache/

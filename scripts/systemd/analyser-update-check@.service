@@ -1,0 +1,10 @@
+[Unit]
+Description=analyser (/%I) -- consulta o GitHub por versao nova (grava disponivel.json)
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=oneshot
+Environment=ANALYSER_DIR=/%I
+ExecStart=/usr/local/bin/analyser-update check
+Nice=15

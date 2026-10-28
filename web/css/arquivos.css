@@ -1,0 +1,920 @@
+/* Tokens desta tela que não vêm do style.css. Os valores claros existem porque o amarelo da
+ * pasta (#e0b054), o rosa do rótulo "Apagado" e a pílula azul-escura do selo de IA foram
+ * escolhidos contra fundo escuro e ficam ilegíveis sobre branco. */
+:root,
+:root[data-theme="dark"] {
+  --arq-pasta: #f0c66a;
+  --arq-tag-bg: #1e4a63;
+  --arq-tag-text: #dff2fe;
+  --arq-apagado: #fb7185;
+}
+
+:root[data-theme="light"] {
+  --arq-pasta: #b47612;
+  --arq-tag-bg: #cfe8f5;
+  --arq-tag-text: #0b4a66;
+  --arq-apagado: #be123c;
+}
+
+/* Página "Arquivos do aparelho": filtros, paginação e ações da tabela.
+   O modal de mídia reutiliza as classes .wa-modal-midia/.wa-midia-* do whatsapp.css. */
+
+.arq-filtros {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 16px;
+}
+
+/* linha única: visões à esquerda, processamentos em lote (OCR, classificação) à direita.
+   Em tela estreita os dois blocos empilham e os botões voltam a ocupar a largura disponível. */
+.arq-barra-acoes {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  margin-bottom: 14px;
+}
+
+.arq-processamentos {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+  margin-left: auto;   /* cola à direita mesmo quando a linha quebra */
+}
+
+/* alternador de visualização: "Lista" (tabela plana) x "Pastas" (navegação pelo filesystem) */
+.arq-visoes {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.arq-visao {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  cursor: pointer;
+}
+
+.arq-visao svg {
+  width: 16px;
+  height: 16px;
+}
+
+.arq-visao.ativa {
+  background: var(--accent, #2563eb);
+  color: #fff;
+  border-color: transparent;
+}
+
+/* trilha (breadcrumb) da pasta atual */
+.arq-trilha {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 4px;
+  margin-bottom: 12px;
+  font-size: 0.88rem;
+}
+
+.arq-trilha button {
+  padding: 3px 8px;
+  border: 0;
+  border-radius: 6px;
+  background: transparent;
+  color: var(--link, #58a6ff);
+  font-size: 0.88rem;
+  font-family: inherit;
+  cursor: pointer;
+}
+
+.arq-trilha button:hover {
+  background: var(--bg-hover);
+}
+
+.arq-trilha .arq-trilha-atual {
+  padding: 3px 8px;
+  color: var(--text-primary);
+  font-weight: 600;
+}
+
+.arq-trilha .arq-trilha-sep {
+  color: var(--text-secondary);
+}
+
+/* grade de subpastas */
+.arq-pastas {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+  gap: 8px;
+  margin-bottom: 8px;
+}
+
+.arq-pasta {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 12px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: transparent;
+  color: var(--text-primary);
+  font-family: inherit;
+  font-size: 0.9rem;
+  text-align: left;
+  cursor: pointer;
+}
+
+.arq-pasta:hover {
+  background: var(--bg-hover);
+}
+
+.arq-pasta svg {
+  width: 20px;
+  height: 20px;
+  flex: 0 0 auto;
+  color: var(--arq-pasta);
+}
+
+.arq-pasta-nome {
+  min-width: 0;   /* deixa o texto encolher dentro do flex para o ellipsis funcionar */
+}
+
+.arq-pasta-nome > div {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.arq-pasta-info {
+  font-size: 0.78rem;
+  color: var(--text-secondary);
+}
+
+.arq-secao-titulo {
+  margin: 20px 0 8px;
+  font-size: 0.95rem;
+  font-weight: 600;
+  color: var(--text-secondary);
+}
+
+/* Campos de filtro. Usam os tokens de tema do style.css: antes apontavam para variáveis que
+   não existem em lugar nenhum (--fundo-input, --borda, --texto), então caíam sempre no valor
+   escuro do fallback — no tema claro a barra de filtros ficava preta dentro do cartão branco. */
+.arq-busca,
+.arq-select {
+  padding: 8px 10px;
+  border: 1px solid var(--border, #262a34);
+  border-radius: var(--raio-md, 8px);
+  background: var(--bg-card, #1a1d25);
+  color: var(--text-primary, #e9eaee);
+  font-size: 0.9rem;
+  transition: border-color 0.15s ease, background-color 0.15s ease;
+}
+
+.arq-busca:hover,
+.arq-select:hover {
+  border-color: var(--text-muted, #5c6270);
+}
+
+/* faz o seletor nativo de data (ícone de calendário, popup) seguir o tema da página */
+:root[data-theme="dark"] input[type="date"].arq-select,
+:root[data-theme="dark"] input[type="number"].arq-select {
+  color-scheme: dark;
+}
+
+:root[data-theme="light"] input[type="date"].arq-select,
+:root[data-theme="light"] input[type="number"].arq-select {
+  color-scheme: light;
+}
+
+.arq-busca {
+  flex: 1 1 260px;
+  min-width: 200px;
+}
+
+.arq-check {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 0.9rem;
+  color: var(--text-secondary, #9297a3);
+  cursor: pointer;
+  user-select: none;
+}
+
+.arq-check input {
+  accent-color: var(--accent, #6366f1);
+}
+
+.arq-datas {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 0.85rem;
+  color: var(--text-secondary, #9297a3);
+}
+
+/* ---------- Painel de filtros ----------
+   Barra de filtros em painel, com cada campo rotulado: é o que a barra montada por
+   ufdr_dominio.js e a lista de contas bancárias usam. Uma linha de controles sem rótulo
+   ("todos os tipos", "todas as moedas", duas datas soltas) obriga a abrir cada select para
+   descobrir o que ele filtra; aqui o rótulo fica em cima e o que está ligado fica visível no
+   rodapé, junto do "limpar". O .arq-filtros continua valendo para as telas que montam a barra
+   à mão, sem o painel. */
+.arq-filtros.filtros-painel {
+  display: block;
+  padding: 14px 16px;
+  border: 1px solid var(--border, #262a34);
+  border-radius: var(--raio-lg, 12px);
+  background: var(--bg-page, #0e1015);
+}
+
+.filtros-grade {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(190px, 1fr));
+  align-items: end;
+  gap: 10px 12px;
+}
+
+.filtro-campo {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  min-width: 0;   /* deixa o campo encolher na grade em vez de estourar a largura */
+}
+
+/* busca e os pares "de/até", "mín/máx" ocupam duas colunas: dois campos de data espremidos em
+   uma só ficam com o dd/mm/aaaa cortado */
+.filtro-campo-busca,
+.filtro-campo-intervalo {
+  grid-column: span 2;
+}
+
+.filtro-rotulo {
+  font-size: 0.7rem;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--text-muted, #5c6270);
+}
+
+/* .arq-busca traz `flex: 1 1 260px` da barra em linha; aqui o campo é uma coluna, e nessa
+   direção esses 260px viram ALTURA — o campo de busca esticava até o pé do painel. */
+.filtro-campo .arq-busca,
+.filtro-campo .arq-select {
+  flex: 0 0 auto;
+  width: 100%;
+  min-width: 0;
+  height: 36px;   /* select, busca e o campo de data nativo têm alturas diferentes por padrão */
+}
+
+.filtro-intervalo {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.filtro-intervalo .arq-select {
+  flex: 1 1 0;
+}
+
+.filtro-ate {
+  flex: 0 0 auto;
+  font-size: 0.8rem;
+  color: var(--text-muted, #5c6270);
+}
+
+.filtro-dica {
+  font-size: 0.72rem;
+  color: var(--text-muted, #5c6270);
+}
+
+.filtros-rodape {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 10px 14px;
+  margin-top: 12px;
+  padding-top: 10px;
+  border-top: 1px solid var(--border, #262a34);
+}
+
+.filtro-atalhos {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.filtro-atalhos:empty {
+  display: none;
+}
+
+/* marcadores liga/desliga do domínio (só com anexo, só com localização) — ficam na mesma linha
+ * do "só apagados", que é o marcador que existe em todo domínio */
+.filtro-marcadores {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px 14px;
+}
+
+.filtro-marcadores:empty {
+  display: none;
+}
+
+.filtro-chip {
+  padding: 4px 10px;
+  border: 1px solid var(--border, #262a34);
+  border-radius: 999px;
+  background: transparent;
+  color: var(--text-secondary, #9297a3);
+  font-size: 0.78rem;
+  cursor: pointer;
+}
+
+.filtro-chip:hover {
+  border-color: var(--accent, #6366f1);
+  background: var(--bg-hover, #21252f);
+  color: var(--text-primary, #e9eaee);
+}
+
+.filtro-limpar {
+  margin-left: auto;
+  padding: 5px 12px;
+  font-size: 0.8rem;
+}
+
+/* Em tela estreita o `span 2` obrigaria a grade a ter duas colunas onde só cabe uma — a
+   segunda ficava com a sobra (~80px) e cortava o texto dos selects. */
+@media (max-width: 760px) {
+  .filtro-campo-busca,
+  .filtro-campo-intervalo {
+    grid-column: auto;
+  }
+}
+
+.arq-paginacao {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 16px;
+  margin-top: 16px;
+}
+
+/* .arq-geo (linha do botão de geocodificação) morava aqui mas só a página de Localizações usa —
+   foi para css/localizacoes_grafo.css, junto do resto da tela */
+
+.arq-pag-info {
+  font-size: 0.9rem;
+  color: var(--text-secondary, #9297a3);
+}
+
+.arq-acao {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 4px 10px;
+  margin-right: 6px;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  background: transparent;
+  color: var(--text-primary);
+  font-size: 0.85rem;
+  cursor: pointer;
+  text-decoration: none;
+  white-space: nowrap;
+}
+
+.arq-acao:hover {
+  background: var(--bg-hover);
+}
+
+/* célula de ações: abrir/baixar + "ver na conversa" + 🗒️ marcar para o relatório */
+.arq-acoes {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 4px;
+}
+
+.arq-acoes .arq-acao {
+  margin-right: 0;
+}
+
+.arq-indisponivel {
+  color: var(--text-secondary);
+  font-size: 0.85rem;
+  font-style: italic;
+}
+
+.arq-caminho {
+  display: block;        /* o span é inline por padrão — sem isto, max-width/ellipsis eram
+                            ignorados e um caminho longo (os "a.zip>>b.zip>>…" do IPED)
+                            esticava a coluna inteira em vez de truncar */
+  max-width: 420px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  direction: rtl;      /* mantém o fim do caminho (nome do arquivo) visível ao truncar */
+  text-align: left;
+  font-family: monospace;
+  font-size: 0.82rem;
+  color: var(--text-secondary);
+}
+
+/* coluna "Conteúdo" da tela de e-mails: o corpo pode ter dezenas de milhares de caracteres
+   (a lista já traz só uma prévia de 700, ver PREVIEW_CORPO_EMAIL no backend) — a célula
+   limita a 3 linhas e o "Ver HTML" mostra o resto */
+.email-conteudo-txt {
+  display: -webkit-box;
+  -webkit-line-clamp: 3;
+  -webkit-box-orient: vertical;
+  line-clamp: 3;
+  overflow: hidden;
+  max-width: 520px;
+  vertical-align: top;
+  word-break: break-word;
+}
+
+.arq-caminho a {
+  color: var(--link, #58a6ff);
+  text-decoration: none;
+}
+
+.arq-caminho a:hover {
+  text-decoration: underline;
+  color: var(--link-hover, #79b8ff);
+}
+
+.arq-nome a {
+  color: var(--link, #58a6ff);
+  text-decoration: none;
+}
+
+.arq-nome a:hover {
+  text-decoration: underline;
+  color: var(--link-hover, #79b8ff);
+}
+
+.arq-tag {
+  display: inline-block;
+  padding: 2px 8px;
+  border-radius: 999px;
+  font-size: 0.78rem;
+  background: var(--bg-hover);
+  color: var(--text-primary);
+}
+
+.arq-status-apagado {
+  color: var(--arq-apagado);
+  font-weight: 600;
+}
+
+/* painel de metadados dentro do modal de mídia (dados do arquivo + EXIF da imagem) */
+.arq-meta {
+  margin: 14px auto 0;
+  max-width: 640px;
+  width: 100%;
+  border-top: 1px solid var(--border);
+  padding-top: 12px;
+}
+
+.arq-meta-linha {
+  display: grid;
+  grid-template-columns: 150px 1fr;
+  gap: 8px;
+  padding: 4px 0;
+  font-size: 0.88rem;
+}
+
+.arq-meta-linha dt {
+  color: var(--text-secondary);
+}
+
+.arq-meta-linha dd {
+  margin: 0;
+  color: var(--text-primary);
+  word-break: break-word;
+}
+
+.arq-meta-linha dd a {
+  color: var(--link);
+}
+
+.arq-meta-baixar {
+  display: inline-block;
+  margin-top: 12px;
+}
+
+/* mesma faixa de ações da linha da tabela, no rodapé do painel de metadados do modal */
+.arq-meta-acoes {
+  margin-top: 12px;
+}
+
+/* selo de classificação por IA */
+.arq-ia-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 0.82rem;
+}
+.arq-ia-tag {
+  display: inline-block;
+  padding: 2px 8px;
+  border-radius: 999px;
+  font-size: 0.78rem;
+  background: var(--arq-tag-bg);
+  color: var(--arq-tag-text);
+  font-weight: 500;
+}
+.arq-ia-conf {
+  color: var(--text-secondary);
+  font-size: 0.75rem;
+}
+.arq-ia-na {
+  color: var(--text-secondary);
+  font-size: 0.8rem;
+  font-style: italic;
+}
+
+/* trecho do texto reconhecido por OCR, na coluna da listagem (o texto inteiro fica no modal) */
+.arq-ocr-trecho {
+  display: -webkit-box;
+  -webkit-line-clamp: 2;    /* duas linhas: o bastante pra reconhecer o print sem esticar a tabela */
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+  max-width: 320px;
+  font-size: 0.8rem;
+  line-height: 1.35;
+  color: var(--text-primary);
+  cursor: pointer;
+}
+
+.arq-ocr-trecho:hover {
+  color: var(--link, #58a6ff);
+}
+
+/* hash do binário no painel de metadados do modal (valor + botão copiar) */
+.arq-hash {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.arq-hash code {
+  font-family: monospace;
+  font-size: 0.78rem;
+  color: var(--text-primary);
+  word-break: break-all;
+}
+
+.arq-hash-copiar {
+  flex: 0 0 auto;
+  padding: 2px 8px;
+  font-size: 0.75rem;
+}
+
+/* texto completo do OCR no painel de metadados do modal de mídia */
+.arq-ocr-texto {
+  max-height: 220px;
+  overflow-y: auto;
+  padding: 8px 10px;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  background: var(--bg-page);
+  font-family: monospace;
+  font-size: 0.82rem;
+  line-height: 1.45;
+  white-space: pre-wrap;
+  word-break: break-word;
+}
+
+/* grade de miniaturas da galeria de imagens */
+.arq-galeria {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+  gap: 12px;
+  margin-bottom: 16px;
+}
+
+.arq-thumb {
+  position: relative;
+  width: 100%;
+  padding-bottom: 100%;  /* mantém aspecto 1:1 */
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: var(--bg-page);
+  cursor: pointer;
+  overflow: hidden;
+}
+
+.arq-thumb:hover {
+  border-color: var(--accent, #2563eb);
+  box-shadow: 0 0 8px rgba(37, 99, 235, 0.3);
+}
+
+.arq-thumb-img {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  object-position: center;
+}
+
+.arq-thumb-placeholder {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--bg-hover);
+  color: var(--text-secondary);
+  font-size: 2.5rem;
+  z-index: 1;
+}
+
+.arq-thumb-placeholder .spinner {
+  display: inline-block;
+  border: 2px solid var(--text-secondary);
+  border-radius: 50%;
+  border-top-color: var(--accent, #2563eb);
+  animation: spin 0.8s linear infinite;
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+
+.arq-thumb-info {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  padding: 6px 8px;
+  background: linear-gradient(to top, rgba(0, 0, 0, 0.8), transparent);
+  color: #fff;
+  font-size: 0.75rem;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  opacity: 0;
+  transition: opacity 0.2s;
+}
+
+.arq-thumb:hover .arq-thumb-info {
+  opacity: 1;
+}
+
+@media (max-width: 520px) {
+  .arq-meta-linha {
+    grid-template-columns: 1fr;
+    gap: 2px;
+  }
+
+  .arq-galeria {
+    grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
+    gap: 8px;
+  }
+}
+
+/* ============ revisao da tela de Arquivos ============ */
+
+/* card de tela cheia (antes, style="max-width:none" no HTML) */
+.card-larga {
+  max-width: none;
+}
+
+#abas-host-card {
+  margin-bottom: 16px;
+}
+
+.arq-scroll-x {
+  overflow-x: auto;
+}
+
+/* toolbar de processos em lote (OCR / classificacao) */
+.arq-processamentos .btn {
+  white-space: nowrap;
+}
+
+.icone-btn {
+  width: 16px;
+  height: 16px;
+  vertical-align: middle;
+  margin-right: 4px;
+}
+
+.arq-lote-status {
+  font-size: 0.85rem;
+  color: var(--text-secondary);
+}
+
+.arq-lote-progresso {
+  margin: 16px 0;
+}
+
+.arq-lote-progresso-linha {
+  display: flex;
+  justify-content: space-between;
+  font-size: 0.85rem;
+  color: var(--text-secondary);
+}
+
+.arq-lote-barra-fundo {
+  width: 100%;
+  height: 8px;
+  background: var(--bg-hover, rgba(255, 255, 255, 0.08));
+  border-radius: 4px;
+  margin-top: 6px;
+  overflow: hidden;
+}
+
+.arq-lote-barra {
+  width: 0;
+  height: 100%;
+  background: var(--accent);
+  border-radius: 4px;
+  transition: width 0.3s;
+}
+
+.arq-lote-acoes {
+  margin-top: 16px;
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.arq-lote-stale {
+  margin-top: 12px;
+  display: none;
+}
+
+.arq-lote-stale .card-hint {
+  color: var(--danger, #f43f5e);
+}
+
+/* select desabilitado por forca de outro filtro (classe da IA escolhida) */
+.arq-select-inativo {
+  opacity: 0.45;
+}
+
+/* sair do recorte de pasta a partir da lista ou da galeria */
+.arq-trilha-sair {
+  margin-left: 14px;
+  background: none;
+  border: none;
+  color: var(--accent);
+  font-size: 0.85rem;
+  cursor: pointer;
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+
+/* thumb e botao de verdade: Tab percorre a galeria, Enter abre */
+button.arq-thumb {
+  font: inherit;
+  color: inherit;
+  text-align: left;
+  appearance: none;
+}
+
+.arq-thumb:focus-visible {
+  outline: none;
+  box-shadow: 0 0 0 2px var(--accent), 0 0 8px rgba(37, 99, 235, 0.35);
+  z-index: 2;
+}
+
+.arq-thumb-nao {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+
+.arq-thumb-play {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  background: rgba(0, 0, 0, 0.55);
+  color: #fff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1rem;
+  z-index: 2;
+  pointer-events: none;
+}
+
+.arq-thumb-badge {
+  position: absolute;
+  top: 6px;
+  padding: 1px 6px;
+  border-radius: 999px;
+  background: rgba(0, 0, 0, 0.62);
+  color: #fff;
+  font-size: 0.65rem;
+  line-height: 1.5;
+  max-width: 70%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  z-index: 2;
+  pointer-events: none;
+}
+
+.arq-thumb-badge-ia {
+  left: 6px;
+}
+
+.arq-thumb-badge-ocr {
+  right: 6px;
+  background: color-mix(in srgb, var(--accent, #2563eb) 80%, black);
+}
+
+.arq-thumb-tam {
+  position: absolute;
+  top: 6px;
+  right: 6px;
+  font-size: 0.62rem;
+  color: rgba(255, 255, 255, 0.85);
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.9);
+  z-index: 1;
+  pointer-events: none;
+}
+
+/* com badge OCR, o tamanho desce para nao brigar com ele */
+.arq-thumb-badge-ocr ~ .arq-thumb-tam {
+  top: auto;
+  bottom: 30px;
+}
+
+/* modal de midia: navegacao pela pagina e zoom */
+.arq-midia-contador {
+  margin-left: auto;
+  margin-right: 10px;
+  font-size: 0.8rem;
+  color: var(--text-secondary);
+  white-space: nowrap;
+}
+
+.arq-midia-nav {
+  width: 30px;
+  height: 30px;
+  flex-shrink: 0;
+  margin-left: 4px;
+  border: 1px solid var(--border);
+  border-radius: 50%;
+  background: transparent;
+  color: var(--text-primary);
+  font-size: 1.15rem;
+  line-height: 1;
+  cursor: pointer;
+}
+
+.arq-midia-nav:hover {
+  border-color: var(--accent);
+  color: var(--accent);
+}
+
+.arq-midia-nav:focus-visible {
+  outline: none;
+  box-shadow: 0 0 0 2px var(--accent);
+}
+
+.wa-modal-midia .modal-body {
+  overflow: auto;
+}
+
+.wa-midia-imagem {
+  cursor: zoom-in;
+}
+
+.arq-zoom {
+  max-width: none !important;
+  max-height: none !important;
+  cursor: zoom-out !important;
+}
+/* ---- editores de revisão no modal (classificação / OCR) ---- */
+.arq-edit-linha {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  margin-top: 6px;
+}
+
+.arq-edit-select {
+  flex: 1;
+  max-width: 420px;
+}

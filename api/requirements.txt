@@ -1,0 +1,33 @@
+fastapi==0.115.0
+uvicorn[standard]==0.30.6
+psycopg[binary]==3.2.3
+psycopg-pool==3.2.3
+faster-whisper==1.0.3
+requests==2.32.3
+bcrypt==4.2.0
+Pillow==10.4.0
+pillow-heif==0.18.0
+pypdf==4.3.1
+openpyxl==3.1.5
+# leitura do .xls binário (BIFF/OLE2) que a TIM entrega no CDR — funcoes/telefonia_utils.py.
+# O openpyxl só abre .xlsx; a Oi manda .xls que na verdade é HTML (lido sem dependência) e a
+# TIM manda .xls binário de verdade, que é o que o xlrd resolve.
+xlrd==2.0.2
+python-docx==1.1.2
+transformers==4.45.2
+torch==2.5.1
+numpy==1.26.4
+python-multipart==0.0.12
+pytesseract==0.3.13
+# leitura de shapefile (.shp/.dbf) e reprojeção para WGS 84 das camadas geoespaciais do mapa
+# de localizações — funcoes/geoespacial_utils.py. O pyproj traz o PROJ embutido na wheel.
+pyshp==2.3.1
+pyproj==3.7.2
+psutil==6.1.0
+tzdata==2024.2
+# acesso a pasta de rede Windows (SMB2/3 com NTLM) para a cópia de importação —
+# funcoes/rede_smb.py. Puro-Python, sem binário extra no Dockerfile. O módulo de alto nível
+# `smbclient` (listdir/stat/open_file) já vem dentro da própria distribuição `smbprotocol`
+# — não existe pacote separado com esse nome no PyPI.
+smbprotocol==1.12.0
+python-dateutil==2.9.0.post0

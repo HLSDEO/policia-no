@@ -1,0 +1,198 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Grafo do extrato (SIMBA) · PolícIA</title>
+<script src="js/utils/boot_tema.js"></script>
+<link rel="icon" type="image/svg+xml" href="favicon.svg">
+<link rel="stylesheet" href="css/style.css">
+<link rel="stylesheet" href="css/mesa.css">
+<link rel="stylesheet" href="css/chat.css">
+<link rel="stylesheet" href="css/ia_flutuante.css">
+<link rel="stylesheet" href="css/grafo_fluxo.css">
+</head>
+<body>
+<div class="app">
+
+  <div class="main" style="width:100%;">
+    <header class="topbar">
+      <div>
+        <h1 class="page-title">Grafo do extrato <span id="smb-arquivo" style="opacity:.7;font-weight:400;font-size:14px;"></span></h1>
+      </div>
+      <div class="topbar-actions">
+        <span class="grupo-total" id="total-registros"></span>
+        <a class="btn btn-secondary" id="voltar-simba" href="#" title="Voltar para as tabelas deste extrato" style="font-size:12px;padding:3px 8px;">← Tabelas do extrato</a>
+        <button type="button" class="btn btn-secondary" id="exportar-png" title="Baixa o grafo desenhado como imagem PNG, com título e legenda, para colar em relatório" style="font-size:12px;padding:3px 8px;">🖼 PNG</button>
+        <span class="i2-grupo">
+          <span class="i2-grupo-rotulo">Exportar grafo:</span>
+          <button type="button" class="btn btn-secondary" id="exportar-i2-csv" title="Exporta os nós e as ligações do grafo filtrado inteiro em CSV, para importar no i2 Analyst&#39;s Notebook">CSV</button>
+          <button type="button" class="btn btn-secondary" id="exportar-i2-xlsx" title="Exporta o grafo filtrado inteiro em XLSX, em abas separadas de entidades e vínculos, para o assistente de importação do i2">XLSX</button>
+          <button type="button" class="btn btn-secondary" id="exportar-i2-anx" title="Exporta o grafo filtrado inteiro em ANX: a carta já montada, que abre direto no i2 Analyst&#39;s Notebook">ANX</button>
+          <button type="button" class="btn btn-secondary" id="exportar-i2-graphml" title="Exporta o grafo filtrado inteiro em GraphML — o formato do Gephi, do yEd e do NetworkX, para medir a rede (centralidade, comunidade, caminho) fora do i2">GraphML</button>
+        </span>
+        <span class="extracao-nav-container"></span>
+      </div>
+    </header>
+
+    <main class="content">
+      <div class="card" style="max-width:none;">
+
+        <div class="gf-filtros">
+          <!-- 1ª linha: QUEM entra no grafo (tudo aqui recarrega a consulta no servidor) -->
+          <div class="gf-filtros-linha">
+            <label class="gf-campo gf-campo-busca">
+              <span>Buscar pessoa <em>— nome ou CPF/CNPJ, titular ou contraparte</em></span>
+              <input type="search" id="f-grafo-busca" placeholder="Ex.: JOSE VALMIR ou 032.533.836-10" autocomplete="off">
+            </label>
+            <label class="gf-campo gf-campo-largo">
+              <span>Banco <em>— da conta afastada</em></span>
+              <select id="f-grafo-banco"><option value="">Todos os bancos</option></select>
+            </label>
+            <label class="gf-campo">
+              <span>Tipo do titular <em>— de quem teve a conta afastada</em></span>
+              <select id="f-grafo-tp">
+                <option value="">PF e PJ</option>
+                <option value="PF">Pessoa física</option>
+                <option value="PJ">Pessoa jurídica</option>
+              </select>
+            </label>
+            <label class="gf-campo">
+              <span>Tipo da contraparte <em>— das entidades ligadas ao titular</em></span>
+              <select id="f-grafo-cp-tipo">
+                <option value="">PF e PJ</option>
+                <option value="pf">Pessoa física</option>
+                <option value="pj">Pessoa jurídica</option>
+              </select>
+            </label>
+          </div>
+          <!-- 2ª linha: QUANTO e QUANTOS -->
+          <div class="gf-filtros-linha">
+            <label class="gf-campo">
+              <span>Sentido do dinheiro</span>
+              <select id="f-grafo-direcao">
+                <option value="">Entradas e saídas</option>
+                <option value="credito">Só entradas (creditaram o titular)</option>
+                <option value="debito">Só saídas (o titular pagou)</option>
+              </select>
+            </label>
+            <label class="gf-campo">
+              <span class="credito">Entradas — creditado ao titular (R$)</span>
+              <div class="gf-faixa">
+                <input type="text" id="f-grafo-credito-de" placeholder="mínimo" inputmode="decimal" aria-label="Crédito mínimo">
+                <i>até</i>
+                <input type="text" id="f-grafo-credito-ate" placeholder="máximo" inputmode="decimal" aria-label="Crédito máximo">
+              </div>
+            </label>
+            <label class="gf-campo">
+              <span class="debito">Saídas — pago pelo titular (R$)</span>
+              <div class="gf-faixa">
+                <input type="text" id="f-grafo-debito-de" placeholder="mínimo" inputmode="decimal" aria-label="Débito mínimo">
+                <i>até</i>
+                <input type="text" id="f-grafo-debito-ate" placeholder="máximo" inputmode="decimal" aria-label="Débito máximo">
+              </div>
+            </label>
+            <label class="gf-campo" style="flex:0 1 190px;">
+              <span>Contrapartes no desenho</span>
+              <select id="f-grafo-limite" title="Quantas contrapartes ganham nó próprio; o resto vai para “Demais contrapartes”">
+                <option value="15">15 maiores</option>
+                <option value="25" selected>25 maiores</option>
+                <option value="40">40 maiores</option>
+                <option value="80">80 maiores</option>
+                <option value="150">150 maiores</option>
+              </select>
+            </label>
+          </div>
+          <!-- 3ª linha: recortes e ações -->
+          <div class="gf-filtros-linha">
+            <label class="gf-campo-check" title="Mostra só as contrapartes que também têm conta afastada neste extrato — o dinheiro circulando entre os próprios investigados">
+              <input type="checkbox" id="f-grafo-internas">
+              <span>Só entre titulares afastados</span>
+            </label>
+            <label class="gf-campo-check" title="Esconde o nó que soma as contrapartes fora do limite exibido">
+              <input type="checkbox" id="f-grafo-agregado">
+              <span>Ocultar “Demais contrapartes”</span>
+            </label>
+            <div class="gf-modo" id="gf-modo" role="group" aria-label="Modo de exibição do grafo"
+                 title="Resumido: só as entidades e as relações financeiras agregadas (o banco sai do desenho). Detalhado: o grafo completo de sempre.">
+              <span class="gf-modo-rotulo">Exibição</span>
+              <button type="button" class="gf-modo-opcao" data-modo="detalhado">Detalhado</button>
+              <button type="button" class="gf-modo-opcao ativo" data-modo="resumido">Resumido</button>
+            </div>
+            <div class="gf-filtros-acoes" style="margin-left:auto;">
+              <button type="button" class="btn btn-primary" id="f-grafo-btn-filtrar">Filtrar</button>
+              <button type="button" class="btn btn-secondary" id="f-grafo-btn-limpar">Limpar</button>
+            </div>
+          </div>
+          <div class="gf-filtros-resumo" id="f-grafo-info"></div>
+        </div>
+
+        <p class="card-hint" id="gf-nota" style="margin:0 0 10px;display:none;"></p>
+        <div class="mesa-info-filtro" id="gf-info-limite" style="display:none;">
+          <span></span>
+          <button type="button" id="gf-carregar-mais" class="btn btn-small">Carregar mais</button>
+        </div>
+        <div class="mesa-legenda" id="gf-legenda"></div>
+        <div class="gf-lay">
+        <div class="mesa-grafo-wrap">
+          <svg id="gf-grafo" preserveAspectRatio="xMidYMid meet"></svg>
+          <!-- Detalhe do nó: gaveta na lateral do grafo, não modal — mesmo padrão da mesa de
+               inquérito e do grafo do RIF. O nó clicado e as ligações dele ficam em foco atrás
+               dela e o resto desbota (ver aplicarFoco em js/utils/grafo_fluxo.js). -->
+          <aside class="mesa-drawer hidden" id="gf-drawer" aria-label="Detalhe do nó">
+            <div class="mesa-drawer-header">
+              <h2 id="gf-drawer-titulo">Nó</h2>
+              <div class="gf-drawer-btns">
+                <button type="button" class="modal-close" id="gf-drawer-nova" style="display:none;"
+                        title="Abrir a ficha da entidade em nova aba" aria-label="Abrir ficha em nova aba">↗</button>
+                <button type="button" class="modal-close" id="gf-drawer-expandir"
+                        title="Expandir/recolher a gaveta" aria-label="Expandir gaveta">⤢</button>
+                <button type="button" class="modal-close" id="gf-drawer-fechar" title="Fechar (Esc)">&times;</button>
+              </div>
+            </div>
+            <div class="mesa-drawer-body">
+              <p class="gf-drawer-sub" id="gf-drawer-sub"></p>
+              <dl class="dono-dl" id="gf-drawer-corpo"></dl>
+              <div id="gf-drawer-acoes"></div>
+            </div>
+          </aside>
+        </div>
+        <!-- Painel de achados clicáveis: cada card recorta o grafo para a entidade em destaque
+             (ver GrafoFluxo.renderKPIs e calculaAchados em js/grafo_simba.js) -->
+        <aside class="gf-kpis" id="gf-kpis" aria-label="Achados de investigação"></aside>
+        </div>
+        <p class="gf-dica" id="gf-dica"></p>
+        <p class="empty-hint" id="gf-vazio" style="display:none;">Nenhuma transação com esses filtros.</p>
+
+      </div>
+    </main>
+  </div>
+
+</div>
+
+<script src="vendor/jquery-3.7.1.min.js"></script>
+<script src="js/utils/utils.js"></script>
+<script src="js/utils/icones.js"></script>
+<script src="js/utils/mapa_telas.js"></script>
+<script src="js/utils/toast.js"></script>
+<script src="js/utils/api.js"></script>
+<script src="js/utils/carregando.js"></script>
+<script src="js/utils/estados.js"></script>
+<script src="js/utils/estado_url.js"></script>
+<script src="js/utils/dialogo.js"></script>
+<script src="js/utils/theme.js"></script>
+<script src="js/utils/sidebar.js"></script>
+<script src="js/utils/auth.js"></script>
+<script src="js/utils/avisos_ia.js"></script>
+<script src="js/utils/exportar_excel.js"></script>
+<script src="js/utils/navegacao_inquerito.js"></script>
+<script src="js/utils/exportar_png.js"></script>
+<script src="js/utils/exportar_i2.js"></script>
+<script src="js/utils/grafo_fluxo.js"></script>
+<script src="js/utils/grafo_filtros.js"></script>
+<script src="js/grafo_simba.js"></script>
+<script src="js/utils/doc_trecho.js"></script>
+<script src="js/utils/evidencia_info.js"></script>
+<script src="js/utils/ia_flutuante.js"></script>
+</body>
+</html>

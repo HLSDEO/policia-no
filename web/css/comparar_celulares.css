@@ -1,0 +1,297 @@
+/* Tela "Comparar celulares" (web/comparar_celulares.html + js/comparar_celulares.js).
+ *
+ * Só o que é próprio desta tela: os chips de aparelho, o cartão de arquivo em comum e as
+ * linhas de ocorrência por aparelho. Filtros, paginação e tabela vêm de arquivos.css e
+ * style.css — o resto da aplicação já tem esse desenho e repeti-lo aqui só criaria dois
+ * lugares para manter.
+ *
+ * Cores sempre por token de tema (--bg-card, --border…): valor cru quebraria no tema claro. */
+
+/* ---------- layout da página (antes inline no HTML) ---------- */
+
+.cmp-main-full {
+  width: 100%;
+}
+
+.cmp-card-full {
+  max-width: none;
+}
+
+.cmp-card-gap {
+  margin-top: 16px;
+}
+
+.cmp-carregando {
+  padding: 24px 0;
+  text-align: center;
+}
+
+/* os três selects exclusivos do eixo "arquivos" somem juntos nas outras abas;
+   display:contents deixa o wrapper invisível para o flex dos filtros, e o
+   .hidden (!important em style.css) continua valendo sobre ele */
+.filtros-arquivos {
+  display: contents;
+}
+
+/* ---------- chips de aparelho (quem entra na comparação) ---------- */
+
+.cmp-aparelhos {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin-top: 12px;
+}
+
+.cmp-aparelho {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  padding: 10px 14px;
+  min-width: 210px;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  background: var(--bg-card);
+  color: var(--text-primary);
+  cursor: pointer;
+  text-align: left;
+  font-family: inherit;
+  font-size: 13px;
+}
+
+.cmp-aparelho:hover {
+  background: var(--bg-hover);
+}
+
+.cmp-aparelho.ativo {
+  border-color: var(--accent);
+  background: var(--tint-accent);
+}
+
+.cmp-aparelho input {
+  margin: 2px 0 0;
+  accent-color: var(--accent);
+}
+
+.cmp-aparelho-nome {
+  font-weight: 600;
+}
+
+/* o número da cor identifica o aparelho nas ocorrências abaixo, onde não cabe o nome inteiro */
+.cmp-aparelho-tag {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 20px;
+  height: 20px;
+  padding: 0 6px;
+  border-radius: 6px;
+  font-size: 11px;
+  font-weight: 700;
+  background: var(--tint-accent);
+  color: var(--tint-accent-text);
+}
+
+.cmp-aparelho-info {
+  display: block;
+  color: var(--text-muted);
+  font-size: 12px;
+  margin-top: 2px;
+}
+
+.cmp-aviso {
+  margin-top: 12px;
+  padding: 10px 12px;
+  border: 1px solid var(--border);
+  border-left: 3px solid var(--warning);
+  border-radius: 8px;
+  background: var(--bg-hover);
+  color: var(--text-secondary);
+  font-size: 13px;
+  line-height: 1.5;
+}
+
+/* ---------- contagem em cada aba ---------- */
+
+.cmp-badge {
+  display: inline-block;
+  margin-left: 6px;
+  padding: 1px 7px;
+  border-radius: 10px;
+  background: var(--tint-accent);
+  color: var(--tint-accent-text);
+  font-size: 11px;
+  font-weight: 700;
+}
+
+/* ---------- cartão de um achado (um hash, um contato, uma rede) ---------- */
+
+.cmp-item {
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  background: var(--bg-card);
+  margin-bottom: 10px;
+  overflow: hidden;
+}
+
+/* achado que é anexo de conversa (arquivo que TRAFEGOU) ou contato direto entre os aparelhos:
+ * a barra lateral é o que separa o achado do "os dois aparelhos por acaso têm isto" */
+.cmp-item.destaque {
+  border-left: 3px solid var(--success);
+}
+
+.cmp-item-cab {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 10px 14px;
+  border-bottom: 1px solid var(--border);
+}
+
+.cmp-miniatura {
+  width: 52px;
+  height: 52px;
+  flex-shrink: 0;
+  border-radius: 6px;
+  border: 1px solid var(--border);
+  object-fit: cover;
+  background: var(--bg-hover);
+}
+
+.cmp-item-titulo {
+  flex: 1;
+  min-width: 0;
+}
+
+.cmp-item-nome {
+  font-weight: 600;
+  font-size: 14px;
+  word-break: break-word;
+}
+
+.cmp-item-meta {
+  color: var(--text-muted);
+  font-size: 12px;
+  margin-top: 2px;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px 10px;
+}
+
+.cmp-hash {
+  font-family: ui-monospace, "SFMono-Regular", Menlo, Consolas, monospace;
+  font-size: 11px;
+  color: var(--text-muted);
+  word-break: break-all;
+}
+
+.cmp-selo {
+  display: inline-block;
+  padding: 1px 8px;
+  border-radius: 10px;
+  font-size: 11px;
+  font-weight: 600;
+  background: var(--tint-success);
+  color: var(--tint-success-text);
+  white-space: nowrap;
+}
+
+.cmp-selo.neutro {
+  background: var(--bg-hover);
+  color: var(--text-secondary);
+}
+
+/* ---------- ocorrências: uma linha por aparelho ---------- */
+
+.cmp-ocorrencias {
+  display: flex;
+  flex-direction: column;
+}
+
+.cmp-ocorrencia {
+  display: flex;
+  gap: 12px;
+  padding: 9px 14px;
+  font-size: 13px;
+  border-top: 1px solid var(--border);
+}
+
+.cmp-ocorrencia:first-child {
+  border-top: none;
+}
+
+.cmp-ocorrencia-corpo {
+  flex: 1;
+  min-width: 0;
+}
+
+.cmp-ocorrencia-caminho {
+  color: var(--text-muted);
+  font-size: 12px;
+  word-break: break-all;
+}
+
+/* "recebeu de João em 12/03 14:02" — a frase que dá o sentido do trânsito do arquivo */
+.cmp-transito {
+  margin-top: 3px;
+  color: var(--text-secondary);
+}
+
+.cmp-transito a {
+  color: var(--link);
+  text-decoration: none;
+}
+
+.cmp-transito a:hover {
+  color: var(--link-hover);
+  text-decoration: underline;
+}
+
+.cmp-seta-enviada {
+  color: var(--success);
+  font-weight: 700;
+}
+
+.cmp-seta-recebida {
+  color: var(--link);
+  font-weight: 700;
+}
+
+.cmp-acoes-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-shrink: 0;
+}
+
+/* ---------- tabela dos eixos leves (agenda, interlocutores, Wi-Fi) ---------- */
+
+.cmp-tabela {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 13px;
+}
+
+.cmp-tabela th {
+  text-align: left;
+  padding: 8px 10px;
+  border-bottom: 1px solid var(--border);
+  color: var(--text-secondary);
+  font-weight: 600;
+  font-size: 12px;
+}
+
+.cmp-tabela td {
+  padding: 8px 10px;
+  border-bottom: 1px solid var(--border);
+  vertical-align: top;
+}
+
+.cmp-tabela tr:hover td {
+  background: var(--bg-hover);
+}
+
+.cmp-tabela .cmp-por-aparelho {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}

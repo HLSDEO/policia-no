@@ -1,0 +1,293 @@
+/* Tela "Buscar entidades no material do inquérito" (busca_entidades.html).
+ *
+ * Só o que é próprio desta tela: as opções de busca, os cartões de resultado por entidade e o
+ * trecho com o destaque da menção. Formulário, botões e tabela vêm de style.css. */
+
+.be-opcoes {
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 10px 14px 14px;
+  margin: 0 0 14px;
+}
+
+.be-opcoes legend {
+  font-size: 12px;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--text-muted);
+  padding: 0 6px;
+}
+
+.be-check {
+  display: flex;
+  gap: 8px;
+  align-items: flex-start;
+  cursor: pointer;
+  font-size: 13px;
+}
+
+.be-check input {
+  margin-top: 2px;
+}
+
+.be-check small {
+  display: block;
+  color: var(--text-muted);
+  font-size: 12px;
+  line-height: 1.45;
+  margin-top: 2px;
+}
+
+.be-check-inline {
+  align-items: center;
+  color: var(--text-secondary);
+}
+
+.be-grupos {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px 10px;
+}
+
+/* Cada grupo de fonte é uma pílula clicável; a indisponível continua visível (em cinza) porque
+ * saber que o inquérito NÃO tem extrato do SIMBA é parte da resposta. */
+.be-grupo {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 5px 10px;
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  font-size: 13px;
+  cursor: pointer;
+  background: var(--bg-card);
+}
+
+.be-grupo:hover {
+  background: var(--bg-hover);
+}
+
+.be-grupo.indisponivel {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+
+.be-grupo.indisponivel:hover {
+  background: var(--bg-card);
+}
+
+.be-cabecalho-resultados {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  margin-bottom: 10px;
+}
+
+.be-cabecalho-resultados h2 {
+  margin: 0;
+}
+
+.be-entidade {
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 12px 14px;
+  margin-bottom: 14px;
+  background: var(--bg-card);
+}
+
+.be-entidade-titulo {
+  font-size: 15px;
+  font-weight: 600;
+}
+
+.be-entidade-sub {
+  font-size: 12px;
+  color: var(--text-muted);
+  margin: 2px 0 10px;
+}
+
+.be-resumo {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-bottom: 10px;
+}
+
+.be-chip {
+  font-size: 12px;
+  padding: 3px 9px;
+  border-radius: 999px;
+  background: var(--tint-accent);
+  color: var(--tint-accent-text);
+}
+
+.be-fonte {
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  margin-bottom: 8px;
+  overflow: hidden;
+}
+
+.be-fonte > summary {
+  cursor: pointer;
+  padding: 8px 12px;
+  font-size: 13px;
+  background: var(--bg-elevated);
+  list-style: none;
+}
+
+.be-fonte > summary::-webkit-details-marker {
+  display: none;
+}
+
+.be-fonte > summary::before {
+  content: "▸ ";
+  color: var(--text-muted);
+}
+
+.be-fonte[open] > summary::before {
+  content: "▾ ";
+}
+
+.be-fonte-contagem {
+  color: var(--text-muted);
+}
+
+.be-tabela-caixa {
+  overflow-x: auto;
+}
+
+.be-tabela {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 13px;
+}
+
+.be-tabela th {
+  text-align: left;
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--text-muted);
+  font-weight: 600;
+  padding: 6px 12px;
+  border-bottom: 1px solid var(--border);
+  white-space: nowrap;
+}
+
+.be-tabela td {
+  padding: 7px 12px;
+  border-bottom: 1px solid var(--border);
+  vertical-align: top;
+}
+
+.be-tabela tr:last-child td {
+  border-bottom: none;
+}
+
+.be-registro {
+  font-weight: 500;
+}
+
+.be-detalhe,
+.be-onde {
+  color: var(--text-muted);
+  font-size: 12px;
+}
+
+.be-trecho {
+  font-size: 12px;
+  line-height: 1.5;
+  white-space: pre-wrap;
+  word-break: break-word;
+  max-width: 520px;
+  color: var(--text-secondary);
+}
+
+.be-trecho mark {
+  background: var(--tint-warning);
+  color: var(--tint-warning-text);
+  border-radius: 3px;
+  padding: 0 2px;
+}
+
+/* Link que abre a evidência onde o registro foi achado. */
+.be-abrir {
+  width: 40px;
+  text-align: center;
+}
+
+.be-link {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 26px;
+  height: 26px;
+  border-radius: 6px;
+  color: var(--text-secondary);
+}
+
+.be-link svg {
+  width: 16px;
+  height: 16px;
+}
+
+.be-link:hover {
+  background: var(--bg-hover);
+  color: var(--accent);
+}
+
+.be-criterio {
+  display: inline-block;
+  font-size: 11px;
+  padding: 2px 7px;
+  border-radius: 999px;
+  margin: 0 4px 3px 0;
+  white-space: nowrap;
+  background: var(--bg-hover);
+  color: var(--text-secondary);
+}
+
+/* Documento e telefone são identificadores: quando batem, o achado é certo. Nome exato vem logo
+ * atrás. Nome parecido e menção no texto são pistas — por isso a cor mais discreta. */
+.be-criterio.forte {
+  background: var(--tint-success);
+  color: var(--tint-success-text);
+}
+
+.be-criterio.media {
+  background: var(--tint-accent);
+  color: var(--tint-accent-text);
+}
+
+.be-vazio {
+  color: var(--text-muted);
+  font-size: 13px;
+}
+
+/* Badge do tipo detectado por regex no termo digitado. Sem conteúdo enquanto a linha está
+ * vazia ou o termo não é reconhecível. */
+.be-tipo-badge {
+  align-self: center;
+  margin-bottom: 8px;
+  font-size: 10px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  padding: 3px 8px;
+  border-radius: 999px;
+  white-space: nowrap;
+  background: var(--bg-hover);
+  color: var(--text-secondary);
+}
+
+.be-tipo-badge.tipo-documento,
+.be-tipo-badge.tipo-telefone,
+.be-tipo-badge.tipo-hash {
+  background: var(--tint-success);
+  color: var(--tint-success-text);
+}
+
+

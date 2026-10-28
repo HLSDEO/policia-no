@@ -1,0 +1,377 @@
+/* Tela Administração → Documentação de código (documentacao.html / js/documentacao.js).
+ *
+ * Duas colunas: lista dos .md de docs/ (grudada no topo enquanto o texto rola) e o documento
+ * renderizado. As classes `.md-*` são as que js/utils/markdown.js emite — estilo de documento
+ * longo (títulos com hierarquia visível, tabela com cabeçalho, bloco de código com rolagem
+ * própria), diferente do `.chat-md`, que é estilo de bolha de conversa.
+ *
+ * Cores sempre por token (--bg-card, --border, --text-*): a tela nasce funcionando nos dois
+ * temas, sem regra separada para o claro. */
+
+.doc-layout {
+  display: grid;
+  grid-template-columns: 300px minmax(0, 1fr);
+  gap: 20px;
+  align-items: start;
+}
+
+/* ---------- painel da lista ---------- */
+
+.doc-painel {
+  position: sticky;
+  top: 88px;                              /* abaixo da topbar sticky */
+  max-height: calc(100vh - 112px);
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 16px;
+  box-shadow: var(--shadow);
+  min-width: 0;
+}
+
+.doc-busca {
+  width: 100%;
+  padding: 10px 12px;
+  border-radius: 8px;
+  border: 1px solid var(--border);
+  background: var(--bg-page);
+  color: var(--text-primary);
+  font-size: 14px;
+  outline: none;
+  transition: box-shadow 0.15s ease, border-color 0.15s ease;
+}
+
+.doc-busca:focus {
+  border-color: var(--accent);
+  box-shadow: var(--focus-ring);
+}
+
+.doc-lista {
+  overflow-y: auto;
+  margin: 0 -6px;
+  padding: 0 6px;
+}
+
+.doc-lista-grupo {
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--text-muted);
+  margin: 14px 0 6px;
+}
+
+.doc-lista-grupo:first-child {
+  margin-top: 0;
+}
+
+.doc-lista-item {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  width: 100%;
+  text-align: left;
+  padding: 8px 10px;
+  border: 1px solid transparent;
+  border-radius: 8px;
+  background: none;
+  color: var(--text-primary);
+  font-family: inherit;
+  font-size: 13px;
+  cursor: pointer;
+}
+
+.doc-lista-item:hover {
+  background: var(--bg-hover);
+}
+
+.doc-lista-item.ativo {
+  background: var(--tint-accent);
+  border-color: var(--accent);
+  color: var(--tint-accent-text);
+}
+
+.doc-lista-titulo {
+  font-weight: 600;
+  line-height: 1.35;
+}
+
+.doc-lista-arquivo {
+  font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  font-size: 11px;
+  color: var(--text-muted);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* trecho que casou com a busca — 2 linhas no máximo, senão um match dentro de um parágrafo
+   longo empurra os outros resultados para fora da tela */
+.doc-lista-trecho {
+  margin-top: 4px;
+  font-size: 11px;
+  line-height: 1.4;
+  color: var(--text-secondary);
+  border-left: 2px solid var(--border);
+  padding-left: 6px;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+/* ---------- documento ---------- */
+
+.doc-conteudo {
+  max-width: none;
+  min-width: 0;
+  padding: 28px 32px 40px;
+}
+
+.doc-cabecalho {
+  border-bottom: 1px solid var(--border);
+  padding-bottom: 14px;
+  margin-bottom: 18px;
+}
+
+.doc-titulo {
+  margin: 0 0 6px;
+  font-size: 22px;
+  font-weight: 700;
+  line-height: 1.25;
+}
+
+.doc-conteudo .doc-meta {
+  margin: 0;
+  font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  font-size: 12px;
+  color: var(--text-muted);
+}
+
+.doc-sumario {
+  background: var(--bg-page);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 12px 14px;
+  margin-bottom: 24px;
+}
+
+.doc-sumario-rotulo {
+  display: block;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--text-muted);
+  margin-bottom: 8px;
+}
+
+.doc-sumario-lista {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.doc-sumario-item {
+  color: var(--text-secondary);
+  text-decoration: none;
+  font-size: 13px;
+  line-height: 1.5;
+  padding: 1px 0;
+}
+
+.doc-sumario-item.nivel-3 {
+  padding-left: 16px;
+  font-size: 12px;
+  color: var(--text-muted);
+}
+
+.doc-sumario-item:hover {
+  color: var(--link-hover);
+  text-decoration: underline;
+}
+
+/* ---------- markdown renderizado ---------- */
+
+.md {
+  font-size: 14.5px;
+  line-height: 1.7;
+  color: var(--text-primary);
+  overflow-wrap: break-word;
+}
+
+.md p {
+  margin: 0 0 14px;
+}
+
+.md .md-h {
+  /* a topbar é sticky: sem isso o título fica escondido atrás dela ao pular por uma âncora */
+  scroll-margin-top: 96px;
+  position: relative;
+  line-height: 1.3;
+  font-weight: 700;
+}
+
+.md h1 { font-size: 20px; margin: 32px 0 12px; }
+.md h2 {
+  font-size: 18px;
+  margin: 34px 0 12px;
+  padding-bottom: 6px;
+  border-bottom: 1px solid var(--border);
+}
+.md h3 { font-size: 16px; margin: 26px 0 10px; }
+.md h4,
+.md h5,
+.md h6 { font-size: 14.5px; margin: 20px 0 8px; color: var(--text-secondary); }
+
+.md .md-h:first-child {
+  margin-top: 0;
+}
+
+/* o "#" ao lado do título só aparece no hover — é atalho para copiar o link da seção, não
+   decoração permanente */
+.md .md-ancora {
+  margin-left: 8px;
+  color: var(--text-muted);
+  text-decoration: none;
+  font-weight: 400;
+  opacity: 0;
+}
+
+.md .md-h:hover .md-ancora,
+.md .md-ancora:focus-visible {
+  opacity: 1;
+}
+
+.md-h-alvo {
+  background: var(--tint-accent);
+  border-radius: 6px;
+  box-shadow: 0 0 0 6px var(--tint-accent);
+}
+
+.md a {
+  color: var(--link);
+  text-decoration: none;
+}
+
+.md a:hover {
+  color: var(--link-hover);
+  text-decoration: underline;
+}
+
+.md strong {
+  font-weight: 700;
+}
+
+.md code {
+  font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  font-size: 0.88em;
+  background: var(--bg-hover);
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  padding: 1px 5px;
+  word-break: break-word;
+}
+
+.md pre {
+  background: var(--bg-page);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 14px 16px;
+  margin: 0 0 16px;
+  overflow-x: auto;
+}
+
+.md pre code {
+  background: none;
+  border: none;
+  padding: 0;
+  font-size: 12.5px;
+  line-height: 1.6;
+  white-space: pre;
+  word-break: normal;
+}
+
+.md .md-lista {
+  margin: 0 0 14px;
+  padding-left: 22px;
+}
+
+.md .md-lista li {
+  margin-bottom: 6px;
+}
+
+.md .md-lista .md-lista {
+  margin: 6px 0 0;
+}
+
+.md li > p {
+  margin: 0 0 8px;
+}
+
+.md blockquote {
+  margin: 0 0 16px;
+  padding: 10px 16px;
+  border-left: 3px solid var(--accent);
+  background: var(--bg-hover);
+  border-radius: 0 8px 8px 0;
+  color: var(--text-secondary);
+}
+
+.md blockquote p:last-child,
+.md blockquote .md-lista:last-child {
+  margin-bottom: 0;
+}
+
+.md hr {
+  border: none;
+  border-top: 1px solid var(--border);
+  margin: 24px 0;
+}
+
+/* tabela larga (docs/investigacao_celular.md tem tabelas de 5 colunas) rola dentro do próprio
+   bloco — a página nunca rola na horizontal */
+.md-tabela-wrap {
+  overflow-x: auto;
+  margin: 0 0 16px;
+}
+
+.md-tabela {
+  border-collapse: collapse;
+  width: 100%;
+  font-size: 13px;
+}
+
+.md-tabela th,
+.md-tabela td {
+  border: 1px solid var(--border);
+  padding: 8px 10px;
+  text-align: left;
+  vertical-align: top;
+}
+
+.md-tabela th {
+  background: var(--bg-hover);
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+/* ---------- responsivo ---------- */
+
+@media (max-width: 1000px) {
+  .doc-layout {
+    grid-template-columns: 1fr;
+  }
+
+  .doc-painel {
+    position: static;
+    max-height: 340px;
+  }
+
+  .doc-conteudo {
+    padding: 20px 18px 28px;
+  }
+}

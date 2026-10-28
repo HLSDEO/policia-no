@@ -1,0 +1,204 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Inquérito · PolícIA</title>
+<script src="js/utils/boot_tema.js"></script>
+<link rel="icon" type="image/svg+xml" href="favicon.svg">
+<link rel="stylesheet" href="css/style.css">
+<link rel="stylesheet" href="css/entidades.css">
+<style>
+  /* Identificação do procedimento (topo) */
+  .ipl-ident { display:grid; grid-template-columns:repeat(auto-fit,minmax(190px,1fr)); gap:10px; margin-bottom:14px; }
+  .ipl-campo { border:1px solid var(--border, rgba(127,127,127,.25)); border-radius:10px; padding:10px 13px;
+    background: var(--surface-2, rgba(127,127,127,.05)); }
+  .ipl-campo .rot { font-size:11px; opacity:.65; text-transform:uppercase; letter-spacing:.03em; margin-bottom:4px; }
+  .ipl-campo .val { font-size:14px; font-weight:600; word-break:break-word; }
+  .ipl-resumo { border:1px solid var(--border, rgba(127,127,127,.25)); border-radius:10px; padding:12px 14px;
+    background: var(--surface-2, rgba(127,127,127,.05)); margin-bottom:18px; }
+  .ipl-resumo .rot { font-size:11px; opacity:.65; text-transform:uppercase; letter-spacing:.03em; margin-bottom:6px; }
+  .ipl-resumo .txt { white-space:pre-wrap; line-height:1.55; font-size:13px; }
+
+  /* Abas */
+  .ipl-abas { display:flex; gap:8px; flex-wrap:wrap; margin-bottom:14px; }
+  .ipl-aba.ativa { background: var(--accent, #2563eb); color:#fff; border-color: transparent; }
+  .ipl-painel { display:none; }
+  .ipl-painel.ativo { display:block; }
+
+  /* Filtros */
+  .ipl-filtros { display:flex; flex-wrap:wrap; gap:8px 10px; align-items:center; margin-bottom:12px; }
+  .ipl-filtros input[type=search], .ipl-filtros select { padding:7px 10px; border-radius:8px;
+    border:1px solid var(--border, rgba(127,127,127,.3)); background:var(--surface, transparent); color:inherit; font-size:13px; }
+  .ipl-filtros input[type=search] { min-width:220px; flex:1 1 240px; max-width:360px; }
+  .ipl-filtro-info { font-size:12px; opacity:.65; margin-left:auto; }
+
+  /* Tabelas */
+  .ipl-folha { white-space:nowrap; font-variant-numeric: tabular-nums; opacity:.85; }
+  .ipl-contexto { font-size:12px; opacity:.7; line-height:1.45; max-width:640px; }
+  .ipl-badge { display:inline-block; padding:1px 8px; border-radius:999px; font-size:11px; font-weight:600;
+    background:rgba(127,127,127,.18); }
+  .ipl-badge.pf { background:rgba(37,99,235,.14); color:#2563eb; }
+  .ipl-badge.pj { background:rgba(217,119,6,.16); color:#d97706; }
+  .ipl-badge.vulgo { background:rgba(192,38,211,.15); color:#c026d3; }
+  .ipl-resumo-peca { font-size:12px; opacity:.72; line-height:1.45; max-width:620px; }
+  .ipl-variantes { font-size:11px; opacity:.6; line-height:1.4; margin-top:2px; max-width:300px; }
+</style>
+</head>
+<body>
+<div class="app">
+
+  <div class="main" style="width:100%;">
+    <header class="topbar">
+      <h1 class="page-title">Inquérito <span id="ipl-numero" style="opacity:.7;font-weight:400;"></span></h1>
+      <div class="topbar-actions">
+        <span class="grupo-total" id="total-registros"></span>
+        <button type="button" class="btn btn-primary" id="prompt-ia-ipl-btn" title="Abrir conversação com a IA focada neste inquérito em PDF"><svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3l1.5 4.5L18 9l-4.5 1.5L12 15l-1.5-4.5L6 9l4.5-1.5L12 3z"/><path d="M19 15l.7 2.1L22 18l-2.3.9L19 21l-.7-2.1L16 18l2.3-.9L19 15z"/></svg> Prompt de IA do Inquérito</button>
+        <button type="button" class="btn btn-secondary" id="achados-analista-ipl-btn" title="Ver as hipóteses ligadas a esta mídia — o chat de IA específico dela também as usa"><svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg> Hipótese da mídia</button>
+        <span class="extracao-nav-container"></span>
+      </div>
+    </header>
+
+    <main class="content">
+      <div class="card" style="max-width:none;">
+
+        <div class="ipl-ident" id="ipl-ident"></div>
+        <div class="ipl-resumo hidden" id="ipl-resumo">
+          <div class="rot">Resumo dos fatos investigados</div>
+          <div class="txt" id="ipl-resumo-texto"></div>
+        </div>
+
+        <div class="ipl-abas">
+          <button type="button" class="btn btn-secondary ipl-aba ativa" data-aba="pecas">Peças</button>
+          <button type="button" class="btn btn-secondary ipl-aba" data-aba="pessoas">Pessoas</button>
+          <button type="button" class="btn btn-secondary ipl-aba" data-aba="achados">Achados</button>
+        </div>
+
+        <!-- Peças -->
+        <div class="ipl-painel ativo" data-painel="pecas">
+          <div class="ipl-filtros">
+            <input type="search" id="f-pec-busca" placeholder="Buscar em peças…" autocomplete="off">
+            <select id="f-pec-tipo"><option value="">Todos os tipos</option></select>
+            <select id="f-pec-ordem">
+              <option value="folha">Ordem: folha</option>
+              <option value="data">Data (mais antiga)</option>
+              <option value="data-desc">Data (mais recente)</option>
+              <option value="tipo">Tipo de peça</option>
+            </select>
+            <span class="ipl-filtro-info" id="f-pec-info"></span>
+          </div>
+          <div style="overflow-x:auto;">
+            <table class="grupo-tabela" id="tab-pecas">
+              <thead>
+                <tr>
+                  <td class="col-nome">Folhas</td>
+                  <td class="col-nome">Peça</td>
+                  <td class="col-nome">Número</td>
+                  <td class="col-nome">Data</td>
+                  <td class="col-nome">Órgão</td>
+                  <td class="col-nome">Assinante</td>
+                  <td class="col-nome">Trecho de abertura</td>
+                </tr>
+              </thead>
+              <tbody id="corpo-pecas"></tbody>
+            </table>
+          </div>
+          <p class="empty-hint" id="vazio-pecas" style="display:none;">Nenhuma peça reconhecida.</p>
+        </div>
+
+        <!-- Pessoas -->
+        <div class="ipl-painel" data-painel="pessoas">
+          <div class="ipl-filtros">
+            <input type="search" id="f-pes-busca" placeholder="Buscar por nome, CPF/CNPJ ou vulgo…" autocomplete="off">
+            <select id="f-pes-papel"><option value="">Todos os papéis</option></select>
+            <select id="f-pes-doc">
+              <option value="">Com e sem documento</option>
+              <option value="com">Só com CPF/CNPJ</option>
+              <option value="pf">Só CPF</option>
+              <option value="pj">Só CNPJ</option>
+              <option value="vulgo">Só com vulgo</option>
+            </select>
+            <select id="f-pes-ordem">
+              <option value="folha">Ordem: folha</option>
+              <option value="mencoes">Mais citadas</option>
+              <option value="nome">Nome (A–Z)</option>
+            </select>
+            <span class="ipl-filtro-info" id="f-pes-info"></span>
+          </div>
+          <div style="overflow-x:auto;">
+            <table class="grupo-tabela" id="tab-pessoas">
+              <thead>
+                <tr>
+                  <td class="col-nome">Folha</td>
+                  <td class="col-nome">Nome</td>
+                  <td class="col-nome">CPF/CNPJ</td>
+                  <td class="col-nome">Vulgo</td>
+                  <td class="col-nome">Papel</td>
+                  <td class="col-nome">Citações</td>
+                  <td class="col-nome">Contexto</td>
+                  <td class="col-nome">Ações</td>
+                </tr>
+              </thead>
+              <tbody id="corpo-pessoas"></tbody>
+            </table>
+          </div>
+          <p class="empty-hint" id="vazio-pessoas" style="display:none;">Nenhuma pessoa identificada.</p>
+        </div>
+
+        <!-- Achados -->
+        <div class="ipl-painel" data-painel="achados">
+          <div class="ipl-filtros">
+            <input type="search" id="f-ach-busca" placeholder="Buscar em achados…" autocomplete="off">
+            <select id="f-ach-tipo"><option value="">Todos os tipos</option></select>
+            <select id="f-ach-ordem">
+              <option value="tipo">Ordem: tipo</option>
+              <option value="folha">Folha</option>
+              <option value="ocorrencias">Mais citados</option>
+              <option value="valor">Maior valor (R$)</option>
+            </select>
+            <span class="ipl-filtro-info" id="f-ach-info"></span>
+          </div>
+          <div style="overflow-x:auto;">
+            <table class="grupo-tabela" id="tab-achados">
+              <thead>
+                <tr>
+                  <td class="col-nome">Folha</td>
+                  <td class="col-nome">Tipo</td>
+                  <td class="col-nome">Dado</td>
+                  <td class="col-nome">Citações</td>
+                  <td class="col-nome">Contexto</td>
+                  <td class="col-nome">Ações</td>
+                </tr>
+              </thead>
+              <tbody id="corpo-achados"></tbody>
+            </table>
+          </div>
+          <p class="empty-hint" id="vazio-achados" style="display:none;">Nenhum achado.</p>
+        </div>
+
+      </div>
+    </main>
+  </div>
+
+</div>
+
+<script src="vendor/jquery-3.7.1.min.js"></script>
+<script src="js/utils/utils.js"></script>
+<script src="js/utils/icones.js"></script>
+<script src="js/utils/mapa_telas.js"></script>
+<script src="js/utils/toast.js"></script>
+<script src="js/utils/api.js"></script>
+<script src="js/utils/carregando.js"></script>
+<script src="js/utils/estados.js"></script>
+<script src="js/utils/estado_url.js"></script>
+<script src="js/utils/dialogo.js"></script>
+<script src="js/utils/theme.js"></script>
+<script src="js/utils/sidebar.js"></script>
+<script src="js/utils/auth.js"></script>
+<script src="js/utils/avisos_ia.js"></script>
+<script src="js/utils/entidades.js"></script>
+<script src="js/utils/exportar_excel.js"></script>
+<script src="js/utils/navegacao_inquerito.js"></script>
+<script src="js/inquerito_pdf.js"></script>
+</body>
+</html>

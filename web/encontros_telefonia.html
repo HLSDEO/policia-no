@@ -1,0 +1,113 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Encontros por antena · PolícIA</title>
+<script src="js/utils/boot_tema.js"></script>
+<link rel="icon" type="image/svg+xml" href="favicon.svg">
+<link rel="stylesheet" href="css/style.css">
+<style>
+  .enc-aviso { border:1px solid #d97706; border-radius:10px; padding:10px 14px; font-size:13px; margin-bottom:16px; }
+  .enc-filtros { display:flex; flex-wrap:wrap; gap:8px 10px; align-items:center; margin-bottom:12px; }
+  .enc-filtros input, .enc-filtros select { padding:7px 10px; border-radius:8px;
+    border:1px solid var(--border, rgba(127,127,127,.3)); background:var(--surface, transparent); color:inherit; font-size:13px; }
+  .enc-filtros input[type=number] { width:110px; }
+  .enc-badge { display:inline-block; padding:1px 8px; border-radius:999px; font-size:11px; font-weight:600; white-space:nowrap;
+    background:rgba(217,119,6,.16); color:#d97706; }
+  .enc-mono { font-family:ui-monospace, monospace; font-size:12px; }
+</style>
+</head>
+<body>
+<div class="app">
+
+  <div class="main" style="width:100%;">
+    <header class="topbar">
+      <h1 class="page-title">Encontros por antena</h1>
+      <div class="topbar-actions">
+        <span class="grupo-total" id="total-registros"></span>
+        <span class="extracao-nav-container"></span>
+      </div>
+    </header>
+
+    <main class="content">
+      <div class="card" style="max-width:none;">
+        <p class="card-hint">
+          Duas linhas na mesma ERB dentro da janela — quem estava com quem, onde e quando.
+          Só entram as linhas do cadastro (os alvos); sem cadastro, as de maior volume no CDR.
+        </p>
+        <p class="card-hint hidden" id="enc-cobertura"></p>
+        <div class="enc-aviso">
+          ⚠️ Antena é <strong>região, não posição</strong>: o encontro é co-localização na mesma torre
+          dentro da janela, não prova de que estiveram juntos. Tentativa não é conversa — confira o
+          CDR antes de afirmar.
+        </div>
+
+        <div class="enc-filtros">
+          <label>Janela (min) <input type="number" id="f-janela" value="30" min="5" max="480" step="5"></label>
+          <label>Mín. encontros <input type="number" id="f-min" value="2" min="1" max="100" step="1"></label>
+          <label>De <input type="date" id="f-de"></label>
+          <label>Até <input type="date" id="f-ate"></label>
+          <input type="search" id="f-busca" placeholder="Buscar por linha ou CGI…" autocomplete="off" style="min-width:200px;">
+          <button type="button" class="btn btn-primary" id="btn-aplicar">Aplicar</button>
+        </div>
+
+        <div style="overflow-x:auto;">
+          <table class="grupo-tabela" id="tab-encontros">
+            <thead><tr>
+              <td class="col-nome">Linha A</td>
+              <td class="col-nome">Linha B</td>
+              <td class="col-nome">CGI / antena</td>
+              <td class="col-nome">Localização</td>
+              <td class="col-nome" style="text-align:right;">Encontros</td>
+              <td class="col-nome">Primeiro</td>
+              <td class="col-nome">Último</td>
+            </tr></thead>
+            <tbody id="corpo-encontros"></tbody>
+          </table>
+        </div>
+        <p class="empty-hint hidden" id="enc-vazio">Nenhum par na mesma antena dentro da janela com os filtros atuais.</p>
+
+        <h2 style="margin-top:20px;">Residência / trabalho provável <span class="enc-badge">indício</span></h2>
+        <p class="card-hint">
+          Residência = ERB com mais madrugadas distintas (22h–06h); trabalho = mais dias úteis 09h–18h,
+          excluída a da residência. Só marca com 3+ dias — abaixo disso é passagem, não rotina.
+          <span id="ancoras-contagem"></span>
+        </p>
+        <div style="overflow-x:auto;">
+          <table class="grupo-tabela" id="tab-ancoras">
+            <thead><tr>
+              <td class="col-nome">Linha</td>
+              <td class="col-nome">Residência provável</td>
+              <td class="col-nome" style="text-align:right;">Noites</td>
+              <td class="col-nome">Trabalho provável</td>
+              <td class="col-nome" style="text-align:right;">Dias úteis</td>
+            </tr></thead>
+            <tbody id="corpo-ancoras"></tbody>
+          </table>
+        </div>
+      </div>
+
+    </main>
+  </div>
+
+</div>
+
+<script src="vendor/jquery-3.7.1.min.js"></script>
+<script src="js/utils/utils.js"></script>
+<script src="js/utils/icones.js"></script>
+<script src="js/utils/mapa_telas.js"></script>
+<script src="js/utils/toast.js"></script>
+<script src="js/utils/api.js"></script>
+<script src="js/utils/carregando.js"></script>
+<script src="js/utils/estados.js"></script>
+<script src="js/utils/estado_url.js"></script>
+<script src="js/utils/dialogo.js"></script>
+<script src="js/utils/theme.js"></script>
+<script src="js/utils/sidebar.js"></script>
+<script src="js/utils/auth.js"></script>
+<script src="js/utils/avisos_ia.js"></script>
+<script src="js/utils/navegacao_inquerito.js"></script>
+<script src="js/encontros_telefonia.js"></script>
+</body>
+</html>

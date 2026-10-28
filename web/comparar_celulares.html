@@ -1,0 +1,128 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Comparar celulares · PolícIA</title>
+<script src="js/utils/boot_tema.js"></script>
+<link rel="icon" type="image/svg+xml" href="favicon.svg">
+<link rel="stylesheet" href="css/style.css">
+<link rel="stylesheet" href="css/arquivos.css">
+<link rel="stylesheet" href="css/comparar_celulares.css">
+</head>
+<body>
+<noscript><p style="padding:16px;">Esta tela precisa de JavaScript para comparar os aparelhos.</p></noscript>
+<div class="app">
+
+  <div class="main cmp-main-full">
+    <header class="topbar">
+      <h1 class="page-title">Comparar celulares</h1>
+      <div class="topbar-actions">
+        <span class="extracao-nav-container"></span>
+      </div>
+    </header>
+
+    <main class="content">
+
+      <!-- Aparelhos do inquérito: quais entram na comparação -->
+      <div class="card cmp-card-full">
+        <h2>Aparelhos comparados</h2>
+        <p class="card-hint">
+          Escolha dois ou mais aparelhos. A comparação procura o que eles têm em comum — antes de tudo
+          o <strong>mesmo arquivo</strong> (hash idêntico), que é o que liga um boleto enviado por um
+          celular ao comprovante devolvido pelo outro.
+        </p>
+        <div id="aparelhos-lista" class="cmp-aparelhos"></div>
+        <p class="empty-hint hidden" id="aparelhos-vazio">
+          Este inquérito não tem dois aparelhos com extração concluída — não há o que comparar.
+        </p>
+        <div class="cmp-aviso hidden" id="aviso-sem-hash"></div>
+      </div>
+
+      <!-- Eixos da comparação -->
+      <div class="card cmp-card-full cmp-card-gap" id="card-resultados">
+        <div class="extracao-tabs" role="tablist" aria-label="O que comparar" id="cmp-abas">
+          <button type="button" class="extracao-tab active" id="cmp-tab-arquivos" data-eixo="arquivos" role="tab" aria-selected="true" aria-controls="cmp-painel" tabindex="0">
+            Arquivos em comum <span class="cmp-badge hidden" data-badge="arquivos"></span>
+          </button>
+          <button type="button" class="extracao-tab" id="cmp-tab-conversas" data-eixo="conversas" role="tab" aria-selected="false" aria-controls="cmp-painel" tabindex="-1">
+            Interlocutores <span class="cmp-badge hidden" data-badge="conversas"></span>
+          </button>
+          <button type="button" class="extracao-tab" id="cmp-tab-contatos" data-eixo="contatos" role="tab" aria-selected="false" aria-controls="cmp-painel" tabindex="-1">
+            Agenda <span class="cmp-badge hidden" data-badge="contatos"></span>
+          </button>
+          <button type="button" class="extracao-tab" id="cmp-tab-wifi" data-eixo="wifi" role="tab" aria-selected="false" aria-controls="cmp-painel" tabindex="-1">
+            Wi-Fi <span class="cmp-badge hidden" data-badge="wifi"></span>
+          </button>
+        </div>
+
+        <div id="cmp-painel" role="tabpanel" tabindex="0" aria-labelledby="cmp-tab-arquivos">
+
+        <!-- filtros: só o eixo de arquivos tem os de relevância/categoria -->
+        <div class="arq-filtros" id="cmp-filtros">
+          <input type="search" id="filtro-busca" class="arq-busca" placeholder="Buscar por nome, caminho ou contato…" aria-label="Buscar por nome, caminho ou contato" autocomplete="off">
+          <div class="filtros-arquivos" id="filtros-arquivos">
+            <select id="filtro-relevancia" class="arq-select" aria-label="O que contar como arquivo em comum">
+              <option value="usuario">Conteúdo de usuário</option>
+              <option value="anexos">Só anexos de conversa</option>
+              <option value="tudo">Tudo (inclui sistema e cache)</option>
+            </select>
+            <select id="filtro-categoria" class="arq-select" aria-label="Filtrar por categoria">
+              <option value="">Todas as categorias</option>
+              <option value="Imagem">Imagem</option>
+              <option value="Vídeo">Vídeo</option>
+              <option value="Áudio">Áudio</option>
+              <option value="Documento">Documento</option>
+              <option value="Compactado">Compactado</option>
+              <option value="Outro">Outro</option>
+            </select>
+            <select id="filtro-ordenar" class="arq-select" aria-label="Ordenar resultados">
+              <option value="relevancia">Mais relevantes primeiro</option>
+              <option value="tamanho">Maiores primeiro</option>
+              <option value="aparelhos">Em mais aparelhos</option>
+              <option value="data">Mais antigos primeiro</option>
+              <option value="nome">Por nome</option>
+            </select>
+          </div>
+        </div>
+
+        <p class="card-hint" id="cmp-explicacao">Escolha dois ou mais aparelhos acima e o eixo de comparação nas abas.</p>
+
+        <div id="cmp-carregando" class="cmp-carregando hidden" aria-live="polite">
+          <span class="spinner"></span> <span>Cruzando os aparelhos…</span>
+        </div>
+        <div id="cmp-resultados" aria-live="polite"></div>
+        <p class="empty-hint hidden" id="cmp-vazio"></p>
+
+        <div class="arq-paginacao hidden" id="cmp-paginacao">
+          <button type="button" class="btn btn-secondary" id="pag-anterior">Anterior</button>
+          <span class="arq-pag-info" id="pag-info" aria-live="polite"></span>
+          <button type="button" class="btn btn-secondary" id="pag-proxima">Próxima</button>
+        </div>
+
+        </div>
+      </div>
+
+    </main>
+  </div>
+
+</div>
+
+<script src="vendor/jquery-3.7.1.min.js"></script>
+<script src="js/utils/utils.js"></script>
+<script src="js/utils/icones.js"></script>
+<script src="js/utils/mapa_telas.js"></script>
+<script src="js/utils/toast.js"></script>
+<script src="js/utils/api.js"></script>
+<script src="js/utils/carregando.js"></script>
+<script src="js/utils/estados.js"></script>
+<script src="js/utils/estado_url.js"></script>
+<script src="js/utils/dialogo.js"></script>
+<script src="js/utils/theme.js"></script>
+<script src="js/utils/sidebar.js"></script>
+<script src="js/utils/auth.js"></script>
+<script src="js/utils/avisos_ia.js"></script>
+<script src="js/utils/navegacao_inquerito.js"></script>
+<script src="js/comparar_celulares.js"></script>
+</body>
+</html>

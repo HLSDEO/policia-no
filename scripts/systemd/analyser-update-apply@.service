@@ -1,0 +1,15 @@
+[Unit]
+Description=analyser (/%I) -- aplica a atualizacao pedida pela tela Servidor
+After=docker.service
+Requires=docker.service
+
+[Service]
+Type=oneshot
+# Roda como root: precisa de docker compose e de escrever na instalacao. O systemd ja inicia
+# como root, sem sudo. /%I e o caminho da instalacao (ver comentario no .path).
+Environment=ANALYSER_DIR=/%I
+ExecStart=/usr/local/bin/analyser-update apply --pedido /%I/.deploy/controle/pedido.json
+# O script grava progresso.log e resultado.json e remove o pedido.json ao terminar (sucesso ou
+# falha), o que re-arma o .path para o proximo pedido.
+TimeoutStartSec=1800
+Nice=10

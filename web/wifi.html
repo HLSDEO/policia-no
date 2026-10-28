@@ -1,0 +1,116 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Redes Wi-Fi · PolícIA</title>
+<script src="js/utils/boot_tema.js"></script>
+<link rel="icon" type="image/svg+xml" href="favicon.svg">
+<link rel="stylesheet" href="css/style.css">
+<link rel="stylesheet" href="css/entidades.css">
+<link rel="stylesheet" href="css/arquivos.css">
+<link rel="stylesheet" href="css/ufdr.css">
+<link rel="stylesheet" href="css/chat.css">
+<link rel="stylesheet" href="css/ia_flutuante.css">
+</head>
+<body>
+<div class="app">
+
+  <div class="main" style="width:100%;">
+    <header class="topbar">
+      <h1 class="page-title">Redes Wi-Fi</h1>
+      <div class="topbar-actions">
+        <span class="grupo-total" id="total-registros"></span>
+        <span class="extracao-nav-container"></span>
+      </div>
+    </header>
+
+    <main class="content">
+      <div class="card" style="max-width:none;">
+
+        <!-- barra de abas: a primeira é esta lista de redes, as demais são montadas pelo
+             componente compartilhado (ver js/utils/ufdr_dominio.js) -->
+        <div id="abas-host"></div>
+
+        <div id="painel-redes">
+        <div id="estado-vazio" style="display:none; text-align:center; padding:32px 12px;">
+          <p style="color:var(--texto-suave,#aab2bd);">
+            Nenhuma rede Wi-Fi encontrada no UFDR desta extração.
+          </p>
+        </div>
+
+        <div id="estado-carregando" style="display:none; text-align:center; padding:32px 12px;">
+          <span class="spinner"></span> <span>Carregando redes Wi-Fi…</span>
+        </div>
+
+        <div id="estado-lista" style="display:none;">
+          <div class="arq-filtros">
+            <input type="search" id="filtro-busca" class="arq-busca" placeholder="Buscar por SSID, BSSID ou fabricante…" autocomplete="off">
+            <select id="filtro-senha" class="arq-select">
+              <option value="sim" selected>Possui senha (sim)</option>
+              <option value="nao">Possui senha (não)</option>
+              <option value="">Possui senha (todos)</option>
+            </select>
+            <select id="filtro-ordenar" class="arq-select" aria-label="Ordenar">
+              <option value="conexoes">Ordenar: mais conexões</option>
+              <option value="recentes">Ordenar: uso mais recente</option>
+              <option value="ssid">Ordenar: nome da rede (A→Z)</option>
+            </select>
+          </div>
+          <div style="overflow-x:auto;">
+            <table class="grupo-tabela" id="dados-tabela" data-exportar="redes-wifi">
+              <thead>
+                <tr>
+                  <td class="col-nome">SSID (Rede)</td>
+                  <td class="col-nome">BSSID (MAC)</td>
+                  <td class="col-nome">Segurança</td>
+                  <td class="col-nome">Senha</td>
+                  <td class="col-nome">Conexões</td>
+                  <td class="col-nome">Primeira conexão</td>
+                  <td class="col-nome">Última conexão</td>
+                  <td class="col-nome">Canal</td>
+                  <td class="col-nome">Sinal (dBm)</td>
+                  <td class="col-nome">Fabricante</td>
+                  <td class="col-nome">Oculta</td>
+                  <td class="col-nome">Fonte</td>
+                  <td class="col-nome">Entidade</td>
+                </tr>
+              </thead>
+              <tbody id="dados-corpo"></tbody>
+            </table>
+          </div>
+          <p class="empty-hint" id="dados-vazio" style="display:none;">Nenhuma rede Wi-Fi encontrada.</p>
+        </div>
+        </div>
+
+      </div>
+    </main>
+  </div>
+
+</div>
+
+<script src="vendor/jquery-3.7.1.min.js"></script>
+<script src="js/utils/utils.js"></script>
+<script src="js/utils/icones.js"></script>
+<script src="js/utils/mapa_telas.js"></script>
+<script src="js/utils/toast.js"></script>
+<script src="js/utils/api.js"></script>
+<script src="js/utils/carregando.js"></script>
+<script src="js/utils/estados.js"></script>
+<script src="js/utils/estado_url.js"></script>
+<script src="js/utils/dialogo.js"></script>
+<script src="js/utils/theme.js"></script>
+<script src="js/utils/sidebar.js"></script>
+<script src="js/utils/auth.js"></script>
+<script src="js/utils/avisos_ia.js"></script>
+<script src="js/utils/entidades.js"></script>
+<script src="js/utils/exportar_excel.js"></script>
+<script src="js/utils/navegacao_inquerito.js"></script>
+<script src="js/utils/velocidade_midia.js"></script>
+<script src="js/utils/ufdr_dominio.js"></script>
+<script src="js/wifi.js"></script>
+<script src="js/utils/doc_trecho.js"></script>
+<script src="js/utils/evidencia_info.js"></script>
+<script src="js/utils/ia_flutuante.js"></script>
+</body>
+</html>

@@ -1,0 +1,1563 @@
+.chat-app {
+  display: flex;
+  height: 100vh;
+  background: var(--bg-page);
+  color: var(--text-primary);
+}
+
+.chat-app.has-topnav {
+  flex-direction: column;
+}
+
+.chat-app.has-topnav > .topnav {
+  flex-shrink: 0;
+  position: sticky;
+  top: 0;
+  z-index: 250;
+}
+
+/* Fluida em vez de 280px fixos, pelo mesmo motivo da lista do WhatsApp: em tela estreita a
+ * coluna de conversas comia a resposta da IA, que é o conteúdo. Abaixo de 860px vira painel
+ * único (ver o @media no fim do arquivo). */
+.chat-sidebar {
+  width: clamp(220px, 22vw, 280px);
+  flex-shrink: 0;
+  border-right: 1px solid var(--border);
+  display: flex;
+  flex-direction: column;
+}
+
+/* Volta da conversa para a lista no painel único; flutua sobre o cabeçalho porque
+ * #chat-main-header é reescrito com .text(titulo) a cada conversa aberta. */
+.chat-voltar {
+  display: none;
+  position: absolute;
+  top: 9px;
+  left: 8px;
+  z-index: 30;
+  align-items: center;
+  justify-content: center;
+  width: 30px;
+  height: 30px;
+  border: none;
+  border-radius: 50%;
+  background: transparent;
+  color: var(--text-primary);
+  font-size: 19px;
+  line-height: 1;
+  cursor: pointer;
+}
+
+.chat-voltar:hover {
+  background: var(--bg-hover);
+}
+
+.chat-sidebar-header {
+  padding: 16px;
+  border-bottom: 1px solid var(--border);
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.chat-sidebar-header h1 {
+  margin: 0;
+  font-size: 15px;
+  font-weight: 600;
+}
+
+/* Filtra a lista por quem criou a conversa; só aparece quando há mais de um criador (js/ia.js). */
+.chat-filtro-criador {
+  width: 100%;
+  padding: 7px 10px;
+  border-radius: 8px;
+  border: 1px solid var(--border);
+  background: var(--bg-page);
+  color: var(--text-primary);
+  font-size: 13px;
+  outline: none;
+}
+
+.chat-filtro-criador:focus {
+  border-color: var(--accent);
+  box-shadow: var(--focus-ring);
+}
+
+.chat-conversas {
+  flex: 1;
+  overflow-y: auto;
+}
+
+/* Sem JavaScript a tela não tem o que mostrar — o aviso ocupa o lugar da conversa. */
+.chat-noscript {
+  margin: 0;
+  padding: 16px 20px;
+  font-size: 14px;
+  color: var(--danger);
+  background: var(--bg-card);
+  border-bottom: 1px solid var(--border);
+}
+
+.chat-conversas-vazio {
+  margin: 0;
+  padding: 16px;
+  font-size: 13px;
+  color: var(--text-muted);
+}
+
+.chat-conversa-item {
+  position: relative;
+  border-bottom: 1px solid var(--border);
+}
+
+.chat-conversa-item:hover {
+  background: var(--bg-hover);
+}
+
+.chat-conversa-apagar {
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  width: 22px;
+  height: 22px;
+  border: none;
+  border-radius: 6px;
+  background: transparent;
+  color: var(--text-muted);
+  font-size: 15px;
+  line-height: 1;
+  cursor: pointer;
+  display: none;
+}
+
+.chat-conversa-item:hover .chat-conversa-apagar {
+  display: block;
+}
+
+.chat-conversa-apagar:hover {
+  background: var(--bg-page);
+  color: var(--danger);
+}
+
+.chat-conversa-item.active {
+  background: var(--bg-hover);
+  border-left: 3px solid var(--accent);
+}
+
+.chat-conversa-nome {
+  font-size: 14px;
+  font-weight: 600;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.chat-conversa-meta {
+  font-size: 12px;
+  color: var(--text-secondary);
+}
+
+.chat-main {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  position: relative; /* âncora da trilha + botão Navegar (js/navegacao_inquerito.js) */
+}
+
+/* padding-right reserva o canto onde a trilha + o botão "Navegar" flutuam (absolutos, injetados
+ * por js/navegacao_inquerito.js); sem ele o título da conversa passava por baixo dos dois.
+ * Abaixo de 1100px a trilha some (regra em style.css) e sobra só o botão. */
+.chat-main-header {
+  padding: 14px var(--nav-flutuante-reserva, 410px) 14px 20px;
+  border-bottom: 1px solid var(--border);
+  font-weight: 600;
+  font-size: 14px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+@media (max-width: 1100px) {
+  .chat-main-header {
+    --nav-flutuante-reserva: 130px;
+  }
+}
+
+.chat-escopo-banner {
+  padding: 8px 20px;
+  font-size: 12.5px;
+  line-height: 1.4;
+  color: var(--accent-contrast, #fff);
+  background: var(--accent-solid);
+  border-bottom: 1px solid var(--border);
+}
+
+/* Barra de ações da conversa (exportar/duplicar/compartilhar + resumo de cobertura): fica
+ * entre o banner de escopo e as mensagens; escondida sem conversa aberta (js/ia.js). */
+.chat-toolbar {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+  padding: 8px 20px;
+  border-bottom: 1px solid var(--border);
+  background: var(--bg-card);
+  font-size: 12.5px;
+}
+
+.chat-toolbar.hidden {
+  display: none;
+}
+
+.chat-toolbar-espaco {
+  flex: 1;
+}
+
+.chat-toolbar-btn {
+  padding: 5px 11px;
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  background: var(--bg-page);
+  color: var(--text-secondary);
+  font-size: 12.5px;
+  font-family: inherit;
+  line-height: 1.2;
+  cursor: pointer;
+  white-space: nowrap;
+}
+
+.chat-toolbar-btn:hover:not(:disabled) {
+  border-color: var(--accent);
+  color: var(--text-primary);
+}
+
+.chat-toolbar-btn:disabled {
+  opacity: 0.55;
+  cursor: default;
+}
+
+.chat-cobertura-resumo {
+  color: var(--text-muted);
+  font-size: 12.5px;
+  white-space: nowrap;
+}
+
+.chat-cobertura-resumo.com-lastro {
+  color: var(--text-secondary);
+}
+
+.chat-cobertura-resumo.sem-lastro {
+  color: var(--warning);
+}
+
+/* Linha de ações no pé da bolha da IA: avaliação + copiar + lastro de evidências. */
+.chat-bolha-acoes {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex-wrap: wrap;
+  margin-top: 8px;
+  padding-top: 6px;
+  border-top: 1px solid var(--border);
+}
+
+.chat-feedback-btn,
+.chat-copiar-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 2px 8px;
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  background: transparent;
+  color: var(--text-muted);
+  font-size: 11.5px;
+  font-family: inherit;
+  line-height: 1.4;
+  cursor: pointer;
+}
+
+.chat-feedback-btn:hover,
+.chat-copiar-btn:hover {
+  border-color: var(--accent);
+  color: var(--text-primary);
+}
+
+.chat-feedback-btn.ativo {
+  border-color: var(--accent);
+  color: var(--text-primary);
+  background: var(--bg-hover);
+}
+
+.chat-feedback-conta {
+  font-variant-numeric: tabular-nums;
+  min-width: 1em;
+  text-align: center;
+}
+
+.chat-cobertura {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  margin-left: auto;
+  font-size: 11.5px;
+  color: var(--text-muted);
+  white-space: nowrap;
+}
+
+.chat-cobertura.com-lastro {
+  color: var(--text-secondary);
+}
+
+.chat-cobertura.sem-lastro {
+  color: var(--warning);
+}
+
+/* Impressão/PDF: só a conversa importa — esconde lista, painel de fontes e campo. */
+@media print {
+  .chat-sidebar,
+  .chat-fontes,
+  .chat-fontes-fundo,
+  .chat-form,
+  .chat-fontes-toggle,
+  .chat-toolbar,
+  .chat-cancelar-btn,
+  .chat-bolha-acoes,
+  .chat-erro-retry,
+  .chat-digitando,
+  .chat-ir-fim,
+  .chat-voltar,
+  .chat-noscript,
+  .extracao-nav-container {
+    display: none !important;
+  }
+
+  .chat-app {
+    height: auto;
+    display: block;
+  }
+
+  .chat-main {
+    display: flex !important;
+  }
+
+  .chat-mensagens {
+    overflow: visible;
+  }
+
+  .chat-bolha {
+    max-width: 100%;
+    break-inside: avoid;
+  }
+}
+
+.chat-mensagens {
+  flex: 1;
+  overflow-y: auto;
+  padding: 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.chat-linha {
+  display: flex;
+}
+
+.chat-linha.user {
+  justify-content: flex-end;
+}
+
+.chat-bolha {
+  max-width: 70%;
+  padding: 10px 14px;
+  border-radius: 12px;
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  font-size: 14px;
+  line-height: 1.5;
+  white-space: pre-wrap;
+}
+
+.chat-linha.user .chat-bolha {
+  background: var(--accent-solid);
+  color: var(--accent-contrast);
+  border-color: transparent;
+}
+
+.chat-bolha-meta {
+  font-size: 10px;
+  opacity: 0.6;
+  margin-top: 6px;
+}
+
+/* Aviso de contexto quase cheio, dentro da própria bolha da resposta (ver avisoContexto em
+   js/ia.js): a pergunta daquele turno já ocupou 80% ou mais da janela do modelo. */
+.chat-bolha-aviso {
+  margin-top: 8px;
+  padding: 6px 10px;
+  font-size: 11px;
+  line-height: 1.45;
+  color: var(--warning);
+  background: color-mix(in srgb, var(--warning) 14%, transparent);
+  border-left: 3px solid var(--warning);
+  border-radius: 6px;
+}
+
+.chat-vazio {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--text-muted);
+  font-size: 13px;
+  text-align: center;
+  padding: 20px;
+}
+
+.chat-form {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  padding: 16px 20px;
+  border-top: 1px solid var(--border);
+}
+
+.chat-conteudo-toggle {
+  flex: 3 1 0;
+  min-width: 0;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 13px;
+  color: var(--text-secondary);
+  cursor: pointer;
+  user-select: none;
+}
+
+.chat-conteudo-toggle input {
+  flex-shrink: 0;
+  width: 15px;
+  height: 15px;
+  accent-color: var(--accent);
+  cursor: pointer;
+}
+
+.chat-conteudo-toggle-rotulo {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
+  cursor: pointer;
+}
+
+/* "?" do modo "não enviar + exibir prompt": a explicação estava só no title, que não chega a
+   quem usa teclado, toque ou leitor de tela. Aqui ela é texto de verdade, num details fechado. */
+.chat-ajuda {
+  position: relative;
+  flex: 0 0 auto;
+}
+
+.chat-ajuda-resumo {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 18px;
+  height: 18px;
+  padding: 0;
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  font-size: 11px;
+  line-height: 1;
+  color: var(--text-muted);
+  cursor: pointer;
+  user-select: none;
+  list-style: none;
+}
+
+.chat-ajuda-resumo::-webkit-details-marker {
+  display: none;
+}
+
+.chat-ajuda-resumo:hover,
+.chat-ajuda[open] .chat-ajuda-resumo {
+  border-color: var(--accent);
+  color: var(--text-primary);
+}
+
+.chat-ajuda-corpo {
+  position: absolute;
+  bottom: calc(100% + 8px);
+  left: 0;
+  z-index: 40;
+  width: min(340px, 74vw);
+  margin: 0;
+  padding: 10px 12px;
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  box-shadow: var(--shadow-lg);
+  color: var(--text-secondary);
+  font-size: 12px;
+  line-height: 1.5;
+  cursor: auto;
+  user-select: text;
+}
+
+/* Botão "Fontes" do compositor — abre/fecha o painel lateral e, de relance, diz a quantas
+   fontes a pergunta está restrita. Na mesma linha do checkbox de exibir prompt. */
+.chat-fontes-toggle {
+  flex: 0 0 auto;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 5px 11px;
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  background: var(--bg-card);
+  color: var(--text-secondary);
+  font-size: 12.5px;
+  font-family: inherit;
+  line-height: 1.2;
+  cursor: pointer;
+}
+
+.chat-fontes-toggle:hover {
+  border-color: var(--accent);
+  color: var(--text-primary);
+}
+
+.chat-fontes-toggle svg {
+  width: 14px;
+  height: 14px;
+  flex-shrink: 0;
+}
+
+.chat-app.fontes-abertas .chat-fontes-toggle {
+  border-color: var(--accent);
+  color: var(--text-primary);
+}
+
+.chat-entrada {
+  flex: 1 1 100%;
+  min-width: 0;
+  display: flex;
+  gap: 10px;
+  align-items: flex-end;
+}
+
+.chat-input-wrap {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.chat-form textarea {
+  width: 100%;
+  resize: none;
+  border-radius: 8px;
+  border: 1px solid var(--border);
+  background: var(--bg-page);
+  color: var(--text-primary);
+  padding: 10px 12px;
+  font-size: 14px;
+  font-family: inherit;
+  line-height: 1.5;
+  outline: none;
+  min-height: 42px;
+  max-height: 160px;
+  overflow-y: hidden;
+  transition: border-color 0.15s ease, box-shadow 0.15s ease;
+}
+
+.chat-form textarea:focus {
+  border-color: var(--accent);
+  box-shadow: var(--focus-ring);
+}
+
+.chat-entrada-footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 0 2px;
+  font-size: 11.5px;
+  line-height: 1;
+  color: var(--text-muted);
+  user-select: none;
+}
+
+.chat-entrada-hint {
+  opacity: 0.85;
+  white-space: nowrap;
+}
+
+.chat-entrada-hint kbd {
+  font-family: inherit;
+  font-size: 11px;
+  padding: 0 4px;
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  color: var(--text-secondary);
+}
+
+.chat-contador {
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+  color: var(--text-muted);
+  transition: color 0.15s ease;
+}
+
+.chat-contador.alerta {
+  color: var(--warning);
+}
+
+.chat-contador.limite {
+  color: var(--danger);
+  font-weight: 600;
+}
+
+@media (max-width: 600px) {
+  .chat-entrada-hint {
+    display: none;
+  }
+  .chat-entrada-footer {
+    justify-content: flex-end;
+  }
+}
+
+.chat-digitando {
+  font-size: 12px;
+  color: var(--text-muted);
+  padding: 0 20px 8px;
+}
+
+/* Botão de cancelar o turno em andamento (aparece acima do campo enquanto a IA responde) */
+.chat-cancelar-btn {
+  display: block;
+  margin: 0 20px 8px;
+  padding: 5px 12px;
+  font-size: 12px;
+  color: var(--danger);
+  background: transparent;
+  border: 1px solid var(--danger);
+  border-radius: 6px;
+  cursor: pointer;
+}
+
+.chat-cancelar-btn:hover:not(:disabled) {
+  background: var(--danger-solid, var(--danger));
+  color: #fff;
+}
+
+.chat-cancelar-btn:disabled {
+  opacity: 0.6;
+  cursor: default;
+}
+
+.chat-cancelado {
+  font-size: 12px;
+  color: var(--text-muted);
+  font-style: italic;
+  padding: 4px 20px 8px;
+}
+
+/* ---------- Markdown nas respostas da IA ---------- */
+
+.chat-md {
+  white-space: normal; /* a bolha usa pre-wrap (bom pra mensagem do usuário), aqui a estrutura já vem do HTML */
+}
+
+.chat-md .chat-md-titulo {
+  font-weight: 700;
+  margin: 8px 0 4px;
+}
+
+.chat-md .chat-md-espaco {
+  height: 8px;
+}
+
+.chat-md ul {
+  margin: 4px 0;
+  padding-left: 20px;
+}
+
+.chat-md li {
+  margin: 2px 0;
+}
+
+.chat-md code {
+  background: var(--bg-hover);
+  border-radius: 4px;
+  padding: 1px 5px;
+  font-size: 13px;
+}
+
+/* .chat-ref / .chat-ref-nome (a pastilha de citação da IA) moram em css/style.css: quem as
+   monta é js/utils/doc_trecho.js, usado também fora do chat — o resumo noturno do inquérito
+   (js/investigacao.js, js/inquerito_orbit.js) não carrega esta folha. */
+
+.chat-md pre {
+  background: var(--bg-page);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 10px 12px;
+  overflow-x: auto;
+  margin: 8px 0;
+}
+
+.chat-md pre code {
+  background: transparent;
+  padding: 0;
+}
+
+.chat-md-tabela {
+  overflow-x: auto;
+  margin: 8px 0;
+}
+
+.chat-md-tabela table {
+  border-collapse: collapse;
+  font-size: 13px;
+  width: 100%;
+}
+
+.chat-md-tabela th,
+.chat-md-tabela td {
+  border: 1px solid var(--border);
+  padding: 6px 10px;
+  text-align: left;
+  vertical-align: top;
+}
+
+.chat-md-tabela th {
+  background: var(--bg-hover);
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+/* ---------- Auditoria de pensamento (js/utils/ia_raciocinio.js) ---------- */
+
+/* Bloco recolhido no pé da bolha da IA: o raciocínio do modelo (quando o provedor devolve) e as
+   ferramentas que ele consultou em cada rodada. Recolhido de propósito — o padrão é ler a
+   resposta; a trilha é para quem vai citar o resultado num relatório. <details> nativo, sem JS
+   de toggle, mesmo padrão dos filtros da mesa (web/mesa_inquerito.html). */
+.chat-raciocinio {
+  margin-top: 10px;
+  border-top: 1px solid var(--border);
+  padding-top: 6px;
+  font-size: 12px;
+}
+
+.chat-raciocinio > summary {
+  cursor: pointer;
+  color: var(--text-muted);
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 2px 0;
+  user-select: none;
+  /* a seta padrão do <details> varia entre navegadores e desalinha com o flex; usamos a nossa */
+  list-style: none;
+}
+
+.chat-raciocinio > summary::-webkit-details-marker {
+  display: none;
+}
+
+.chat-raciocinio > summary:hover {
+  color: var(--text-secondary);
+}
+
+.chat-raciocinio-seta {
+  display: inline-block;
+  font-size: 11px;
+  line-height: 1;
+  /* só transform: transição em propriedade de cor atrapalha a repintura dos tokens na troca
+     de tema (ver css/style.css, .trocando-tema) */
+  transition: transform 120ms ease;
+}
+
+.chat-raciocinio[open] > summary .chat-raciocinio-seta {
+  transform: rotate(90deg);
+}
+
+.chat-raciocinio-corpo {
+  margin-top: 6px;
+  padding: 8px 10px;
+  background: var(--bg-page);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  max-height: 320px;
+  overflow-y: auto;
+}
+
+.chat-raciocinio-rodada + .chat-raciocinio-rodada {
+  margin-top: 10px;
+  padding-top: 10px;
+  border-top: 1px dashed var(--border);
+}
+
+.chat-raciocinio-rotulo {
+  font-weight: 600;
+  color: var(--text-muted);
+  margin-bottom: 4px;
+}
+
+.chat-raciocinio-texto {
+  white-space: pre-wrap;
+  color: var(--text-secondary);
+  line-height: 1.5;
+}
+
+.chat-raciocinio-tools {
+  margin: 6px 0 0;
+  padding-left: 16px;
+}
+
+.chat-raciocinio-tools li {
+  margin: 3px 0;
+}
+
+.chat-raciocinio-tools code {
+  background: var(--bg-hover);
+  border-radius: 4px;
+  padding: 1px 5px;
+}
+
+/* o argumento pode ser um JSON longo: rola na horizontal em vez de esticar a bolha */
+.chat-raciocinio-args {
+  display: block;
+  color: var(--text-muted);
+  white-space: pre;
+  overflow-x: auto;
+  margin-top: 2px;
+}
+
+/* ---------- Sugestões de pergunta (conversa vazia) ---------- */
+
+.chat-sugestoes {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  margin: auto;
+  max-width: 560px;
+}
+
+.chat-sugestoes .chat-vazio {
+  flex: none;
+  padding: 0 0 8px;
+}
+
+.chat-sugestao {
+  width: 100%;
+  text-align: left;
+  padding: 10px 14px;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  background: var(--bg-card);
+  color: var(--text-primary);
+  font-size: 13px;
+  font-family: inherit;
+  cursor: pointer;
+}
+
+.chat-sugestao:hover {
+  border-color: var(--accent);
+  background: var(--bg-hover);
+}
+
+/* ---------- Painel de fontes ("considerar apenas") ----------
+   Terceira coluna do .chat-app, no estilo do painel de fontes do NotebookLM: uma lista com caixa
+   de seleção por item (aparelhos, RIFs, extratos do SIMBA, IPLs, documentos) no lugar do antigo
+   <select multiple>. A visibilidade é a classe .fontes-abertas no .chat-app (não .hidden, que é
+   !important em style.css e não daria pra reverter aqui); js/ia.js só a põe quando há conversa
+   aberta, sem escopo próprio, e o inventário do inquérito trouxe pelo menos um item.
+   Quando o topnav é injetado (js/utils/sidebar.js), os três filhos vão para um .wa-content-wrapper
+   flex — a coluna continua valendo. */
+.chat-fontes {
+  display: none;
+  width: clamp(258px, 22vw, 340px);
+  flex-shrink: 0;
+  min-height: 0;
+  flex-direction: column;
+  border-left: 1px solid var(--border);
+  background: var(--bg-sidebar);
+}
+
+.chat-app.fontes-abertas .chat-fontes {
+  display: flex;
+}
+
+.chat-fontes-topo {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  padding: 14px 14px 10px;
+}
+
+.chat-fontes-titulo {
+  margin: 0;
+  font-size: 15px;
+  font-weight: 600;
+}
+
+.chat-fontes-fechar {
+  width: 26px;
+  height: 26px;
+  flex-shrink: 0;
+  border: none;
+  border-radius: 6px;
+  background: transparent;
+  color: var(--text-muted);
+  font-size: 14px;
+  line-height: 1;
+  cursor: pointer;
+}
+
+.chat-fontes-fechar:hover {
+  background: var(--bg-hover);
+  color: var(--text-primary);
+}
+
+.chat-fontes-busca {
+  padding: 0 14px 8px;
+}
+
+.chat-fontes-busca input {
+  width: 100%;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: var(--bg-page);
+  color: var(--text-primary);
+  font-family: inherit;
+  font-size: 13px;
+  padding: 7px 10px;
+  outline: none;
+}
+
+.chat-fontes-busca input:focus {
+  border-color: var(--accent);
+  box-shadow: var(--focus-ring);
+}
+
+/* Linha de fonte: ícone + nome + caixa à direita (o rótulo inteiro é clicável, por ser <label>) */
+.chat-fonte {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  padding: 7px 14px;
+  font-size: 13px;
+  line-height: 1.3;
+  color: var(--text-primary);
+  cursor: pointer;
+  user-select: none;
+}
+
+.chat-fonte:hover {
+  background: var(--bg-hover);
+}
+
+.chat-fonte-todas {
+  font-weight: 600;
+  border-top: 1px solid var(--border);
+  border-bottom: 1px solid var(--border);
+  padding-top: 9px;
+  padding-bottom: 9px;
+}
+
+.chat-fonte-icone {
+  display: inline-flex;
+  flex-shrink: 0;
+  color: var(--text-muted);
+}
+
+.chat-fonte-icone svg {
+  width: 15px;
+  height: 15px;
+}
+
+.chat-fonte-nome {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  overflow-wrap: anywhere;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+}
+
+.chat-fonte input[type="checkbox"] {
+  flex-shrink: 0;
+  width: 15px;
+  height: 15px;
+  margin: 0;
+  accent-color: var(--accent);
+  cursor: pointer;
+}
+
+.chat-fontes-lista {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  padding: 6px 0 10px;
+}
+
+.chat-fontes-grupo + .chat-fontes-grupo {
+  margin-top: 6px;
+}
+
+.chat-fontes-grupo-cab {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 14px;
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.4px;
+  text-transform: uppercase;
+  color: var(--text-secondary);
+  cursor: pointer;
+  user-select: none;
+}
+
+.chat-fontes-grupo-cab:hover {
+  color: var(--text-primary);
+}
+
+.chat-fontes-grupo-nome {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.chat-fontes-grupo-qtd {
+  flex-shrink: 0;
+  font-weight: 400;
+  letter-spacing: 0;
+  color: var(--text-muted);
+  font-variant-numeric: tabular-nums;
+}
+
+.chat-fontes-grupo-cab input[type="checkbox"] {
+  flex-shrink: 0;
+  width: 14px;
+  height: 14px;
+  margin: 0;
+  accent-color: var(--accent);
+  cursor: pointer;
+}
+
+/* Blocos de subgrupo (só em grupos com item demais — ver LIMIAR_SUBGRUPOS_FONTES em js/ia.js):
+ * nascem recolhidos e seguem o mesmo vocabulário do cabeçalho de grupo, com recuo. */
+.chat-fontes-subgrupo-cab {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 14px 4px 24px;
+  font-size: 11.5px;
+  color: var(--text-secondary);
+  user-select: none;
+}
+
+.chat-fontes-subgrupo-toggle {
+  flex-shrink: 0;
+  width: 18px;
+  height: 18px;
+  padding: 0;
+  font-size: 10px;
+  line-height: 1;
+  color: var(--text-muted);
+  background: transparent;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+}
+
+.chat-fontes-subgrupo-toggle:hover {
+  color: var(--text-primary);
+  background: rgba(125, 125, 125, .15);
+}
+
+.chat-fontes-subgrupo-nome {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-weight: 600;
+}
+
+.chat-fontes-subgrupo-qtd {
+  flex-shrink: 0;
+  font-weight: 400;
+  color: var(--text-muted);
+  font-variant-numeric: tabular-nums;
+}
+
+.chat-fontes-subgrupo-cab input[type="checkbox"] {
+  flex-shrink: 0;
+  width: 14px;
+  height: 14px;
+  margin: 0;
+  accent-color: var(--accent);
+  cursor: pointer;
+}
+
+.chat-fontes-subgrupo-itens {
+  padding-left: 12px;
+}
+
+.chat-fontes-vazio {
+  padding: 16px 14px;
+  font-size: 12.5px;
+  color: var(--text-muted);
+}
+
+.chat-fontes-rodape {
+  padding: 10px 14px;
+  border-top: 1px solid var(--border);
+  font-size: 12px;
+  line-height: 1.4;
+  color: var(--text-muted);
+}
+
+.chat-fontes-rodape.alerta {
+  color: var(--warning);
+}
+
+.chat-fontes-fundo {
+  display: none;
+}
+
+/* Abaixo de 1000px as três colunas não cabem: o painel vira gaveta sobre a conversa, com fundo
+   clicável para fechar (mesma ideia da gaveta do nó em css/mesa.css). */
+@media (max-width: 1000px) {
+  .chat-fontes {
+    position: fixed;
+    top: 0;
+    right: 0;
+    bottom: 0;
+    z-index: 320;
+    width: min(340px, 88vw);
+    box-shadow: var(--shadow-lg);
+  }
+
+  .chat-app.fontes-abertas .chat-fontes-fundo {
+    display: block;
+    position: fixed;
+    inset: 0;
+    z-index: 310;
+    background: var(--overlay);
+  }
+}
+
+/* ---------- Painel único (tela estreita) ----------
+   Mesma regra da tela de WhatsApp: abaixo de 860px a lista de conversas e a conversa não cabem
+   lado a lado, então a tela mostra uma de cada vez. A classe .conversa-aberta é posta por
+   js/ia.js ao abrir uma conversa, e tirada pelo botão de voltar. */
+@media (max-width: 860px) {
+  .chat-sidebar {
+    width: 100%;
+    border-right: none;
+  }
+
+  .chat-main {
+    display: none;
+  }
+
+  .chat-app.conversa-aberta .chat-sidebar {
+    display: none;
+  }
+
+  .chat-app.conversa-aberta .chat-main {
+    display: flex;
+  }
+
+  .chat-voltar {
+    display: inline-flex;
+  }
+
+  /* abre espaço à esquerda para o botão de voltar (a reserva da direita vem da regra de 1100px) */
+  .chat-main-header {
+    padding-left: 44px;
+  }
+
+  .chat-bolha {
+    max-width: 88%;
+  }
+}
+
+/* ---------- Melhorias ia.html (A/B) ---------- */
+
+/* O que some da tela usa a classe utilitária .hidden (css/style.css) em todo o chat — a antiga
+   .is-oculto queria dizer o mesmo e vivia aos dois no mesmo arquivo. */
+
+.chat-nav-flutuante {
+  position: absolute;
+  top: 12px;
+  right: 16px;
+  z-index: 30;
+}
+
+.chat-nova-btn {
+  width: 100%;
+  justify-content: center;
+}
+
+.chat-busca {
+  width: 100%;
+  padding: 7px 10px;
+  border-radius: 8px;
+  border: 1px solid var(--border);
+  background: var(--bg-page);
+  color: var(--text-primary);
+  font-size: 13px;
+  font-family: inherit;
+  outline: none;
+}
+
+.chat-busca:focus {
+  border-color: var(--accent);
+  box-shadow: var(--focus-ring);
+}
+
+.chat-busca::placeholder {
+  color: var(--text-muted);
+}
+
+.chat-voltar svg {
+  width: 18px;
+  height: 18px;
+}
+
+.chat-fontes-fechar svg {
+  width: 14px;
+  height: 14px;
+}
+
+/* Ações por conversa (renomear + apagar): aparecem no hover e sempre no foco/teclado */
+.chat-conversa-acoes {
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  display: none;
+  gap: 4px;
+}
+
+/* O item é só o contêiner da linha e o que abre a conversa é o botão abaixo: renomear/apagar são
+   botões, e botão dentro de botão não existe em HTML — daí o item ser um <div> com o botão "abrir"
+   e as ações lado a lado. O padding é do botão, para o alvo do clique continuar sendo a linha
+   inteira (inclusive as laterais). */
+.chat-conversa-abrir {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  width: 100%;
+  padding: 12px 34px 12px 16px;
+  margin: 0;
+  border: none;
+  background: transparent;
+  color: inherit;
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+
+/* o anel de foco vem da regra global .chat-app :focus-visible; como as ações agora são botões
+   irmãos do botão "abrir", é o :focus-within do item que as revela pelo teclado. */
+.chat-conversa-item:hover .chat-conversa-acoes,
+.chat-conversa-item:focus-within .chat-conversa-acoes {
+  display: flex;
+}
+
+.chat-conversa-acao {
+  width: 24px;
+  height: 24px;
+  border: none;
+  border-radius: 6px;
+  background: transparent;
+  color: var(--text-muted);
+  font-size: 13px;
+  line-height: 1;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.chat-conversa-acao:hover {
+  background: var(--bg-page);
+  color: var(--text-primary);
+}
+
+.chat-conversa-acao-perigo:hover {
+  color: var(--danger);
+}
+
+/* Resumo agregado da conversa (era style inline em js/ia.js) */
+.chat-resumo {
+  padding: 14px 16px;
+  font-size: 13px;
+  line-height: 1.6;
+  color: var(--text-primary);
+  background: var(--bg-card);
+  border: 1px solid color-mix(in srgb, var(--accent) 30%, var(--border));
+  border-left: 4px solid var(--accent);
+  border-radius: 8px;
+  margin-bottom: 16px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+}
+
+.chat-resumo-titulo {
+  font-size: 14px;
+  display: block;
+  margin-bottom: 6px;
+}
+
+/* Erro com retry */
+.chat-erro {
+  border-color: var(--danger);
+}
+
+.chat-erro-retry {
+  margin-top: 8px;
+  padding: 5px 12px;
+  border: 1px solid var(--danger);
+  border-radius: 999px;
+  background: transparent;
+  color: var(--danger);
+  font-size: 12px;
+  font-family: inherit;
+  cursor: pointer;
+}
+
+.chat-erro-retry:hover {
+  background: var(--danger-solid, var(--danger));
+  color: #fff;
+}
+
+/* Botão flutuante voltar ao fim */
+.chat-ir-fim {
+  position: sticky;
+  bottom: 12px;
+  align-self: center;
+  z-index: 20;
+  margin-top: -40px;
+  padding: 7px 14px;
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  background: var(--bg-card);
+  color: var(--text-primary);
+  font-size: 12.5px;
+  font-family: inherit;
+  cursor: pointer;
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.15);
+}
+
+.chat-ir-fim:hover {
+  border-color: var(--accent);
+}
+
+.chat-ir-fim-novas {
+  display: inline-block;
+  min-width: 20px;
+  margin-left: 6px;
+  padding: 1px 6px;
+  border-radius: 999px;
+  background: var(--accent-solid);
+  color: var(--accent-contrast, #fff);
+  font-size: 11px;
+  font-weight: 700;
+  text-align: center;
+}
+
+/* Toolbar: em tela larga os botões ficam em linha (summary escondido) */
+.chat-toolbar-menu {
+  display: inline-flex;
+  align-items: center;
+}
+
+.chat-toolbar-menu-resumo {
+  display: none;
+  list-style: none;
+}
+
+.chat-toolbar-menu-resumo::-webkit-details-marker {
+  display: none;
+}
+
+.chat-toolbar-menu-corpo {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+@media (max-width: 720px) {
+  .chat-toolbar-menu {
+    display: block;
+    position: relative;
+  }
+
+  .chat-toolbar-menu-resumo {
+    display: inline-flex;
+  }
+
+  .chat-toolbar-menu-corpo {
+    display: none;
+    position: absolute;
+    right: 0;
+    top: calc(100% + 6px);
+    z-index: 40;
+    flex-direction: column;
+    gap: 6px;
+    min-width: 200px;
+    padding: 10px;
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    background: var(--bg-card);
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+  }
+
+  .chat-toolbar-menu[open] .chat-toolbar-menu-corpo {
+    display: flex;
+  }
+
+  .chat-toolbar-menu-corpo .chat-toolbar-btn {
+    text-align: left;
+  }
+}
+
+/* Empty-state rico */
+.chat-vazio-titulo {
+  margin: 0 0 6px;
+  font-size: 13px;
+  color: var(--text-secondary);
+}
+
+.chat-vazio-dica {
+  margin: 0;
+  font-size: 12px;
+  color: var(--text-muted);
+}
+
+.chat-vazio-dica code {
+  background: var(--bg-hover);
+  border-radius: 4px;
+  padding: 1px 5px;
+}
+
+/* Foco visível por teclado */
+.chat-app :focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .chat-app *,
+  .chat-app *::before,
+  .chat-app *::after {
+    animation-duration: 0.01ms !important;
+    transition-duration: 0.01ms !important;
+  }
+}
+
+/* ---- cartão de progresso do OCR disparado pela IA (co_jobs da resposta, migração 0045) ---- */
+.chat-jobs {
+  margin-top: 10px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.chat-job-ocr {
+  border: 1px solid var(--border);
+  border-left: 3px solid var(--accent);
+  border-radius: 8px;
+  background: var(--bg-card);
+  padding: 10px 12px;
+  font-size: 13px;
+}
+
+.chat-job-ocr.concluido { border-left-color: var(--success, #2da44e); }
+.chat-job-ocr.cancelado { border-left-color: var(--text-muted); }
+.chat-job-ocr.erro { border-left-color: var(--danger); }
+.chat-job-ocr.aguardando { border-left-color: var(--warning, #d4a72c); }
+
+.job-ocr-topo {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 8px;
+}
+
+.job-ocr-icone { line-height: 1; }
+
+.job-ocr-rotulo {
+  flex: 1;
+  color: var(--text-secondary);
+  font-weight: 600;
+  font-size: 12px;
+}
+
+.job-ocr-cancelar {
+  border: 1px solid var(--border);
+  background: transparent;
+  color: var(--danger);
+  border-radius: 6px;
+  padding: 2px 8px;
+  font-size: 12px;
+  cursor: pointer;
+}
+
+.job-ocr-cancelar:hover { background: var(--bg-hover); }
+.job-ocr-cancelar:disabled { color: var(--text-muted); cursor: default; }
+
+.job-ocr-barra {
+  height: 6px;
+  border-radius: 3px;
+  background: var(--bg-hover);
+  overflow: hidden;
+}
+
+.job-ocr-barra-preench {
+  height: 100%;
+  width: 0;
+  background: var(--accent);
+  transition: width 250ms ease;
+}
+
+.chat-job-ocr.concluido .job-ocr-barra-preench { background: var(--success, #2da44e); }
+.chat-job-ocr.erro .job-ocr-barra-preench { background: var(--danger); }
+
+.job-ocr-rodape {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-top: 6px;
+  color: var(--text-muted);
+}
+
+.job-ocr-texto { flex: 1; }
+
+.job-ocr-link {
+  color: var(--accent);
+  text-decoration: none;
+  white-space: nowrap;
+}
+
+.job-ocr-link:hover { text-decoration: underline; }
+
+.job-ocr-pct {
+  min-width: 28px;
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+}

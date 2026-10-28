@@ -1,0 +1,41 @@
+# Mestra + worker de Locust na MESA REDE do PolícIA (enxerga http://web direto, sem passar
+# pelo host). Sobe só para o teste:
+#   docker compose -f tests/carga/docker-compose.carga.yml --project-directory tests/carga up -d
+# Web UI: http://localhost:8089  (navegue até lá para escolher usuários/rampa e cenários)
+# Abaixo desce tudo: ... down
+# O credenciais.csv do seed é montado por cima — o seed roda no HOST (precisa ver a porta 8080).
+services:
+  mestre:
+    build: .
+    image: analyser-carga
+    container_name: analyser-carga-mestre
+    environment:
+      CENARIO: ${CENARIO:-A}
+      CREDENCIAIS: /carga/credenciais.csv
+    volumes:
+      - ./:/carga
+    command: >
+      locust -f locustfile.py --host http://web:80
+      --master --web-host 0.0.0.0
+    ports:
+      - "8089:8089"
+    networks: [mesa]
+
+  worker:
+    image: analyser-carga
+    container_name: analyser-carga-worker
+    environment:
+      CENARIO: ${CENARIO:-A}
+      CREDENCIAIS: /carga/credenciais.csv
+    volumes:
+      - ./:/carga
+    command: >
+      locust -f locustfile.py --host http://web:80 --worker
+    depends_on:
+      - mestre
+    networks: [mesa]
+
+networks:
+  mesa:
+    name: analyser_default
+    external: true

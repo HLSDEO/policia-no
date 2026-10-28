@@ -1,0 +1,4496 @@
+:root,
+:root[data-theme="dark"] {
+  --bg-page: #0f1117;
+  --bg-sidebar: #141821;
+  --bg-topbar: #141821e6;
+  --bg-card: #181c26;
+  --bg-hover: #222839;
+  --bg-elevated: #1f2432;
+  --border: #2e3546;
+  --border-strong: #3c4459;
+  --text-primary: #eceef3;
+  --text-secondary: #a3a9bc;
+  --text-muted: #8b93a8;
+  --accent: #8285ff;
+  --accent-hover: #9496ff;
+  --accent-contrast: #ffffff;
+  /* Fundo dos botões primários: o --accent clareado (bom como TEXTO no escuro) não passa em
+   * contraste com o branco do rótulo; estes tons mais fechados passam (>=4.5:1). */
+  --accent-solid: #6164ee;
+  --accent-solid-hover: #5a5dea;
+  --danger: #ff6b6b;
+  /* Mesmo motivo do --accent-solid: fundo com rótulo branco precisa de tom fechado. */
+  --danger-solid: #d63031;
+  --success: #3ddc97;
+  --warning: #fcc44d;
+  --shadow: 0 4px 12px rgba(0, 0, 0, 0.45), 0 16px 40px rgba(0, 0, 0, 0.6);
+  --shadow-lg: 0 8px 24px rgba(0, 0, 0, 0.5), 0 24px 48px rgba(0, 0, 0, 0.65);
+  --focus-ring: 0 0 0 3px rgba(130, 133, 255, 0.4);
+  --overlay: rgba(2, 4, 10, 0.66);
+  --link: #7cb3ff;
+  --link-hover: #9cc6ff;
+  /* Tintas de status (fundo do .badge + tinta do texto). Aqui reproduzem exatamente os
+   * rgba() que estavam escritos à mão nas regras .badge-*; existem como token porque no
+   * tema claro esses mesmos pares precisam de valores próprios pra passar em contraste. */
+  --tint-accent: rgba(130, 133, 255, 0.18);
+  --tint-accent-text: #a3a5ff;
+  --tint-success: rgba(61, 220, 151, 0.16);
+  --tint-success-text: #7ce8bd;
+  --tint-danger: rgba(255, 107, 107, 0.16);
+  --tint-danger-text: #ffb3b3;
+  --tint-warning: rgba(252, 196, 77, 0.16);
+  --tint-warning-text: #fdd978;
+  /* Verde-água do botão "Mesa de investigação" (ação primária do cartão): tom fechado porque o
+   * rótulo é branco — o teal claro (#2dd4bf) ficava em 2.3:1 com o branco. */
+  --mesa: #0e857c;
+  --mesa-hover: #0b6b63;
+  color-scheme: dark;
+}
+
+:root[data-theme="light"] {
+  --bg-page: #eef0f5;
+  --bg-sidebar: #e9ebfa;
+  --bg-topbar: #e9ebfacc;
+  --bg-card: #ffffff;
+  --bg-elevated: #ffffff;
+  /* No tema claro "hover" tem que ESCURECER. O valor antigo (#eef0f4) era mais claro que a
+   * própria página e que a topbar, então o realce de mouse — e todo botão secundário, que usa
+   * este mesmo token de fundo — praticamente sumia contra o fundo. */
+  --bg-hover: #dde2ec;
+  /* Borda antiga (#e4e6eb) dava 1.14:1 contra a pagina: cartão e fundo encostavam sem linha
+   * perceptível. Esta dá ~1.45:1 contra o branco, na faixa das bordas de tema claro que se veem. */
+  --border: #d0d6e2;
+  --border-strong: #b8bfd4;
+  --text-primary: #16181f;
+  --text-secondary: #5b6070;
+  --text-muted: #656b78;
+  --accent: #4f46e5;
+  --accent-hover: #4338ca;
+  --accent-contrast: #ffffff;
+  --accent-solid: #4f46e5;
+  --accent-solid-hover: #4338ca;
+  --danger: #dc2626;
+  --danger-solid: #dc2626;
+  --success: #15803d;
+  --warning: #b45309;
+  --shadow: 0 1px 2px rgba(16, 24, 40, 0.06), 0 8px 24px rgba(16, 24, 40, 0.10);
+  --shadow-lg: 0 8px 24px rgba(16, 24, 40, 0.12), 0 16px 40px rgba(16, 24, 40, 0.14);
+  --focus-ring: 0 0 0 3px rgba(79, 70, 229, 0.30);
+  --overlay: rgba(15, 23, 42, 0.42);
+  --link: #2563eb;
+  --link-hover: #1d4ed8;
+  /* Fundo pastel + tinta escura: no claro, o rgba(cor, 0.15) do tema escuro virava um lavado
+   * quase branco e o texto na cor cheia ficava em 2.9-4.0:1. */
+  --tint-accent: #e0e7ff;
+  --tint-accent-text: #4338ca;
+  --tint-success: #dcfce7;
+  --tint-success-text: #15803d;
+  --tint-danger: #fee2e2;
+  --tint-danger-text: #b91c1c;
+  --tint-warning: #fef3c7;
+  --tint-warning-text: #92400e;
+  --mesa: #0f766e;
+  --mesa-hover: #115e59;
+  color-scheme: light;
+}
+
+/* No tema claro o menu lateral e a topbar usam fundo azulado (#e9ebfa); os tokens de
+ * superfície/tinta são redefinidos só nessas regiões pra botões, hovers, bordas e textos
+ * acompanharem o tom — o resto da página continua com os neutros padrão.
+ *
+ * .topnav entra na lista porque js/utils/sidebar.js monta SEMPRE o menu horizontal (.topnav);
+ * sem ela o bloco inteiro não valia pra navegação nenhuma, e o menu azulado ficava herdando o
+ * --bg-hover neutro da página — um cinza mais claro que a própria barra, ou seja, hover invisível. */
+:root[data-theme="light"] .sidebar,
+:root[data-theme="light"] .topbar,
+:root[data-theme="light"] .topnav {
+  --bg-hover: #d5dbf3;
+  --border: #c3cae8;
+  --text-primary: #1f2250;
+  --text-secondary: #474d75;
+  --text-muted: #5f6690;
+}
+
+/* Tokens sem variação de tema (espaçamento, raio, tipografia, camadas) — usados pelos
+ * componentes compartilhados (toast, estados vazio/erro, skeleton). O restante do CSS
+ * continua com valores em px soltos; não é objetivo desta lista reescrevê-lo. */
+:root {
+  --esp-1: 4px;
+  --esp-2: 8px;
+  --esp-3: 12px;
+  --esp-4: 16px;
+  --esp-5: 24px;
+  --esp-6: 32px;
+  --raio-sm: 6px;
+  --raio-md: 8px;
+  --raio-lg: 12px;
+  --fs-xs: 12px;
+  --fs-sm: 13px;
+  --fs-md: 14px;
+  --fs-lg: 16px;
+  --z-modal: 100;
+  --z-toast: 300;
+}
+
+/* ---------- Scrollbar e seleção (dark confortável, sem flash branco) ---------- */
+html {
+  scrollbar-color: var(--border) var(--bg-page);
+  scrollbar-width: thin;
+}
+
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: var(--bg-page);
+}
+
+::-webkit-scrollbar-thumb {
+  background: var(--border);
+  border-radius: 999px;
+  border: 2px solid var(--bg-page);
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: var(--text-muted);
+}
+
+::-webkit-scrollbar-corner {
+  background: var(--bg-page);
+}
+
+::selection {
+  background: rgba(130, 133, 255, 0.35);
+  color: var(--text-primary);
+}
+
+:root[data-theme="light"] ::selection {
+  background: rgba(79, 70, 229, 0.22);
+}
+
+* {
+  box-sizing: border-box;
+}
+
+/* O Chromium não repinta `background: var(--token)` quando o token muda, se o elemento tem
+ * `transition: background-color` — botão, item de menu e cartão continuavam com o fundo do
+ * tema anterior até o próximo reload, o que fazia a troca pro claro parecer quebrada.
+ * js/utils/theme.js põe esta classe no <html> durante a troca e tira no quadro seguinte,
+ * então a mudança de tema é instantânea (que é o certo) e os hovers seguem animando. */
+.trocando-tema,
+.trocando-tema *,
+.trocando-tema *::before,
+.trocando-tema *::after {
+  transition: none !important;
+}
+
+html,
+body {
+  height: 100%;
+}
+
+body {
+  margin: 0;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+  background: var(--bg-page);
+  color: var(--text-primary);
+  -webkit-font-smoothing: antialiased;
+  transition: background-color 0.2s ease, color 0.2s ease;
+}
+
+a {
+  color: inherit;
+  text-decoration: none;
+}
+
+button {
+  font-family: inherit;
+}
+
+/* ---------- Acessibilidade: foco visível, skip-link, texto só-leitor-de-tela ---------- */
+/* Antes desta regra o CSS inteiro tinha só 3 seletores de :focus (campo de formulário e busca
+ * de investigação) — quem navega por teclado não via onde estava em nenhum botão, link ou item
+ * de menu. :focus-visible aplica o anel só quando o navegador acha que é navegação por teclado
+ * (não em todo clique de mouse), usando --focus-ring que já existia e quase não era usado. */
+a:focus-visible,
+button:focus-visible,
+.btn:focus-visible,
+.nav-item:focus-visible,
+input:focus-visible,
+select:focus-visible,
+textarea:focus-visible,
+[tabindex]:focus-visible {
+  outline: none;
+  box-shadow: var(--focus-ring);
+  border-radius: var(--raio-sm);
+}
+
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
+
+/* injetado por js/sidebar.js como primeiro elemento focável da página */
+.skip-link {
+  position: fixed;
+  top: -48px;
+  left: 8px;
+  z-index: var(--z-toast);
+  background: var(--accent-solid);
+  color: var(--accent-contrast);
+  padding: 10px 16px;
+  border-radius: var(--raio-md);
+  font-size: var(--fs-sm);
+  font-weight: 600;
+  transition: top 0.15s ease;
+}
+
+.skip-link:focus {
+  top: 8px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.001ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.001ms !important;
+  }
+}
+
+.app {
+  display: flex;
+  min-height: 100vh;
+}
+
+/* ---------- Sidebar ---------- */
+
+.sidebar {
+  width: 248px;
+  flex-shrink: 0;
+  background: var(--bg-sidebar);
+  border-right: 1px solid var(--border);
+  display: flex;
+  flex-direction: column;
+  padding: 20px 14px;
+  position: sticky;
+  top: 0;
+  height: 100vh;
+  overflow-y: auto;
+}
+
+.sidebar-brand {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 6px 10px 24px;
+}
+
+.brand-mark {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.brand-mark img {
+  height: 32px;
+  width: auto;
+  display: block;
+}
+
+.brand-name {
+  font-weight: 600;
+  font-size: 15px;
+}
+
+.brand-polic {
+  color: var(--text-primary);
+  font-weight: 600;
+  letter-spacing: 2px;
+}
+
+.brand-ia {
+  color: var(--accent);
+  font-weight: 900;
+  letter-spacing: 0px;
+}
+
+.sidebar-nav {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.nav-item {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 10px 12px;
+  border-radius: 8px;
+  color: var(--text-secondary);
+  font-size: 14px;
+  font-weight: 500;
+  transition: background-color 0.15s ease, color 0.15s ease;
+}
+
+.nav-item svg {
+  width: 18px;
+  height: 18px;
+  flex-shrink: 0;
+}
+
+.nav-item:hover {
+  background: var(--bg-hover);
+  color: var(--text-primary);
+}
+
+.nav-item.active {
+  background: var(--bg-hover);
+  color: var(--accent);
+}
+
+/* ---------- Submenu (grupo expansível, ex.: Administração) ---------- */
+
+.nav-group-toggle {
+  width: 100%;
+  border: none;
+  background: none;
+  font: inherit;
+  cursor: pointer;
+  text-align: left;
+}
+
+.nav-group-chevron {
+  width: 14px;
+  height: 14px;
+  flex-shrink: 0;
+  margin-left: auto;
+  transition: transform 0.15s ease;
+}
+
+.nav-group-open > .nav-group-toggle .nav-group-chevron {
+  transform: rotate(90deg);
+}
+
+.nav-group-children {
+  display: none;
+  flex-direction: column;
+  gap: 2px;
+  margin-top: 2px;
+}
+
+.nav-group-open > .nav-group-children {
+  display: flex;
+}
+
+.nav-subitem {
+  padding-left: 34px;
+}
+
+.sidebar-footer {
+  margin-top: auto;
+  padding-top: 14px;
+  border-top: 1px solid var(--border);
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+/* ---------- Reduzido (só ícones — telas de um caso específico) ---------- */
+
+.sidebar-reduced {
+  width: 72px;
+  padding: 20px 10px;
+}
+
+.sidebar-reduced .brand-name,
+.sidebar-reduced .nav-item span,
+.sidebar-reduced .auth-usuario-nome,
+.sidebar-reduced .auth-footer-btn span,
+.sidebar-reduced .theme-toggle span {
+  display: none;
+}
+
+.sidebar-reduced .sidebar-brand,
+.sidebar-reduced .nav-item,
+.sidebar-reduced .theme-toggle {
+  justify-content: center;
+}
+
+.sidebar-reduced .sidebar-brand {
+  padding-left: 0;
+  padding-right: 0;
+}
+
+.sidebar-reduced .nav-group-chevron {
+  display: none;
+}
+
+.sidebar-reduced .nav-subitem {
+  padding-left: 12px;
+}
+
+.sidebar-reduced .auth-usuario {
+  flex-direction: column;
+}
+
+.sidebar-reduced .auth-usuario-acoes {
+  flex-direction: column;
+}
+
+/* ---------- Main / topbar ---------- */
+
+.main {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+
+/* min-height em vez de height fixa: quando não cabe tudo numa linha (notebook 1366 com trilha
+ * longa, janela dividida ao lado do ePol), a barra quebra em duas linhas em vez de espremer o
+ * título/trilha até virar reticências. O padding vertical mantém os 64px na linha única. */
+.topbar {
+  min-height: 64px;
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 8px 16px;
+  padding: 8px 24px;
+  border-bottom: 1px solid var(--border);
+  background: var(--bg-topbar);
+  backdrop-filter: blur(8px);
+  position: sticky;
+  top: 0;
+  z-index: 10;
+}
+
+.page-title {
+  font-size: 16px;
+  font-weight: 600;
+  margin: 0;
+}
+
+.topbar-actions {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: 8px 16px;
+}
+
+/* ---------- Topnav horizontal (menu reduzido) ---------- */
+
+.topnav {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 8px 16px;
+  padding: 8px 24px;
+  border-bottom: 1px solid var(--border);
+  background: var(--bg-topbar);
+  backdrop-filter: blur(8px);
+  position: sticky;
+  top: 0;
+  z-index: 250;
+  min-height: 56px;
+}
+
+.topnav-left {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  flex-wrap: wrap;
+}
+
+.topnav-right {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  flex-wrap: wrap;
+}
+
+.topnav-item {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 12px;
+  border-radius: var(--raio-md);
+  color: var(--text-secondary);
+  font-size: var(--fs-sm);
+  font-weight: 500;
+  transition: background-color 0.15s ease, color 0.15s ease;
+  white-space: nowrap;
+}
+
+.topnav-item svg {
+  width: 18px;
+  height: 18px;
+  flex-shrink: 0;
+}
+
+.topnav-item:hover {
+  background: var(--bg-hover);
+  color: var(--text-primary);
+}
+
+.topnav-item.active {
+  background: var(--bg-hover);
+  color: var(--accent);
+}
+
+/* Inquérito aberto (js/utils/sidebar.js) — item do menu que só existe quando a URL traz
+ * ?inquerito=. Tinta de destaque pra ler como "o contexto em que estou", e não como mais uma
+ * seção fixa do menu; o max-width corta com reticências o número muito longo, em vez de
+ * empurrar Administração e Convergência pra fora da barra. */
+.topnav-inquerito {
+  max-width: 260px;
+  background: var(--tint-accent);
+  color: var(--tint-accent-text);
+  /* único item do menu que aceita encolher: na faixa em que a barra é nowrap (>= 1400px) ele
+   * cede espaço com reticências antes de empurrar o resto do menu pra fora da tela */
+  min-width: 0;
+}
+
+.topnav-inquerito-rotulo {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  min-width: 0;
+}
+
+/* min-width:0 porque sem ele o <span> é um item flex com min-width:auto — não encolhe abaixo
+ * do texto inteiro e o text-overflow nunca chega a valer */
+.topnav-inquerito-numero {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* Abaixo de 1300px a palavra "Inquérito" sai e fica só o número (o ícone e a vizinhança com
+ * "Inquéritos / casos" já dizem o que é). São ~70px que decidem se a barra cabe numa linha:
+ * com a seção Administração visível, um monitor de 1280 não fecha a conta com o rótulo cheio,
+ * e a barra passa a empurrar o menu do usuário pra fora da tela. */
+@media (max-width: 1300px) {
+  .topnav-inquerito-prefixo {
+    display: none;
+  }
+}
+
+.topnav-inquerito:hover,
+.topnav-inquerito.active {
+  background: var(--tint-accent);
+  color: var(--tint-accent-text);
+  box-shadow: inset 0 0 0 1.5px var(--accent);
+}
+
+/* No tema claro a barra já é azulada (#e9ebfa) e o --tint-accent padrão (#e0e7ff) encostava
+ * nela — 1.05:1, o item sumia como forma e sobrava só a cor do texto. Este tom dá contorno sem
+ * virar botão cheio. Fica no próprio item (e não no bloco de superfície do menu) pra não mexer
+ * na tinta de badge nenhum. */
+:root[data-theme="light"] .topnav-inquerito {
+  --tint-accent: #c3cdf9;
+}
+
+.topnav-group {
+  position: relative;
+}
+
+.topnav-group-toggle {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 12px;
+  border: none;
+  background: transparent;
+  color: var(--text-secondary);
+  font: inherit;
+  font-size: var(--fs-sm);
+  font-weight: 500;
+  cursor: pointer;
+  border-radius: var(--raio-md);
+  transition: background-color 0.15s ease, color 0.15s ease;
+  white-space: nowrap;
+}
+
+.topnav-group-toggle svg {
+  width: 18px;
+  height: 18px;
+  flex-shrink: 0;
+}
+
+.topnav-group-chevron {
+  width: 14px;
+  height: 14px;
+  flex-shrink: 0;
+  transition: transform 0.15s ease;
+}
+
+.topnav-group-open > .topnav-group-toggle .topnav-group-chevron {
+  transform: rotate(180deg);
+}
+
+.topnav-group-toggle:hover {
+  background: var(--bg-hover);
+  color: var(--text-primary);
+}
+
+.topnav-group-dropdown {
+  position: absolute;
+  top: 100%;
+  left: 0;
+  margin-top: 8px;
+  min-width: 220px;
+  max-height: min(70vh, 480px);
+  overflow-y: auto;
+  background: var(--bg-elevated, var(--bg-card));
+  border: 1px solid var(--border);
+  border-radius: var(--raio-lg);
+  box-shadow: var(--shadow-lg, var(--shadow));
+  padding: 6px;
+  z-index: 100;
+  display: none;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.topnav-group-open > .topnav-group-dropdown {
+  display: flex;
+}
+
+.topnav-dropdown-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 8px 10px;
+  border-radius: var(--raio-sm);
+  color: var(--text-secondary);
+  font-size: var(--fs-sm);
+  font-weight: 500;
+  transition: background-color 0.15s ease, color 0.15s ease;
+  white-space: nowrap;
+}
+
+.topnav-dropdown-item svg {
+  width: 16px;
+  height: 16px;
+  flex-shrink: 0;
+}
+
+.topnav-dropdown-item:hover {
+  background: var(--bg-hover);
+  color: var(--text-primary);
+}
+
+.topnav-dropdown-item.active {
+  background: var(--accent-solid);
+  color: var(--accent-contrast);
+}
+
+.topnav-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  height: 36px;
+  border: none;
+  background: transparent;
+  color: var(--text-secondary);
+  border-radius: var(--raio-md);
+  cursor: pointer;
+  transition: background-color 0.15s ease, color 0.15s ease;
+}
+
+.topnav-btn svg {
+  width: 18px;
+  height: 18px;
+  flex-shrink: 0;
+}
+
+.topnav-btn:hover {
+  background: var(--bg-hover);
+  color: var(--text-primary);
+}
+
+/* ---------- Topnav: dropdown "Temas" ---------- */
+/* Mesmo desenho do menu do usuário ao lado (mesmos paddings, dropdown e chevron); a lista de
+ * opções vem de js/utils/theme.js, então tema novo entra sem CSS novo aqui. */
+
+.topnav-theme {
+  position: relative;
+}
+
+.topnav-theme-toggle {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 12px;
+  border: none;
+  background: transparent;
+  color: var(--text-secondary);
+  font: inherit;
+  font-size: var(--fs-sm);
+  font-weight: 500;
+  cursor: pointer;
+  border-radius: var(--raio-md);
+  transition: background-color 0.15s ease, color 0.15s ease;
+  white-space: nowrap;
+}
+
+.topnav-theme-toggle:hover {
+  background: var(--bg-hover);
+  color: var(--text-primary);
+}
+
+.topnav-theme-toggle > svg {
+  width: 18px;
+  height: 18px;
+  flex-shrink: 0;
+}
+
+.topnav-theme-chevron {
+  width: 14px !important;
+  height: 14px !important;
+  transition: transform 0.15s ease;
+}
+
+.topnav-theme-toggle[aria-expanded="true"] .topnav-theme-chevron {
+  transform: rotate(180deg);
+}
+
+.topnav-theme-label {
+  font-size: var(--fs-sm);
+  font-weight: 500;
+}
+
+.topnav-theme-dropdown {
+  position: absolute;
+  top: 100%;
+  right: 0;
+  margin-top: 8px;
+  min-width: 180px;
+  background: var(--bg-elevated, var(--bg-card));
+  border: 1px solid var(--border);
+  border-radius: var(--raio-lg);
+  box-shadow: var(--shadow-lg, var(--shadow));
+  padding: 6px;
+  z-index: 300;
+}
+
+.topnav-theme-option {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+  padding: 8px 10px;
+  border: none;
+  background: transparent;
+  border-radius: var(--raio-sm);
+  color: var(--text-secondary);
+  font: inherit;
+  font-size: var(--fs-sm);
+  font-weight: 500;
+  text-align: left;
+  cursor: pointer;
+  transition: background-color 0.15s ease, color 0.15s ease;
+  white-space: nowrap;
+}
+
+.topnav-theme-option svg {
+  width: 16px;
+  height: 16px;
+  flex-shrink: 0;
+}
+
+.topnav-theme-option:hover {
+  background: var(--bg-hover);
+  color: var(--text-primary);
+}
+
+.topnav-theme-option.active {
+  color: var(--text-primary);
+}
+
+/* O "check" ocupa lugar mesmo escondido (visibility, não display): assim as opções não dançam
+ * de largura quando o tema ativo muda. margin-left auto o empurra pra direita. */
+.topnav-theme-check {
+  margin-left: auto;
+  color: var(--accent);
+  visibility: hidden;
+}
+
+.topnav-theme-option.active .topnav-theme-check {
+  visibility: visible;
+}
+
+/* ---------- Topnav user dropdown ---------- */
+
+.topnav-user {
+  position: relative;
+}
+
+.topnav-user-toggle {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 12px;
+  border: none;
+  background: transparent;
+  color: var(--text-secondary);
+  font: inherit;
+  font-size: var(--fs-sm);
+  font-weight: 500;
+  cursor: pointer;
+  border-radius: var(--raio-md);
+  transition: background-color 0.15s ease, color 0.15s ease;
+  white-space: nowrap;
+}
+
+.topnav-user-toggle:hover {
+  background: var(--bg-hover);
+  color: var(--text-primary);
+}
+
+.topnav-user-toggle:focus-visible,
+.topnav-user-dropdown-item:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+
+.topnav-user-icon {
+  width: 18px;
+  height: 18px;
+  flex-shrink: 0;
+}
+
+.topnav-user-chevron {
+  width: 14px;
+  height: 14px;
+  flex-shrink: 0;
+  transition: transform 0.15s ease;
+}
+
+.topnav-user-toggle[aria-expanded="true"] {
+  background: var(--bg-hover);
+  color: var(--text-primary);
+}
+
+.topnav-user-toggle[aria-expanded="true"] .topnav-user-chevron {
+  transform: rotate(180deg);
+}
+
+.topnav-user-dropdown {
+  position: absolute;
+  top: 100%;
+  right: 0;
+  margin-top: 8px;
+  min-width: 240px;
+  max-width: min(300px, calc(100vw - 24px));
+  background: var(--bg-elevated, var(--bg-card));
+  border: 1px solid var(--border);
+  border-radius: var(--raio-lg);
+  box-shadow: var(--shadow-lg, var(--shadow));
+  padding: 6px;
+  z-index: 300;
+}
+
+.topnav-user-dropdown[hidden] {
+  display: none;
+}
+
+/* Cabeçalho com contexto da conta: nome + e-mail + papel. O e-mail usa ellipsis para
+ * não estourar o painel em contas com endereço longo. */
+.topnav-user-header {
+  padding: 10px 10px 8px;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  align-items: flex-start;
+}
+
+.topnav-user-header-name {
+  font-size: var(--fs-sm);
+  font-weight: 700;
+  color: var(--text-primary);
+  max-width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.topnav-user-header-email {
+  font-size: 12px;
+  font-weight: 400;
+  color: var(--text-muted);
+  max-width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.topnav-user-header-email[hidden],
+.topnav-user-badge[hidden] {
+  display: none;
+}
+
+.topnav-user-badge {
+  margin-top: 6px;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.4px;
+  text-transform: uppercase;
+  color: var(--accent);
+  background: var(--tint-accent, var(--bg-hover));
+  border-radius: 999px;
+  padding: 2px 8px;
+  line-height: 1.6;
+}
+
+.topnav-user-group-label {
+  margin: 8px 10px 4px;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.6px;
+  text-transform: uppercase;
+  color: var(--text-muted);
+}
+
+.topnav-user-separator {
+  margin: 6px 4px;
+  border: none;
+  border-top: 1px solid var(--border);
+}
+
+.topnav-user-dropdown-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 8px 10px;
+  border-radius: var(--raio-sm);
+  color: var(--text-secondary);
+  font-size: var(--fs-sm);
+  font-weight: 500;
+  transition: background-color 0.15s ease, color 0.15s ease;
+  white-space: nowrap;
+  text-decoration: none;
+}
+
+.topnav-user-dropdown-item svg {
+  width: 16px;
+  height: 16px;
+  flex-shrink: 0;
+}
+
+.topnav-user-dropdown-item:hover {
+  background: var(--bg-hover);
+  color: var(--text-primary);
+}
+
+/* Estado do "Avisos da IA": pill discreta à direita; muda de tom quando ligado. */
+.topnav-user-item-state {
+  margin-left: auto;
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.4px;
+  color: var(--text-muted);
+  background: var(--bg-hover);
+  border-radius: 999px;
+  padding: 2px 8px;
+  line-height: 1.6;
+}
+
+.topnav-user-dropdown-item.is-on .topnav-user-item-state {
+  color: var(--accent);
+}
+
+/* "Sair" isolado após o separador, com tinta de perigo para não parecer só mais um item. */
+.topnav-user-dropdown-item-danger {
+  color: var(--danger, #e5484d);
+}
+
+.topnav-user-dropdown-item-danger svg {
+  color: inherit;
+}
+
+.topnav-user-dropdown-item-danger:hover {
+  background: var(--danger-tint, var(--bg-hover));
+  color: var(--danger, #e5484d);
+}
+
+/* Responsivo: esconde textos no tema e usuário em telas estreitas */
+@media (max-width: 900px) {
+  .topnav-theme-label,
+  .topnav-user-name {
+    display: none;
+  }
+}
+
+/* Evita quebra de linha do menu em telas largas. O limite era 1100px, mas nessa faixa a barra
+ * de um administrador (que ganha a seção Administração, e pode ter um nome comprido no canto
+ * direito) já não cabia: com nowrap ela não quebra, ela TRANSBORDA — e o que sai da tela é
+ * justamente o canto direito, com Temas e o menu do usuário. Daqui pra baixo é melhor a barra
+ * usar duas linhas, como já fazia abaixo de 1100. Ela só quebra quando não cabe mesmo: em
+ * qualquer largura, se o conteúdo couber numa linha, ele fica numa linha. */
+@media (min-width: 1400px) {
+  .topnav {
+    flex-wrap: nowrap;
+  }
+  .topnav-left,
+  .topnav-right {
+    flex-wrap: nowrap;
+  }
+  .topnav-item,
+  .topnav-group-toggle {
+    white-space: nowrap;
+  }
+}
+
+/* Quando há topnav, a topbar fica logo abaixo sem position:sticky duplicado */
+.has-topnav .topbar {
+  position: static;
+  backdrop-filter: none;
+  border-bottom: 1px solid var(--border);
+}
+
+/* Ajuste para o skip-link funcionar com topnav (topnav 56px + topbar 64px + 8px) */
+.has-topnav .skip-link:focus {
+  top: 128px;
+}
+
+@media (max-width: 700px) {
+  .has-topnav .skip-link:focus {
+    top: 120px;
+  }
+}
+
+/* ---------- Topnav brand/logo ---------- */
+
+.topnav-brand {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  padding: 4px 8px;
+  border-radius: var(--raio-md);
+  color: var(--text-primary);
+  text-decoration: none;
+  flex-shrink: 0;
+}
+
+.topnav-brand:hover {
+  background: var(--bg-hover);
+}
+
+.topnav-brand .brand-mark img {
+  height: 28px;
+  width: auto;
+  display: block;
+}
+
+.topnav-brand .brand-name {
+  font-weight: 600;
+  font-size: 14px;
+}
+
+.topnav-brand .brand-polic {
+  color: var(--text-primary);
+  font-weight: 600;
+  letter-spacing: 2px;
+}
+
+.topnav-brand .brand-ia {
+  color: var(--accent);
+  font-weight: 900;
+  letter-spacing: 0px;
+}
+
+/* O topnav fica acima dos botões flutuantes (marcadores/IA) que têm z-index 200 */
+.wa-app.has-topnav .mrcflt-botao,
+.wa-app.has-topnav .iaflt-botao,
+.chat-app.has-topnav .mrcflt-botao,
+.chat-app.has-topnav .iaflt-botao {
+  z-index: 210;
+}
+
+/* Wrapper interno mantém layout horizontal (sidebar + main) */
+.wa-app.has-topnav .wa-content-wrapper,
+.chat-app.has-topnav .wa-content-wrapper {
+  display: flex;
+  flex: 1;
+  min-height: 0;
+}
+
+/* ---------- Trilha de navegação (breadcrumb) ---------- */
+
+.topbar-context {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+  flex: 1 1 240px;
+}
+
+/* Os itens não encolhem (antes cada crumb virava um toco de 20px quando as ações da direita
+ * disputavam espaço); se ainda assim a trilha não couber, ela rola na horizontal — e a partir de
+ * 1000px o meio da trilha some (regra mais abaixo), deixando sempre visível onde você está. */
+.crumbs {
+  display: flex;
+  align-items: center;
+  gap: 3px;
+  font-size: 11.5px;
+  color: var(--text-muted);
+  min-width: 0;
+  overflow-x: auto;
+  scrollbar-width: none;
+}
+
+.crumbs::-webkit-scrollbar {
+  display: none;
+}
+
+.crumbs > * {
+  flex-shrink: 0;
+}
+
+.crumbs .crumb-sep {
+  width: 12px;
+  height: 12px;
+  flex-shrink: 0;
+  opacity: 0.55;
+}
+
+.crumb {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 1px 4px;
+  border-radius: 5px;
+  color: var(--text-muted);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 260px;
+}
+
+a.crumb:hover {
+  color: var(--accent);
+  background: var(--bg-hover);
+}
+
+.crumb-aparelho svg {
+  width: 12px;
+  height: 12px;
+  flex-shrink: 0;
+}
+
+.crumb-atual {
+  color: var(--text-secondary);
+  font-weight: 600;
+}
+
+/* Trilha em tela estreita: os níveis do meio saem primeiro (são os que o investigador já
+ * conhece — o inquérito e o aparelho em que ele está), e o que fica é o penúltimo + o atual.
+ * Os :nth-last-child(-n+3) são "crumb, separador, crumb-atual". Abaixo de 700px sobra só o
+ * atual. A navegação para os níveis escondidos continua no botão "Navegar" da própria topbar. */
+@media (max-width: 1000px) {
+  .crumbs > :not(:nth-last-child(-n+3)) {
+    display: none;
+  }
+}
+
+@media (max-width: 700px) {
+  .crumbs > :not(:last-child) {
+    display: none;
+  }
+
+  .crumb {
+    max-width: 100%;
+  }
+}
+
+/* nas telas sem topbar (whatsapp/mensageiros/ia) a trilha flutua junto do botão Navegar.
+ * max-width porque ela é absoluta sobre o cabeçalho da conversa: sem teto, um nome de aparelho
+ * longo + o nome da tela cobria o nome da conversa. O espaço que ela ocupa é reservado com
+ * --nav-flutuante-reserva (ver whatsapp.css/chat.css) — os dois foram encolhidos junto quando
+ * o número do inquérito saiu da trilha e virou item do menu do topo. */
+.crumbs-flutuante {
+  max-width: min(260px, 20vw);
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 5px 8px;
+  box-shadow: var(--shadow);
+  margin-right: 8px;
+}
+
+/* Abaixo disso não há largura para trilha e cabeçalho ao mesmo tempo; o botão "Navegar" ao
+ * lado dela continua dando acesso a inquérito, aparelho e telas. */
+@media (max-width: 1100px) {
+  .crumbs-flutuante {
+    display: none;
+  }
+}
+
+/* ---------- Navegação dentro do inquérito ---------- */
+
+/* O Orbit conserva todos os níveis, inclusive em telas estreitas. */
+.crumbs.crumbs-completa {
+  flex-wrap: wrap;
+  overflow: visible;
+  row-gap: 4px;
+}
+
+.crumbs.crumbs-completa > * {
+  display: inline-flex;
+}
+
+.crumbs-completa .crumb {
+  max-width: 100%;
+  white-space: normal;
+  overflow-wrap: anywhere;
+  min-width: 0;
+}
+
+.crumbs.crumbs-cabecalho {
+  flex-shrink: 0;
+  min-height: 60px;
+  padding: 12px 140px 12px 44px;
+  border-bottom: 1px solid var(--border);
+  background: var(--bg-card);
+}
+
+.extracao-nav-container {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+}
+
+.extracao-nav-btn {
+  height: 36px;
+  padding: 0 10px;
+  border-radius: 8px;
+  border: 1px solid var(--border);
+  background: var(--bg-card);
+  color: var(--text-secondary);
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  cursor: pointer;
+  font-size: 13px;
+  font-weight: 600;
+  transition: background-color 0.15s ease, color 0.15s ease, transform 0.15s ease;
+}
+
+.extracao-nav-btn:hover {
+  background: var(--bg-hover);
+  color: var(--text-primary);
+}
+
+.extracao-nav-btn:active {
+  transform: scale(0.96);
+}
+
+.extracao-nav-btn svg {
+  width: 18px;
+  height: 18px;
+}
+
+.extracao-nav-btn .extracao-nav-chevron {
+  width: 13px;
+  height: 13px;
+  opacity: 0.7;
+  transition: transform 0.15s ease;
+}
+
+.extracao-nav-btn[aria-expanded="true"] .extracao-nav-chevron {
+  transform: rotate(180deg);
+}
+
+/* Pastilha da citação da IA: [msg:wpp:ID] abre a mensagem original, [doc:ID] abre o documento.
+   Vive aqui, e não em css/chat.css, porque quem a monta (js/utils/doc_trecho.js) também é usado
+   fora do chat — o resumo noturno do inquérito não carrega aquela folha. */
+.chat-ref {
+  display: inline-block;
+  text-decoration: none;
+  font-size: 12px;
+  line-height: 1;
+  padding: 1px 4px;
+  margin: 0 1px;
+  border-radius: 5px;
+  background: var(--bg-hover);
+  vertical-align: baseline;
+  cursor: pointer;
+}
+
+.chat-ref:hover {
+  background: var(--accent-solid);
+}
+
+/* ℹ️ cadeia de custódia (js/utils/evidencia_info.js): fica colada na pastilha de link da
+   mesma citação — não navega, abre o modal com mídia, arquivo, data e hashes. */
+.chat-ref-info:hover {
+  background: var(--bg-hover);
+  outline: 1px solid var(--accent-solid);
+}
+
+.evidencia-linha {
+  display: flex;
+  gap: 10px;
+  align-items: baseline;
+  padding: 6px 0;
+  border-bottom: 1px dashed var(--border);
+}
+
+.evidencia-linha:last-of-type {
+  border-bottom: none;
+}
+
+.evidencia-rotulo {
+  flex: 0 0 140px;
+  color: var(--text-secondary);
+  font-size: 12px;
+}
+
+.evidencia-valor {
+  flex: 1;
+  min-width: 0;
+  word-break: break-all;
+  font-size: 13px;
+}
+
+.evidencia-hash,
+.evidencia-arquivo {
+  font-family: ui-monospace, "Cascadia Mono", Consolas, monospace;
+  font-size: 12px;
+}
+
+.evidencia-copiar {
+  background: transparent;
+  border: 1px solid var(--border);
+  border-radius: 5px;
+  color: var(--text-secondary);
+  font-size: 11px;
+  margin-left: 6px;
+  padding: 1px 6px;
+  cursor: pointer;
+}
+
+.evidencia-copiar:hover {
+  background: var(--bg-hover);
+  color: var(--text-primary);
+}
+
+/* Nome do arquivo citado pela IA, quando ele próprio vira o link para o documento.
+   Sublinhado pontilhado em vez de cor de link: numa lista de evidências a
+   citação aparece em toda linha, e um azul forte a cada uma vira ruído. */
+.chat-ref-nome {
+  color: inherit;
+  text-decoration: underline dotted var(--accent);
+  text-underline-offset: 2px;
+  cursor: pointer;
+}
+
+.chat-ref-nome:hover {
+  background: var(--bg-hover);
+  border-radius: 4px;
+  text-decoration-style: solid;
+}
+
+/* Resumo noturno (investigacao.html): nasce fechado, o cabeçalho inteiro é o gatilho. */
+.resumo-noturno-det > summary {
+  display: flex;
+  gap: 8px;
+  align-items: baseline;
+  flex-wrap: wrap;
+  cursor: pointer;
+  list-style: none;
+}
+
+.resumo-noturno-det > summary::-webkit-details-marker {
+  display: none;
+}
+
+.resumo-noturno-chevron {
+  width: 13px;
+  height: 13px;
+  opacity: 0.7;
+  align-self: center;
+  flex: none;
+  transition: transform 0.15s ease;
+}
+
+.resumo-noturno-det[open] > summary .resumo-noturno-chevron {
+  transform: rotate(90deg);
+}
+
+.resumo-noturno-corpo {
+  margin-top: 8px;
+}
+
+.extracao-nav-dropdown {
+  position: absolute;
+  top: 100%;
+  right: 0;
+  margin-top: 8px;
+  min-width: 230px;
+  max-height: min(70vh, 560px);
+  overflow-y: auto;
+  background: var(--bg-elevated, var(--bg-card));
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  box-shadow: var(--shadow-lg, var(--shadow));
+  padding: 6px;
+  z-index: 1000;
+}
+
+/* o 1º grupo é o do inquérito; os seguintes (aparelho, extração) ganham um filete separando.
+ * Não dá pra usar irmão adjacente: o container dos RIFs/PDFs fica entre eles no DOM. */
+.extracao-nav-grupo:not(:first-child) {
+  border-top: 1px solid var(--border);
+  margin-top: 4px;
+  padding-top: 2px;
+}
+
+.extracao-nav-header {
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  padding: 6px 8px 8px;
+}
+
+.extracao-nav-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 5px;
+  padding: 0 8px 8px;
+}
+
+.extracao-nav-chip {
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  padding: 3px 9px;
+  font-size: 12px;
+  color: var(--text-secondary);
+  cursor: pointer;
+  white-space: nowrap;
+  max-width: 190px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.extracao-nav-chip:hover {
+  background: var(--bg-hover);
+  color: var(--text-primary);
+}
+
+.extracao-nav-chip.active {
+  background: var(--accent-solid);
+  border-color: transparent;
+  color: var(--accent-contrast);
+  cursor: default;
+  pointer-events: none;
+}
+
+.extracao-nav-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 7px 8px;
+  border-radius: 8px;
+  color: var(--text-secondary);
+  font-size: 13px;
+  font-weight: 500;
+  transition: background-color 0.15s ease, color 0.15s ease;
+  cursor: pointer;
+}
+
+.extracao-nav-item:hover {
+  background: var(--bg-hover);
+  color: var(--text-primary);
+}
+
+.extracao-nav-item.active {
+  background: var(--accent-solid);
+  color: var(--accent-contrast);
+  cursor: default;
+  pointer-events: none;
+}
+
+.extracao-nav-item svg {
+  width: 16px;
+  height: 16px;
+  flex-shrink: 0;
+}
+
+.theme-toggle {
+  width: 100%;
+  border-radius: 6px;
+  border: 1px solid var(--border);
+  background: var(--bg-hover);
+  color: var(--text-secondary);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  font-size: 11.5px;
+  font-weight: 600;
+  padding: 5px 8px;
+  cursor: pointer;
+  transition: background-color 0.15s ease, color 0.15s ease;
+}
+
+.theme-toggle:hover {
+  background: var(--border);
+  color: var(--text-primary);
+}
+
+.theme-toggle svg {
+  width: 18px;
+  height: 18px;
+}
+
+.theme-toggle .icon-moon {
+  display: none;
+}
+
+:root[data-theme="light"] .theme-toggle .icon-sun {
+  display: none;
+}
+
+:root[data-theme="light"] .theme-toggle .icon-moon {
+  display: block;
+}
+
+/* ---------- Layout sem .app (whatsapp/ia/mensageiros) — sidebar injetada por
+   js/sidebar.js como 1º filho do body, que aqui vira flex pra acomodá-la ---------- */
+
+.has-injected-sidebar {
+  display: flex;
+  min-height: 100vh;
+}
+
+.has-injected-sidebar > .sidebar {
+  flex-shrink: 0;
+}
+
+.has-injected-sidebar > *:not(.sidebar) {
+  flex: 1;
+  min-width: 0;
+}
+
+/* Topnav em layout sem .app */
+.has-injected-sidebar.has-topnav {
+  flex-direction: column;
+}
+
+.has-injected-sidebar.has-topnav > .topnav {
+  flex-shrink: 0;
+}
+
+.has-injected-sidebar.has-topnav > *:not(.topnav) {
+  flex: 1;
+  min-width: 0;
+  width: 100%;
+}
+
+/* ---------- Content ---------- */
+
+.content {
+  flex: 1;
+  padding: 24px;
+  min-width: 0;
+}
+
+/* Em tela estreita os 24px de fora + 24px do card comem quase 100px de largura útil da
+ * tabela — que é o conteúdo, não a moldura. */
+@media (max-width: 700px) {
+  .content {
+    padding: 16px 12px;
+  }
+
+  .content > .card,
+  .content > * > .card {
+    padding: 16px;
+  }
+
+  .topbar {
+    padding: 8px 12px;
+  }
+
+  .topnav {
+    padding: 6px 12px;
+    min-height: 48px;
+  }
+
+  .topnav-item,
+  .topnav-group-toggle {
+    padding: 6px 8px;
+    font-size: var(--fs-xs);
+  }
+
+  .topnav-btn {
+    width: 32px;
+    height: 32px;
+  }
+}
+
+.empty-state {
+  height: 100%;
+  min-height: 320px;
+}
+
+/* ---------- Form (configurações) ---------- */
+
+.card {
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 24px;
+  max-width: 560px;
+  box-shadow: var(--shadow);
+}
+
+.card h2 {
+  margin: 0 0 4px;
+  font-size: 16px;
+  font-weight: 600;
+}
+
+.card .card-hint {
+  margin: 0 0 20px;
+  font-size: 13px;
+  color: var(--text-secondary);
+}
+
+.field {
+  margin-bottom: 16px;
+}
+
+.field label {
+  display: block;
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--text-secondary);
+  margin-bottom: 6px;
+}
+
+.field input,
+.field select,
+.field textarea {
+  width: 100%;
+  padding: 10px 12px;
+  border-radius: 8px;
+  border: 1px solid var(--border);
+  background: var(--bg-page);
+  color: var(--text-primary);
+  font-size: 14px;
+  outline: none;
+  transition: box-shadow 0.15s ease, border-color 0.15s ease;
+}
+
+.field input:focus,
+.field select:focus,
+.field textarea:focus {
+  border-color: var(--accent);
+  box-shadow: var(--focus-ring);
+}
+
+.field .field-help {
+  margin-top: 6px;
+  font-size: 12px;
+  color: var(--text-muted);
+}
+
+.field select + input[type="text"] {
+  margin-top: 8px;
+}
+
+/* Certificado colado (PEM) — fonte monoespaçada porque o que se confere aqui é uma sequência
+   de caracteres, não uma frase; só cresce na vertical para não estourar a grade do formulário. */
+.campo-certificado {
+  margin-top: 8px;
+  font-family: ui-monospace, SFMono-Regular, Consolas, "Liberation Mono", monospace;
+  font-size: 12px;
+  line-height: 1.5;
+  resize: vertical;
+}
+
+/* Número do inquérito compartilhado — fieldset destacado para vínculo visual
+   com as 5 fontes abaixo (antes era um .field solto entre duas fileiras de abas,
+   sem indicação de que valia para todas). */
+.field-inquerito {
+  border: 1px solid var(--border);
+  border-left: 3px solid var(--accent);
+  border-radius: 8px;
+  padding: 12px 14px;
+  margin: 0 0 20px;
+  background: var(--bg-page);
+}
+
+.field-legend {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text-secondary);
+  padding: 0 6px;
+  margin-left: -2px;
+}
+
+.field-inquerito input {
+  margin-top: 4px;
+}
+
+/* Topbar: delegacia em importação — antes com style inline */
+.topbar-actions-label {
+  font-size: 13px;
+  font-weight: 500;
+  white-space: nowrap;
+}
+
+.inv-filtro-delegacia {
+  min-width: 150px;
+}
+
+.hidden {
+  display: none !important;
+}
+
+/* Select solto (fora de .field) — ex.: filtro no cabeçalho de um card, ao lado de botões */
+.select-inline {
+  width: auto;
+  padding: 9px 12px;
+  border-radius: 8px;
+  border: 1px solid var(--border);
+  background: var(--bg-page);
+  color: var(--text-primary);
+  font-size: 13px;
+  outline: none;
+}
+
+.select-inline:focus {
+  border-color: var(--accent);
+  box-shadow: var(--focus-ring);
+}
+
+/* wrap + base de 200px: dois campos lado a lado num modal de 92vw viravam duas colunas de
+ * ~150px, estreitas demais para data, CPF ou nome — abaixo disso eles empilham. */
+.field-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+}
+
+.field-row .field {
+  flex: 1 1 200px;
+  min-width: 0;
+}
+
+/* Grade de 3 colunas para a configuração de IA */
+.ai-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 0 16px;
+  align-items: start;
+}
+
+/* Rótulo "fantasma" para alinhar o botão de download com os selects ao lado */
+.ai-grid .field label.label-spacer {
+  visibility: hidden;
+}
+
+@media (max-width: 720px) {
+  .ai-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+.password-wrap {
+  position: relative;
+}
+
+.password-wrap input {
+  padding-right: 40px;
+}
+
+.password-toggle {
+  position: absolute;
+  right: 6px;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 28px;
+  height: 28px;
+  border: none;
+  background: transparent;
+  color: var(--text-muted);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 6px;
+}
+
+.password-toggle:hover {
+  color: var(--text-primary);
+  background: var(--bg-hover);
+}
+
+.password-toggle svg {
+  width: 16px;
+  height: 16px;
+}
+
+.form-actions {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-top: 22px;
+}
+
+.btn {
+  padding: 10px 18px;
+  border-radius: 8px;
+  border: 1px solid transparent;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background-color 0.15s ease, opacity 0.15s ease, transform 0.1s ease;
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+}
+
+.btn svg {
+  width: 15px;
+  height: 15px;
+  flex-shrink: 0;
+  stroke: currentColor;
+}
+
+.btn:active {
+  transform: scale(0.98);
+}
+
+.btn-primary {
+  background: var(--accent-solid);
+  color: var(--accent-contrast);
+}
+
+.btn-primary:hover {
+  background: var(--accent-solid-hover);
+}
+
+.btn-primary:disabled {
+  opacity: 0.6;
+  cursor: default;
+}
+
+/* ---------- Botões de ação do cartão de investigação (pill escura + ícone com badge colorido) ---------- */
+
+.btn-whatsapp, .btn-sms, .btn-contatos, .btn-ligacoes, .btn-localizacoes,
+.btn-notificacoes, .btn-navegacao, .btn-aplicativos, .btn-timeline,
+.btn-arquivos, .btn-pix, .btn-dono, .btn-notas, .btn-ia, .btn-mensageiro, .btn-achado {
+  background: var(--bg-hover);
+  border: 1px solid var(--border);
+  color: var(--text-primary);
+  padding: 6px 14px 6px 6px;
+}
+
+.btn-whatsapp:hover, .btn-sms:hover, .btn-contatos:hover, .btn-ligacoes:hover, .btn-localizacoes:hover,
+.btn-notificacoes:hover, .btn-navegacao:hover, .btn-aplicativos:hover, .btn-timeline:hover,
+.btn-arquivos:hover, .btn-pix:hover, .btn-dono:hover, .btn-notas:hover, .btn-ia:hover, .btn-mensageiro:hover, .btn-achado:hover {
+  background: var(--bg-card);
+  border-color: var(--btn-accent, var(--accent));
+}
+
+.btn-whatsapp svg, .btn-sms svg, .btn-contatos svg, .btn-ligacoes svg, .btn-localizacoes svg,
+.btn-notificacoes svg, .btn-navegacao svg, .btn-aplicativos svg, .btn-timeline svg,
+.btn-arquivos svg, .btn-pix svg, .btn-dono svg, .btn-notas svg, .btn-ia svg, .btn-mensageiro svg, .btn-achado svg {
+  width: 15px;
+  height: 15px;
+  padding: 6px;
+  box-sizing: content-box;
+  border-radius: 50%;
+  background: var(--btn-accent, var(--text-secondary));
+  stroke: #ffffff;
+}
+
+.btn-whatsapp { --btn-accent: #22c55e; }
+.btn-sms { --btn-accent: #3b82f6; }
+.btn-contatos { --btn-accent: #8b5cf6; }
+.btn-ligacoes { --btn-accent: #f97316; }
+.btn-localizacoes { --btn-accent: #f43f5e; }
+.btn-notificacoes { --btn-accent: #f59e0b; }
+.btn-navegacao { --btn-accent: #0ea5e9; }
+.btn-aplicativos { --btn-accent: #a855f7; }
+.btn-timeline { --btn-accent: #6366f1; }
+.btn-arquivos { --btn-accent: #0d9488; }
+.btn-pix { --btn-accent: #16a34a; }
+.btn-dono { --btn-accent: #ec4899; }
+.btn-notas { --btn-accent: #eab308; }
+.btn-ia { --btn-accent: #d946ef; }
+.btn-achado { --btn-accent: #06b6d4; }
+/* .btn-mensageiro: cor definida via --btn-accent inline por app (CORES_APP em investigacao.js) */
+
+/* "Mesa de investigação" é a ação primária do cartão: fica sólida, como aba ativa */
+.btn-mesa { background: var(--mesa); color: #ffffff; padding: 6px 14px 6px 6px; }
+.btn-mesa:hover { background: var(--mesa-hover); }
+.btn-mesa svg {
+  width: 15px;
+  height: 15px;
+  padding: 6px;
+  box-sizing: content-box;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.2);
+  stroke: #ffffff;
+}
+
+.form-status {
+  font-size: 13px;
+  font-weight: 500;
+}
+
+.form-status.success {
+  color: var(--success);
+}
+
+.form-status.error {
+  color: var(--danger);
+}
+
+/* ---------- Card "Nova extração" (abas de fonte, ver investigacao.html) ---------- */
+
+.card-extracao {
+  width: 100%;
+  max-width: none;
+  margin: 0 0 16px;
+}
+
+.extracao-tabs,
+.imp-tabs {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+  padding: 4px;
+  margin-bottom: 20px;
+  background: var(--bg-page);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+}
+
+.extracao-tab,
+.imp-tab {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  padding: 9px 14px;
+  border: none;
+  border-radius: 7px;
+  background: transparent;
+  color: var(--text-secondary);
+  font-family: inherit;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background-color 0.15s ease, color 0.15s ease;
+}
+
+.extracao-tab svg,
+.imp-tab svg {
+  width: 15px;
+  height: 15px;
+  flex-shrink: 0;
+  stroke: currentColor;
+}
+
+.extracao-tab:hover,
+.imp-tab:hover {
+  background: var(--bg-hover);
+  color: var(--text-primary);
+}
+
+.extracao-tab.active,
+.imp-tab.active {
+  background: var(--accent-solid);
+  color: var(--accent-contrast);
+}
+
+.extracao-tab-panel .card-hint,
+.imp-tab-panel .card-hint {
+  margin-bottom: 20px;
+}
+
+
+/* ---------- Ingestão de dados ---------- */
+
+.grupos-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+  gap: 16px;
+}
+
+.grupo-card {
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.grupo-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.grupo-header h2 {
+  margin: 0;
+  font-size: 15px;
+  font-weight: 600;
+}
+
+.grupo-total {
+  font-size: 12px;
+  color: var(--text-secondary);
+}
+
+.grupo-secoes {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.grupo-secao-label {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  margin-bottom: 4px;
+  font-size: 11px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--text-muted);
+}
+
+.grupo-secao-total {
+  font-variant-numeric: tabular-nums;
+  font-weight: 500;
+}
+
+.grupo-tabela {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 13px;
+}
+
+.grupo-tabela td {
+  padding: 8px 10px;
+  border-bottom: 1px solid var(--border);
+}
+
+.grupo-tabela td:first-child {
+  padding-left: 0;
+}
+
+.grupo-tabela td:last-child {
+  padding-right: 0;
+}
+
+.grupo-tabela tr:last-child td {
+  border-bottom: none;
+}
+
+/* vale para <td> e <th>: o UfdrDominio desenha o cabeçalho com <th class="col-nome">
+ * (coluna clicável reusa o .tp-ordenar abaixo) e o mesmo tom cinza continua aplicado */
+.grupo-tabela td.col-nome,
+.grupo-tabela th.col-nome {
+  color: var(--text-secondary);
+}
+
+.grupo-tabela td.col-registros {
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+  color: var(--text-primary);
+  font-weight: 500;
+}
+
+.grupo-tabela td.col-registros.sem-dado {
+  color: var(--text-muted);
+  font-weight: 400;
+}
+
+/* cabeçalho como <th scope="col"> (js/utils/tabela_paginada.js) — antes as telas de extração
+ * desenhavam o cabeçalho com <td>, sem semântica de tabela para leitor de tela */
+.grupo-tabela th {
+  padding: 8px 10px;
+  border-bottom: 1px solid var(--border);
+  text-align: left;
+  font-weight: 600;
+  color: var(--text-secondary);
+  white-space: nowrap;
+}
+
+/* cabeçalho clicável de ordenação (window.TabelaPaginada). É um <button> dentro do <th> para
+   funcionar com Tab/Enter sem handler de teclado próprio; o reset abaixo o faz parecer o
+   mesmo texto do cabeçalho, sem cara de botão. */
+.grupo-tabela th .tp-ordenar {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 0;
+  border: 0;
+  background: none;
+  font: inherit;
+  color: inherit;
+  cursor: pointer;
+  white-space: nowrap;
+}
+.grupo-tabela th .tp-ordenar:hover {
+  color: var(--text-primary);
+}
+.grupo-tabela th .tp-ordenar-ativo {
+  color: var(--accent, #2563eb);
+}
+.grupo-tabela th .tp-seta {
+  font-size: 0.75em;
+  /* a seta neutra fica discreta até a coluna ser a ordenada — sinaliza "dá pra clicar"
+     sem competir com a coluna que está de fato ordenando a tabela */
+  opacity: 0.45;
+}
+.grupo-tabela th .tp-ordenar-ativo .tp-seta {
+  opacity: 1;
+}
+
+.grupo-tabela th:first-child {
+  padding-left: 0;
+}
+
+/* linha realçada pelo deep-link ?destacar= (window.TabelaPaginada, vindo do link da evidência
+   em busca_entidades) — marca onde o registro achado está na lista */
+.grupo-tabela tr.tp-destacada td {
+  background: var(--tint-accent, #1e3a5f);
+  animation: tp-pulso 1.6s ease-out 2;
+}
+@keyframes tp-pulso {
+  0% { background: var(--tint-warning, #4a2f00); }
+  100% { background: var(--tint-accent, #1e3a5f); }
+}
+
+.grupo-tabela th:last-child {
+  padding-right: 0;
+}
+
+.grupo-footer {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 10px;
+  border-radius: 999px;
+  font-size: 12px;
+  font-weight: 500;
+}
+
+.badge svg {
+  width: 13px;
+  height: 13px;
+  flex-shrink: 0;
+}
+
+.badge-rodando {
+  background: var(--tint-accent);
+  color: var(--tint-accent-text);
+}
+
+.badge-ok {
+  background: var(--tint-success);
+  color: var(--tint-success-text);
+}
+
+.badge-erro {
+  background: var(--tint-danger);
+  color: var(--tint-danger-text);
+}
+
+/* atenção sem ser falha: o dado está no sistema, mas algo externo precisa de conserto
+   (ex.: o .ufdr saiu da pasta e os anexos deixaram de abrir) */
+.badge-aviso {
+  background: var(--tint-warning);
+  color: var(--tint-warning-text);
+}
+
+.badge-neutro {
+  background: var(--bg-hover);
+  color: var(--text-secondary);
+}
+
+.spinner {
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  border: 2px solid currentColor;
+  border-right-color: transparent;
+  animation: spin 0.7s linear infinite;
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+
+.btn-importar {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.btn-secondary {
+  background: var(--bg-hover);
+  color: var(--text-primary);
+  border: 1px solid var(--border);
+}
+
+.btn-secondary:hover {
+  background: var(--border);
+}
+
+.btn-danger {
+  background: transparent;
+  color: var(--danger);
+  border: 1px solid var(--danger);
+}
+
+.btn-danger:hover {
+  background: var(--danger-solid);
+  color: var(--accent-contrast);
+}
+
+.btn:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+
+/* ---------- Investigação ---------- */
+
+.row-2col {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px;
+  align-items: start;
+}
+
+@media (max-width: 900px) {
+  .row-2col {
+    grid-template-columns: 1fr;
+  }
+}
+
+.card-stat {
+  font-size: 32px;
+  font-weight: 700;
+  margin: 4px 0 16px;
+}
+
+.card-stat-label {
+  font-size: 13px;
+  color: var(--text-secondary);
+  margin-top: -12px;
+  margin-bottom: 16px;
+}
+
+.investigacoes-toolbar {
+  display: flex;
+  gap: 10px;
+  margin: 4px 0 14px;
+  flex-wrap: wrap;
+}
+
+.inv-busca {
+  position: relative;
+  flex: 1;
+  min-width: 220px;
+}
+
+.inv-busca-icone {
+  position: absolute;
+  left: 12px;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 16px;
+  height: 16px;
+  color: var(--text-muted);
+  pointer-events: none;
+}
+
+.inv-busca input {
+  width: 100%;
+  padding: 10px 12px 10px 36px;
+  border-radius: 8px;
+  border: 1px solid var(--border);
+  background: var(--bg-page);
+  color: var(--text-primary);
+  font-size: 14px;
+  outline: none;
+  transition: box-shadow 0.15s ease, border-color 0.15s ease;
+}
+
+.inv-filtro {
+  padding: 10px 12px;
+  border-radius: 8px;
+  border: 1px solid var(--border);
+  background: var(--bg-page);
+  color: var(--text-primary);
+  font-size: 14px;
+  outline: none;
+  cursor: pointer;
+}
+
+.inv-busca input:focus,
+.inv-filtro:focus {
+  border-color: var(--accent);
+  box-shadow: var(--focus-ring);
+}
+
+/* ---------- Investigação: substitutos dos inline styles do HTML/JS ---------- */
+.inv-topbar-label {
+  font-size: 13px;
+  font-weight: 500;
+  white-space: nowrap;
+}
+
+.card-fluido { max-width: none; }
+
+.investigacao-aviso { margin-bottom: 12px; }
+
+.investigacao-aviso-box {
+  padding: 10px 14px;
+  border-radius: 8px;
+  font-size: 13px;
+  border: 1px solid var(--border);
+}
+
+.investigacao-aviso-box.aviso-erro {
+  background: var(--tint-danger);
+  color: var(--tint-danger-text);
+}
+
+.investigacao-aviso-box.aviso-alerta {
+  background: var(--tint-warning);
+  color: var(--tint-warning-text);
+}
+
+.investigacao-aviso-link { margin-left: 12px; font-weight: 600; text-decoration: underline; }
+
+.investigacao-skeleton { display: flex; flex-direction: column; gap: 10px; margin-bottom: 12px; }
+
+.skeleton-linha-media { height: 18px; width: 40%; }
+.skeleton-linha-longa { height: 14px; width: 60%; }
+.skeleton-bloco-alto { height: 120px; }
+
+.investigacao-resumo { margin-bottom: 12px; }
+
+.inv-limpar {
+  position: absolute;
+  right: 8px;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  border: 1px solid var(--border);
+  background: var(--bg-card);
+  color: var(--text-secondary);
+  font-size: 14px;
+  line-height: 1;
+  cursor: pointer;
+}
+
+.inv-busca input { padding-right: 36px; }
+
+.modal-sm { width: min(440px, 92vw); }
+.modal-md { width: min(600px, 94vw); }
+.modal-lg { width: min(900px, 94vw); }
+.modal-xl { width: min(1100px, 96vw); }
+.modal-scroll-x { overflow-x: auto; }
+
+.extracoes-busca { margin-bottom: 10px; max-width: 420px; }
+
+.toolbar-footer {
+  margin: 4px 0 12px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.inv-total {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--text-secondary);
+  font-variant-numeric: tabular-nums;
+}
+
+.breadcrumb-lista { display: flex; align-items: center; gap: 8px; list-style: none; margin: 0; padding: 0; }
+.breadcrumb-sep[aria-hidden="true"] { color: var(--text-muted); }
+.breadcrumb-voltar { margin-left: 12px; padding: 4px 10px; font-size: 12px; }
+
+.convergencia-alerta { margin: 8px 0 4px; padding: 8px 12px; border-radius: 6px; background: var(--bg-hover); border: 1px solid var(--border); font-size: 13px; line-height: 1.5; }
+.convergencia-alerta-titulo { font-weight: 600; cursor: pointer; list-style: none; user-select: none; }
+.convergencia-alerta-titulo::-webkit-details-marker { display: none; }
+.convergencia-alerta-titulo::marker { content: ""; }
+.convergencia-alerta-titulo::before { content: "▸"; display: inline-block; margin-right: 6px; transition: transform 120ms ease; }
+.convergencia-alerta[open] > .convergencia-alerta-titulo::before { transform: rotate(90deg); }
+.convergencia-alerta-linha { margin-top: 4px; }
+.convergencia-alerta-linha a { font-weight: 500; }
+
+.resumo-noturno-card { border-left: 4px solid var(--accent, #6c9); }
+.tab-contador { font-weight: 400; opacity: 0.75; font-size: 0.9em; }
+.investigacao-limpar-filtros { align-self: flex-start; }
+
+/* Tabela de extrações: empilha em telas estreitas em vez de só rolar */
+@media (max-width: 760px) {
+  #extracoes-tabela thead { display: none; }
+  #extracoes-tabela, #extracoes-tabela tbody, #extracoes-tabela tr, #extracoes-tabela td { display: block; width: 100%; }
+  #extracoes-tabela tr { border: 1px solid var(--border); border-radius: 8px; margin-bottom: 10px; padding: 6px 10px; }
+  #extracoes-tabela td { border: none; padding: 4px 0; }
+  #extracoes-tabela td::before { content: attr(data-label); display: block; font-size: 11px; font-weight: 600; color: var(--text-secondary); text-transform: uppercase; letter-spacing: 0.04em; }
+  #extracoes-tabela td:empty::before { content: none; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .investigacao-card-destaque { animation: none; }
+}
+
+.paginacao {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-top: 14px;
+  flex-wrap: wrap;
+}
+
+.paginacao-info {
+  font-size: 13px;
+  color: var(--text-secondary);
+}
+
+.paginacao-ctrls {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.paginacao-atual {
+  font-size: 13px;
+  color: var(--text-secondary);
+  min-width: 118px;
+  text-align: center;
+}
+
+.paginacao-btn {
+  padding: 8px 14px;
+  font-size: 13px;
+}
+
+.breadcrumb {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+  font-size: 13px;
+  color: var(--text-secondary);
+  margin: 0 0 12px;
+  padding: 8px 12px;
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+}
+
+.breadcrumb a {
+  color: var(--link);
+  text-decoration: none;
+  font-weight: 500;
+}
+
+.breadcrumb a:hover {
+  color: var(--link-hover);
+  text-decoration: underline;
+}
+
+.breadcrumb-sep {
+  color: var(--text-muted);
+}
+
+.breadcrumb-atual {
+  color: var(--text-primary);
+  font-weight: 600;
+}
+
+.investigacoes-lista {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.investigacao-card {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  padding: 14px 16px;
+  border: 1px solid var(--border);
+  border-left: 4px solid var(--accent);
+  border-radius: 10px;
+  background: var(--bg-card);
+  box-shadow: var(--shadow);
+}
+
+/* chegada via trilha ("voltar pro inquérito"): pisca pra mostrar qual card é o do link */
+.investigacao-card-destaque {
+  animation: destaque-card 2.4s ease;
+}
+
+@keyframes destaque-card {
+  0%, 55% { box-shadow: 0 0 0 2px var(--accent); }
+  100% { box-shadow: var(--shadow); }
+}
+
+.investigacao-card + .investigacao-card {
+  margin-top: 4px;
+}
+
+.investigacao-info {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.investigacao-admin {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  margin-top: 2px;
+  font-size: 13px;
+  color: var(--text-secondary);
+}
+
+.investigacao-admin svg {
+  width: 14px;
+  height: 14px;
+  flex-shrink: 0;
+}
+
+.investigacao-admin strong {
+  color: var(--text-primary);
+  font-weight: 600;
+}
+
+/* As abas do inquérito ficam coladas nos blocos que filtram: o respiro de 20px do .extracao-tabs
+ * genérico (usado como cabeçalho de página em importacao/configuracoes/auditoria) abria um vão
+ * grande demais aqui, onde a barra e o conteúdo são o mesmo cartão. */
+.inquerito-abas {
+  margin-bottom: 1px;
+}
+
+/* A lista de blocos de uma aba (Celulares, RIFs, SIMBA, Outros documentos) vai em duas colunas:
+ * empilhados, os cartões de um inquérito com vários aparelhos viravam uma rolagem longa. São
+ * duas fixas, e não auto-fit, para a tela larga não virar uma parede de quatro colunas.
+ * .blocos-async é o <div> que guarda lugar para os blocos que chegam por AJAX (IPED, RIF, SIMBA,
+ * IPL, IRPF, documentos): display:contents mantém a ordem sem gastar uma célula da grade. */
+.inquerito-categoria-wrap {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  align-items: start;
+  gap: 10px;
+}
+
+@media (max-width: 1180px) {
+  .inquerito-categoria-wrap {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+
+.blocos-async {
+  display: contents;
+}
+
+.inquerito-categoria-wrap > .empty-hint {
+  grid-column: 1 / -1;
+}
+
+/* Checkbox "Agrupar por categoria" (abas IPL e Outros documentos, ver js/investigacao.js): a barra
+ * e cada grupo atravessam as duas colunas da grade da aba; o corpo do grupo repete a grade de
+ * 2 colunas para os blocos. */
+.inquerito-categoria-wrap > .agrupar-controle,
+.blocos-async > .agrupar-grupo {
+  grid-column: 1 / -1;
+}
+
+.agrupar-controle {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin: 2px 0 4px;
+  font-weight: 600;
+  color: var(--text-secondary);
+  cursor: pointer;
+  user-select: none;
+}
+
+.agrupar-controle input[type="checkbox"] {
+  width: auto;
+  margin: 0;
+}
+
+.agrupar-cabecalho {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+  margin: 10px 0 0;
+  padding: 6px 10px;
+  font: inherit;
+  font-weight: 700;
+  font-size: .9rem;
+  text-align: left;
+  color: var(--text-primary);
+  background: rgba(125, 125, 125, .1);
+  border: none;
+  border-left: 3px solid var(--accent, #888);
+  border-radius: 4px;
+  cursor: pointer;
+}
+
+.agrupar-cabecalho:hover {
+  background: rgba(125, 125, 125, .18);
+}
+
+.agrupar-cabecalho:focus-visible {
+  outline: 2px solid var(--accent, #888);
+  outline-offset: 1px;
+}
+
+.agrupar-seta {
+  flex: none;
+  width: 1.2em;
+  text-align: center;
+  opacity: .7;
+}
+
+.agrupar-corpo {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  align-items: start;
+  gap: 10px;
+  margin-top: 10px;
+}
+
+@media (max-width: 1180px) {
+  .agrupar-corpo {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+
+/* uma seção por extração (cada aparelho), dentro do card do inquérito */
+.extracao-bloco {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 12px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: var(--bg-page);
+}
+
+/* Cabeçalho do bloco em uma linha só: ícone da plataforma + identidade à esquerda, ações à
+ * direita. Ver montarCabecalho em js/investigacao.js — os badges de estado moram na coluna da
+ * identidade (descrevem o dado) e o secundário/destrutivo vai para o menu "Mais ações", senão o
+ * cabeçalho volta a ser três fileiras de botões de pesos diferentes. */
+.extracao-cab {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.extracao-avatar {
+  flex-shrink: 0;
+  width: 44px;
+  height: 44px;
+  display: grid;
+  place-items: center;
+  border-radius: 10px;
+  background: var(--bg-hover);
+  color: var(--text-secondary);
+}
+
+.extracao-avatar svg {
+  width: 26px;
+  height: 26px;
+}
+
+.extracao-avatar.is-android { color: var(--tint-success-text); }
+.extracao-avatar.is-ios { color: var(--text-primary); }
+
+.extracao-identidade {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+  flex: 1 1 240px;
+}
+
+.extracao-modelo {
+  font-size: 20px;
+  font-weight: 700;
+  line-height: 1.15;
+  color: var(--text-primary);
+  overflow-wrap: anywhere;
+}
+
+.extracao-arquivo {
+  font-size: 13px;
+  color: var(--text-secondary);
+  overflow-wrap: anywhere;
+}
+
+.extracao-cab-badges {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex-wrap: wrap;
+  margin-top: 6px;
+}
+
+.extracao-cab-badges:empty {
+  display: none;
+}
+
+.extracao-cab-acoes {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 8px;
+  flex-wrap: wrap;
+  margin-left: auto;
+}
+
+/* Botão de cabeçalho é menor que o da caixa de acessos: ali embaixo é onde se navega, aqui em cima
+   são ações sobre o próprio documento. */
+.extracao-cab-acoes .btn {
+  padding: 5px 12px 5px 5px;
+  font-size: 12px;
+  gap: 6px;
+}
+
+.extracao-cab-acoes .btn svg {
+  width: 13px;
+  height: 13px;
+  padding: 5px;
+}
+
+.extracao-cab-acoes .btn-secondary {
+  padding: 6px 12px;
+}
+
+.extracao-cab-acoes .btn-secondary svg {
+  width: 13px;
+  height: 13px;
+  padding: 0;
+  background: none;
+  stroke: currentColor;
+}
+
+/* o menu abre a partir da borda direita: alinhado à esquerda ele escapava do cartão */
+.extracao-cab-acoes .acoes-menu-lista {
+  left: auto;
+  right: 0;
+}
+
+.extracao-titulo {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+.extracao-titulo svg {
+  width: 15px;
+  height: 15px;
+  flex-shrink: 0;
+}
+
+.extracao-contagens {
+  font-size: 12px;
+  color: var(--text-secondary);
+}
+
+.extracao-contagens svg {
+  width: 13px;
+  height: 13px;
+  vertical-align: -2px;
+  flex-shrink: 0;
+}
+
+
+/* Lista de rótulo/valor em modal. Nasceu no modal "Dono do aparelho" do card de extração —
+ * que saiu de cena quando dono e contas viraram abas da tela de Identidade do aparelho —,
+ * e segue em uso no detalhe de nó do RIF. */
+.dono-dl {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  gap: 4px 14px;
+  margin: 0;
+  font-size: 13px;
+}
+
+.dono-dl dt {
+  color: var(--text-muted);
+}
+
+.dono-dl dd {
+  margin: 0;
+  color: var(--text-primary);
+}
+
+.investigacao-info strong {
+  font-size: 17px;
+  color: var(--accent);
+}
+
+.investigacao-info span {
+  font-size: 12px;
+  color: var(--text-secondary);
+}
+
+/* Caixas de acesso do bloco: o celular tem umas vinte telas e, em fluxo único, o que se abre em
+ * toda análise ficava com o mesmo peso do que se abre uma vez por caso — daí "Principais" e
+ * "Demais". Os outros tipos de importação têm poucas ações e usam uma caixa só, que ocupa a
+ * largura inteira. Ver criarGrupoAcoes em js/investigacao.js. */
+.acoes-grupos {
+  display: grid;
+  /* 220px porque o bloco agora ocupa meia largura da lista: com 300px as duas caixas do celular
+     não cabiam lado a lado e empilhavam. O min() segura a caixa dentro do bloco em tela estreita
+     — minmax(220px,...) puro mantinha a coluna em 220px e a caixa vazava do cartão. */
+  grid-template-columns: repeat(auto-fit, minmax(min(220px, 100%), 1fr));
+  gap: 12px;
+}
+
+.acoes-grupo {
+  padding: 12px;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  background: var(--bg-card);
+}
+
+.acoes-grupo-titulo {
+  margin-bottom: 10px;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: .08em;
+  text-transform: uppercase;
+  color: var(--text-secondary);
+}
+
+.investigacao-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.investigacao-actions .btn {
+  padding: 8px 14px;
+  font-size: 13px;
+}
+
+/* Busca rápida do card do inquérito (js/investigacao.js → busca_entidades.html). Dentro de
+ * .investigacao-actions (flex com quebra), a base 100% joga a barra para a linha abaixo dos
+ * botões de ação; o campo reaproveita a pílula .inv-busca do topo da página. */
+.inv-busca-entidades {
+  display: flex;
+  flex: 1 1 100%;
+  gap: 8px;
+  align-items: center;
+}
+
+.inv-busca-entidades .inv-busca {
+  flex: 1;
+  min-width: 0;
+}
+
+.inv-busca-entidades .inv-busca input {
+  width: 100%;
+}
+
+/* menu "Mais ações" do card de investigação (ver criarMenuAcoes em js/investigacao.js) */
+.acoes-menu {
+  position: relative;
+  display: inline-flex;
+}
+
+.acoes-menu-lista {
+  position: absolute;
+  top: 100%;
+  left: 0;
+  margin-top: 6px;
+  min-width: 230px;
+  background: var(--bg-elevated, var(--bg-card));
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  box-shadow: var(--shadow-lg, var(--shadow));
+  padding: 4px;
+  z-index: 20;
+}
+
+/* O card de investigação tem dois menus lado a lado e "Gerência do inquérito" é o último: com o
+ * alinhamento padrão (left: 0) a lista abriria para fora da borda direita do card. */
+.acoes-menu-direita .acoes-menu-lista {
+  left: auto;
+  right: 0;
+}
+
+.acoes-menu-item {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  width: 100%;
+  padding: 9px 12px;
+  border: none;
+  background: none;
+  color: var(--text-primary);
+  font-size: 13px;
+  font-family: inherit;
+  cursor: pointer;
+  border-radius: 6px;
+  text-align: left;
+  white-space: nowrap;
+  transition: background-color 0.12s ease;
+}
+
+.acoes-menu-item:hover {
+  background: var(--bg-hover);
+}
+
+.acoes-menu-item:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+
+.acoes-menu-item svg {
+  width: 15px;
+  height: 15px;
+  flex-shrink: 0;
+  stroke: currentColor;
+}
+
+.acoes-menu-item.perigoso {
+  color: var(--danger);
+}
+
+.acoes-menu-item.perigoso:hover {
+  background: color-mix(in srgb, var(--danger) 15%, transparent);
+}
+
+.acoes-menu-divisor {
+  height: 1px;
+  background: var(--border);
+  margin: 4px 2px;
+}
+
+/* modal "Informações da prova" dos blocos do card (ver itemInfoProva em js/investigacao.js) */
+.info-prova-lista {
+  display: flex;
+  flex-direction: column;
+}
+
+.info-prova-linha {
+  display: grid;
+  grid-template-columns: 180px 1fr;
+  gap: 12px;
+  padding: 8px 4px;
+  border-bottom: 1px solid var(--border);
+  font-size: 13px;
+}
+
+.info-prova-linha:last-child {
+  border-bottom: none;
+}
+
+.info-prova-linha dt {
+  color: var(--text-muted);
+  font-weight: 600;
+}
+
+.info-prova-linha dd {
+  margin: 0;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+
+.empty-hint {
+  color: var(--text-muted);
+  font-size: 13px;
+}
+
+/* ---------- Permissões de inquérito (modal, ver js/investigacao.js) ---------- */
+
+.permissoes-lista {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin-bottom: 16px;
+}
+
+.permissao-linha {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 8px 12px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  margin-bottom: 6px;
+}
+
+.permissao-linha:last-child {
+  margin-bottom: 0;
+}
+
+.permissao-linha .permissao-nome {
+  font-size: 13px;
+}
+
+.permissao-linha .permissao-login {
+  color: var(--text-muted);
+  font-size: 12px;
+}
+
+.permissao-adicionar {
+  display: flex;
+  align-items: flex-end;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.permissao-adicionar .field {
+  flex: 1;
+  margin-bottom: 0;
+  min-width: 180px;
+}
+
+.field-check {
+  display: flex !important;
+  align-items: center;
+  gap: 8px;
+  cursor: pointer;
+}
+
+.field-check input {
+  width: 16px;
+  height: 16px;
+  cursor: pointer;
+  accent-color: var(--accent);
+}
+
+.permissao-admin-check {
+  display: flex !important;
+  align-items: center;
+  gap: 5px;
+  font-size: 13px;
+  cursor: pointer;
+  white-space: nowrap;
+  margin: 0 !important;
+  padding: 4px 0;
+}
+
+.permissao-admin-check input {
+  width: 16px;
+  height: 16px;
+  cursor: pointer;
+  accent-color: var(--accent);
+}
+
+.switch-label input {
+  position: absolute;
+  opacity: 0;
+  width: 0;
+  height: 0;
+}
+
+/* ---------- Modal ---------- */
+
+.modal-overlay {
+  position: fixed;
+  inset: 0;
+  background: var(--overlay, rgba(0, 0, 0, 0.5));
+  backdrop-filter: blur(2px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 100;
+}
+
+.modal-overlay.hidden {
+  display: none;
+}
+
+.modal {
+  background: var(--bg-elevated, var(--bg-card));
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  box-shadow: var(--shadow-lg, var(--shadow));
+  width: min(900px, 92vw);
+  max-height: 84vh;
+  display: flex;
+  flex-direction: column;
+}
+
+.modal-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 16px 20px;
+  border-bottom: 1px solid var(--border);
+}
+
+.modal-header h2 {
+  margin: 0;
+  font-size: 15px;
+  font-weight: 600;
+}
+
+.modal-close {
+  background: transparent;
+  border: none;
+  color: var(--text-secondary);
+  font-size: 20px;
+  line-height: 1;
+  cursor: pointer;
+  padding: 4px 8px;
+  border-radius: 6px;
+}
+
+.modal-close:hover {
+  background: var(--bg-hover);
+  color: var(--text-primary);
+}
+
+/* overflow-x: as tabelas dentro de modal (extrações do inquérito, permissões, padrões
+ * detectados) são mais largas que os 92vw do modal em tela estreita — sem isto elas estouravam
+ * a caixa em vez de rolar dentro dela. */
+.modal-body {
+  padding: 12px 20px 20px;
+  overflow-y: auto;
+  overflow-x: auto;
+}
+
+/* Modal Gerar relatório: o footer fica visível mesmo com a lista longa de marcações. */
+.gr-footer {
+  position: sticky;
+  bottom: -20px;
+  background: var(--bg-elevated, var(--bg-card));
+  padding: 12px 0 4px;
+  border-top: 1px solid var(--border);
+  flex-wrap: wrap;
+}
+.gr-resumo {
+  font-size: 13px;
+  color: var(--text-secondary);
+  background: var(--bg-hover);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 8px 12px;
+  margin: 12px 0 0;
+}
+.gr-historico { margin-top: 14px; }
+.gr-historico-linha {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+  font-size: 13px;
+  padding: 6px 0;
+  border-bottom: 1px solid var(--border);
+}
+.gr-historico-linha:last-child { border-bottom: none; }
+.gr-filtros-limpar {
+  padding: 4px 10px;
+  font-size: 12px;
+}
+.gr-vazio-filtro {
+  font-size: 13px;
+  color: var(--text-secondary);
+  padding: 10px 4px;
+}
+
+/* campo de texto do Dialogo.prompt (js/dialogo.js) */
+.dialogo-campo {
+  width: 100%;
+  padding: 8px 10px;
+  border-radius: 8px;
+  border: 1px solid var(--border);
+  background: var(--bg-page);
+  color: var(--text-primary);
+  font-size: 13px;
+  font-family: inherit;
+  box-sizing: border-box;
+}
+
+textarea.dialogo-campo {
+  min-height: 90px;
+  resize: vertical;
+}
+
+/* ---------- Usuário logado / trocar senha / sair (rodapé do menu vertical, js/auth.js) ---------- */
+
+.auth-usuario {
+}
+
+.auth-usuario-info {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.auth-usuario-nome {
+  font-size: 12.5px;
+  font-weight: 500;
+  color: var(--text-secondary);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.auth-usuario-acoes {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.auth-footer-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  width: 100%;
+  border: 1px solid var(--border);
+  background: var(--bg-hover);
+  color: var(--text-secondary);
+  font-size: 11.5px;
+  font-weight: 600;
+  padding: 5px 8px;
+  border-radius: 6px;
+  cursor: pointer;
+}
+
+.auth-footer-btn:hover {
+  background: var(--border);
+  color: var(--text-primary);
+}
+
+.auth-footer-btn svg {
+  width: 13px;
+  height: 13px;
+  flex-shrink: 0;
+}
+
+.auth-pendente-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 200;
+  background: var(--overlay, rgba(0, 0, 0, 0.55));
+  backdrop-filter: blur(2px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* fica acima da tela de "pendente de aprovação" (z-index 200) — sem isso o modal de trocar
+   senha abriria escondido atrás dela quando acionado por lá */
+#modal-trocar-senha {
+  z-index: 250;
+}
+
+.auth-pendente-caixa {
+  width: min(420px, 92vw);
+  background: var(--bg-elevated, var(--bg-card));
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 28px;
+  box-shadow: var(--shadow-lg, var(--shadow));
+  text-align: center;
+}
+
+.auth-pendente-caixa h2 {
+  margin: 0 0 10px;
+  font-size: 17px;
+}
+
+.auth-pendente-caixa p {
+  margin: 0 0 20px;
+  font-size: 13.5px;
+  color: var(--text-secondary);
+  line-height: 1.5;
+}
+
+.auth-pendente-acoes {
+  display: flex;
+  gap: 10px;
+  justify-content: center;
+}
+
+/* ---------- Timeline ---------- */
+
+.tl-filtros {
+  display: flex;
+  gap: 10px;
+  margin-bottom: 20px;
+  flex-wrap: wrap;
+  align-items: center;
+}
+
+.tl-filtros .arq-busca {
+  flex: 1;
+  min-width: 200px;
+}
+
+.tl-filtros .arq-select {
+  min-width: 150px;
+}
+
+.tl-filtros .arq-datas {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 13px;
+  color: var(--text-secondary);
+  white-space: nowrap;
+}
+
+.tl-filtros .arq-datas input[type="date"] {
+  width: 150px;
+}
+
+.tl-dia {
+  margin-bottom: 20px;
+}
+
+.tl-dia-header {
+  display: flex;
+  align-items: baseline;
+  gap: 10px;
+  padding: 8px 0;
+  margin-bottom: 8px;
+  border-bottom: 1px solid var(--border);
+  position: sticky;
+  top: 64px;
+  background: var(--bg-page);
+  z-index: 5;
+}
+
+.tl-dia-rotulo {
+  font-size: 15px;
+  font-weight: 700;
+  color: var(--text-primary);
+}
+
+.tl-dia-qtd {
+  font-size: 12px;
+  color: var(--text-muted);
+}
+
+.tl-item {
+  display: flex;
+  gap: 12px;
+  padding: 10px 12px;
+  border-radius: 8px;
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  margin-bottom: 6px;
+  align-items: flex-start;
+  transition: background-color 0.15s ease;
+}
+
+.tl-item:hover {
+  background: var(--bg-hover);
+}
+
+.tl-item-marca {
+  width: 4px;
+  min-height: 100%;
+  border-radius: 2px;
+  flex-shrink: 0;
+  align-self: stretch;
+}
+
+.tl-item-icone {
+  font-size: 18px;
+  line-height: 1.4;
+  flex-shrink: 0;
+  margin-top: 1px;
+}
+
+.tl-item-corpo {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.tl-item-hora {
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+}
+
+.tl-item-desc {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.tl-item-texto {
+  font-size: 13px;
+  color: var(--text-primary);
+  line-height: 1.4;
+  word-break: break-word;
+}
+
+/* coordenadas de um evento de localização: link pro Google Maps (ver timeline.js) */
+.tl-item-coordenadas {
+  font-size: 12px;
+  color: var(--accent);
+  text-decoration: none;
+  border-bottom: 1px dashed var(--accent);
+  white-space: nowrap;
+  cursor: pointer;
+}
+
+.tl-item-coordenadas:hover {
+  color: var(--accent-hover);
+}
+
+.tl-item-app {
+  font-size: 11px;
+  color: var(--text-muted);
+  background: var(--bg-hover);
+  padding: 1px 7px;
+  border-radius: 999px;
+  white-space: nowrap;
+}
+
+/* quantos registros idênticos foram agrupados neste horário (ver listar_timeline) */
+.tl-item-repeticoes {
+  font-size: 11px;
+  font-variant-numeric: tabular-nums;
+  color: var(--accent-contrast);
+  background: var(--accent-solid);
+  padding: 1px 7px;
+  border-radius: 999px;
+  white-space: nowrap;
+}
+
+.tl-item-origem {
+  font-size: 11px;
+  color: var(--text-muted);
+  margin-top: 1px;
+}
+
+.tl-item-acoes {
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.btn-link-original {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 30px;
+  height: 30px;
+  padding: 0;
+  border-radius: 6px;
+  border: 1px solid var(--border);
+  background: var(--bg-hover);
+  color: var(--text-secondary);
+  font-size: 14px;
+  text-decoration: none;
+  cursor: pointer;
+  transition: background-color 0.15s ease, color 0.15s ease;
+}
+
+.btn-link-original:hover {
+  background: var(--accent-solid);
+  color: var(--accent-contrast);
+  border-color: var(--accent-solid);
+}
+
+/* a lista agora usa section/h2 + ul/li (acessibilidade): os li substituem exatamente as
+   antigas divs empilhadas, sem marcar nada com bolinha */
+ul.tl-dia-lista {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+/* checkbox de seleção para marcar eventos em lote para o relatório */
+.tl-item-check {
+  flex-shrink: 0;
+  width: 16px;
+  height: 16px;
+  margin-top: 3px;
+  accent-color: var(--accent-solid);
+  cursor: pointer;
+}
+
+/* barra de seleção (contador + marcador + ações), some quando nada está marcado */
+.tl-selecao-bar {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 10px;
+  padding: 8px 12px;
+  margin-bottom: 10px;
+  border: 1px solid var(--accent-solid);
+  border-radius: 8px;
+  background: var(--bg-card);
+}
+
+.tl-selecao-bar.hidden {
+  display: none;
+}
+
+.tl-selecao-bar #selecao-total {
+  font-weight: 700;
+  color: var(--text-primary);
+}
+
+/* multisseletor de aplicações: botão com carinha de select + painel de checkboxes */
+.tl-multiselect {
+  position: relative;
+  display: inline-block;
+}
+
+.tl-multiselect-botao {
+  cursor: pointer;
+}
+
+.tl-multiselect-painel {
+  position: absolute;
+  z-index: 30;
+  top: calc(100% + 4px);
+  left: 0;
+  min-width: 210px;
+  max-height: 300px;
+  overflow-y: auto;
+  padding: 8px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: var(--bg-card);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.18);
+}
+
+.tl-multiselect-painel.hidden {
+  display: none;
+}
+
+.tl-mult-item {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 6px;
+  border-radius: 6px;
+  font-size: 13px;
+  color: var(--text-primary);
+  cursor: pointer;
+}
+
+.tl-mult-item:hover {
+  background: var(--bg-hover);
+}
+
+.tl-mult-limpar {
+  margin-top: 6px;
+  width: 100%;
+  padding: 5px;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  background: var(--bg-hover);
+  color: var(--text-secondary);
+  font-size: 12px;
+  cursor: pointer;
+}
+
+.tl-mult-limpar:hover {
+  color: var(--text-primary);
+}
+
+.tl-geo-label {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 13px;
+  color: var(--text-secondary);
+  white-space: nowrap;
+  cursor: pointer;
+}
+
+/* painel de detalhe do evento (acordeão): os campos que a tx_descricao achata */
+.tl-item-detalhe-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 30px;
+  height: 30px;
+  padding: 0;
+  border-radius: 6px;
+  border: 1px solid var(--border);
+  background: var(--bg-hover);
+  color: var(--text-secondary);
+  cursor: pointer;
+}
+
+.tl-item-detalhe-btn[aria-expanded="true"] {
+  background: var(--accent-solid);
+  color: var(--accent-contrast);
+  border-color: var(--accent-solid);
+}
+
+li.tl-item {
+  flex-wrap: wrap;
+}
+
+.tl-item-detalhe {
+  flex-basis: 100%;
+  margin-top: 8px;
+  padding: 10px 12px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: var(--bg-hover);
+}
+
+.tl-item-detalhe.hidden {
+  display: none;
+}
+
+.tl-detalhe-dl {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+  gap: 6px 16px;
+  margin: 0 0 8px;
+}
+
+.tl-detalhe-dl div {
+  min-width: 0;
+}
+
+.tl-detalhe-dl dt {
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+  color: var(--text-muted);
+}
+
+.tl-detalhe-dl dd {
+  margin: 0;
+  font-size: 13px;
+  color: var(--text-primary);
+  word-break: break-word;
+}
+
+.tl-mini-mapa {
+  height: 240px;
+  border-radius: 8px;
+  overflow: hidden;
+  border: 1px solid var(--border);
+}
+
+.tl-detalhe-gmaps {
+  display: inline-block;
+  margin-bottom: 8px;
+}
+
+/* mapa da página: trilha temporal dos eventos com coordenada */
+.tl-mapa {
+  position: relative;
+  margin-bottom: 14px;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  overflow: hidden;
+  background: var(--bg-card);
+}
+
+.tl-mapa.hidden {
+  display: none;
+}
+
+#tl-mapa-corpo {
+  height: 340px;
+}
+
+#tl-mapa-hint {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin: 0;
+  background: var(--bg-card);
+}
+
+#tl-mapa-hint.hidden {
+  display: none;
+}
+
+@media (max-width: 720px) {
+  /* telas estreitas: o menu completo também vira reduzido (só ícones) */
+  .sidebar:not(.sidebar-reduced) {
+    width: 72px;
+    padding: 20px 10px;
+  }
+
+  .sidebar:not(.sidebar-reduced) .brand-name,
+  .sidebar:not(.sidebar-reduced) .nav-item span,
+  .sidebar:not(.sidebar-reduced) .auth-usuario-nome,
+  .sidebar:not(.sidebar-reduced) .auth-footer-btn span {
+    display: none;
+  }
+
+  .sidebar:not(.sidebar-reduced) .sidebar-brand,
+  .sidebar:not(.sidebar-reduced) .nav-item,
+  .sidebar:not(.sidebar-reduced) .theme-toggle {
+    justify-content: center;
+  }
+
+  .sidebar:not(.sidebar-reduced) .sidebar-brand {
+    padding-left: 0;
+    padding-right: 0;
+  }
+
+  .sidebar:not(.sidebar-reduced) .auth-usuario,
+  .sidebar:not(.sidebar-reduced) .auth-usuario-acoes {
+    flex-direction: column;
+  }
+
+  .sidebar:not(.sidebar-reduced) .nav-group-chevron {
+    display: none;
+  }
+
+  .sidebar:not(.sidebar-reduced) .nav-subitem {
+    padding-left: 12px;
+  }
+}
+
+/* ─── Área de envio de arquivo (a tela "Comparar rosto" e as importações de importacao/inqueritos;
+   os cartões de resultado da comparação estão em css/comparar_rosto.css) ─── */
+
+.drop-zone {
+  display: block;
+  /* prende o <input type="file"> em .sr-only (position:absolute) dentro da caixa; sem isto ele se
+     posiciona pelo bloco inicial e vai parar longe daqui */
+  position: relative;
+  border: 2px dashed var(--border);
+  border-radius: 8px;
+  padding: 40px 20px;
+  text-align: center;
+  cursor: pointer;
+  transition: border-color .2s, background .2s;
+  color: var(--text-secondary);
+}
+
+.drop-zone:hover,
+.drop-zone-active {
+  border-color: var(--accent);
+  background: var(--bg-hover);
+}
+.drop-zone-active {
+  border-style: solid;
+}
+
+/* Variante para quando a área de envio é UM campo do formulário, e não o assunto da tela (aba
+   "Arquivo genérico" da Nova importação): mesma caixa tracejada, mais baixa, para não empurrar o
+   resto do formulário para fora da dobra. */
+.drop-zone-compacta {
+  padding: 18px 16px;
+  font-size: 13px;
+}
+
+/* Enquanto o envio anterior está subindo: clicar abriria outro seletor e a segunda leva
+   atropelaria a primeira (o JS ignora, isto só deixa isso visível). */
+.drop-zone.disabled {
+  pointer-events: none;
+  opacity: .6;
+}
+
+/* `.field input` (style.css, "Formulários") tem especificidade maior que `.sr-only` e devolvia
+   `width:100%` + padding ao input escondido: a 420px de viewport ele sozinho empurrava a página
+   350px para a direita, sem nada visível para explicar a barra de rolagem horizontal. */
+.drop-zone input[type="file"].sr-only {
+  width: 1px;
+  padding: 0;
+  border: 0;
+}
+
+/* O <input type="file"> fica em .sr-only (visível só para leitor de tela) e não com display:none,
+   para continuar recebendo foco pelo teclado — sem esta regra o foco existe e não aparece. */
+.drop-zone:has(:focus-visible) {
+  border-color: var(--accent);
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+
+/* Lista do que acabou de subir, abaixo da caixa de envio. */
+.upload-lista {
+  list-style: none;
+  margin: 8px 0 0;
+  padding: 0;
+  font-size: 13px;
+}
+.upload-lista li {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 2px 0;
+  color: var(--text-secondary);
+}
+.upload-lista li.upload-erro {
+  color: var(--danger);
+}
+.upload-lista .upload-marca {
+  flex: none;
+  font-weight: 700;
+}
+/* Avisos amargos: entrou, mas não como a pessoa esperava (ex.: renomeado por colisão de nome). */
+.upload-lista li.upload-aviso {
+  color: #b45309;
+}
+.upload-lista .upload-renomeado {
+  color: #b45309;
+  font-style: italic;
+}
+
+/* Barra de bytes do upload em lote (o status de texto sozinho fazia lote grande parecer travado). */
+.upload-progresso {
+  margin-top: 8px;
+  height: 6px;
+  border-radius: 3px;
+  background: var(--border);
+  overflow: hidden;
+}
+.upload-progresso-cheio {
+  height: 100%;
+  width: 0;
+  border-radius: 3px;
+  background: var(--accent);
+  transition: width .2s ease;
+}
+
+/* Lista de arquivos da pasta de rede (modal "Copiar de outra pasta de rede"). */
+.rede-lista {
+  max-height: 260px;
+  overflow-y: auto;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 6px 10px;
+}
+.rede-lista li {
+  gap: 8px;
+  padding: 4px 0;
+  border-bottom: 1px solid var(--border);
+}
+.rede-lista li:last-child {
+  border-bottom: 0;
+}
+.rede-lista input[type="checkbox"] {
+  flex: none;
+  width: 16px;
+  height: 16px;
+  accent-color: var(--accent);
+}
+.rede-lista .btn-compacto {
+  margin-left: auto;
+  padding: 2px 10px;
+  font-size: 12px;
+}
+
+/* Barra de progresso da cópia de rede. */
+.rede-progresso {
+  margin-top: 12px;
+}
+.rede-progresso-barra {
+  height: 8px;
+  border-radius: 4px;
+  background: var(--bg-hover);
+  overflow: hidden;
+}
+.rede-progresso-preenchimento {
+  height: 100%;
+  width: 0;
+  background: var(--accent);
+  transition: width 0.3s ease;
+}
+.rede-progresso-texto {
+  margin: 6px 0 0;
+}
+
+/* Itens do painel "Cópias da pasta de rede" (importacao.html). */
+.rede-lista .copia-item {
+  display: block;
+  padding: 8px 2px;
+}
+.copia-info {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin-bottom: 6px;
+}
+.copia-titulo {
+  font-weight: 600;
+  color: var(--text-primary);
+  font-size: 13px;
+  overflow-wrap: anywhere;
+}
+.copia-detalhe {
+  font-size: 12px;
+  color: var(--text-muted);
+}
+.copia-item .badge {
+  margin: 2px 8px 6px 0;
+}
+
+/* ---------- Toast (js/toast.js) ---------- */
+
+.toast-pilha {
+  position: fixed;
+  bottom: var(--esp-5);
+  right: var(--esp-5);
+  z-index: var(--z-toast);
+  display: flex;
+  flex-direction: column-reverse;
+  gap: var(--esp-2);
+  width: min(360px, calc(100vw - 48px));
+  pointer-events: none;
+}
+
+.toast {
+  pointer-events: auto;
+  display: flex;
+  align-items: flex-start;
+  gap: var(--esp-2);
+  background: var(--bg-elevated, var(--bg-card));
+  border: 1px solid var(--border);
+  border-left: 3px solid var(--text-muted);
+  border-radius: var(--raio-md);
+  box-shadow: var(--shadow-lg, var(--shadow));
+  padding: var(--esp-3) var(--esp-3);
+  animation: toast-entrar 0.18s ease;
+}
+
+.toast-saindo {
+  animation: toast-sair 0.18s ease forwards;
+}
+
+@keyframes toast-entrar {
+  from { opacity: 0; transform: translateY(8px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes toast-sair {
+  to { opacity: 0; transform: translateY(-4px); }
+}
+
+.toast-sucesso { border-left-color: var(--success); }
+.toast-erro { border-left-color: var(--danger); }
+.toast-aviso { border-left-color: var(--warning); }
+.toast-info { border-left-color: var(--accent); }
+
+.toast-icone {
+  flex-shrink: 0;
+  width: 18px;
+  height: 18px;
+  margin-top: 1px;
+}
+.toast-icone svg { width: 100%; height: 100%; }
+.toast-sucesso .toast-icone { color: var(--success); }
+.toast-erro .toast-icone { color: var(--danger); }
+.toast-aviso .toast-icone { color: var(--warning); }
+.toast-info .toast-icone { color: var(--accent); }
+
+.toast-corpo {
+  flex: 1;
+  min-width: 0;
+}
+
+.toast-mensagem {
+  font-size: var(--fs-sm);
+  color: var(--text-primary);
+  white-space: pre-wrap;
+  word-break: break-word;
+}
+
+.toast-acao {
+  background: none;
+  border: none;
+  color: var(--accent);
+  font-size: var(--fs-sm);
+  font-weight: 600;
+  cursor: pointer;
+  padding: 0;
+  margin-top: var(--esp-1);
+}
+.toast-acao:hover { color: var(--accent-hover); }
+
+.toast-fechar {
+  flex-shrink: 0;
+  background: none;
+  border: none;
+  color: var(--text-secondary);
+  font-size: 16px;
+  line-height: 1;
+  cursor: pointer;
+  padding: 2px 4px;
+  border-radius: var(--raio-sm);
+}
+.toast-fechar:hover { background: var(--bg-hover); color: var(--text-primary); }
+
+/* ---------- Carregando: botão, skeleton de tabela, overlay de bloco (js/carregando.js) ---------- */
+
+.spinner-grande {
+  width: 28px;
+  height: 28px;
+  border-width: 3px;
+}
+
+.carregando-overlay {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--bg-elevated, var(--bg-card));
+  opacity: 0.78;
+  border-radius: inherit;
+  z-index: 1;
+  color: var(--accent);
+}
+
+.skeleton-bloco {
+  display: block;
+  height: 12px;
+  border-radius: var(--raio-sm);
+  background: linear-gradient(90deg, var(--bg-hover) 25%, var(--border) 50%, var(--bg-hover) 75%);
+  background-size: 200% 100%;
+  animation: skeleton-pulso 1.4s ease-in-out infinite;
+}
+
+@keyframes skeleton-pulso {
+  0% { background-position: 200% 0; }
+  100% { background-position: -200% 0; }
+}
+
+.skeleton-linha td {
+  padding: 10px 12px;
+}
+
+/* ---------- Estados vazio/erro (js/estados.js) ---------- */
+
+.estado-vazio,
+.estado-erro {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  gap: var(--esp-2);
+  padding: var(--esp-6) var(--esp-4);
+  color: var(--text-secondary);
+}
+
+.estado-vazio .estado-icone,
+.estado-erro .estado-icone {
+  width: 36px;
+  height: 36px;
+  color: var(--text-muted);
+  margin-bottom: var(--esp-1);
+}
+.estado-erro .estado-icone { color: var(--danger); }
+.estado-icone svg { width: 100%; height: 100%; }
+
+.estado-titulo {
+  font-size: var(--fs-md);
+  font-weight: 600;
+  color: var(--text-primary);
+  margin: 0;
+}
+
+.estado-dica {
+  font-size: var(--fs-sm);
+  color: var(--text-secondary);
+  margin: 0;
+}
+
+.estado-acao {
+  margin-top: var(--esp-2);
+}
+
+/* ---------- Palette de busca rápida Ctrl+K (js/utils/sidebar.js) ---------- */
+
+.palette-busca {
+  width: min(560px, 92vw);
+  margin: 12vh auto auto;
+  padding: 0;
+  border: 1px solid var(--border);
+  border-radius: var(--raio-md, 10px);
+  background: var(--bg-card, var(--bg-primary));
+  color: var(--text-primary);
+  box-shadow: 0 18px 50px rgba(0, 0, 0, 0.35);
+}
+
+.palette-busca::backdrop {
+  background: rgba(15, 23, 42, 0.45);
+}
+
+.palette-cabecalho {
+  display: flex;
+  align-items: center;
+  gap: var(--esp-2);
+  padding: var(--esp-3);
+  border-bottom: 1px solid var(--border);
+}
+
+.palette-campo {
+  flex: 1;
+  border: none;
+  background: transparent;
+  color: var(--text-primary);
+  font-size: var(--fs-md, 15px);
+  outline: none;
+}
+
+.palette-fechar {
+  border: none;
+  background: transparent;
+  color: var(--text-muted);
+  font-size: 20px;
+  line-height: 1;
+  cursor: pointer;
+  padding: 0 4px;
+}
+
+.palette-resultados {
+  max-height: 52vh;
+  overflow-y: auto;
+  padding: var(--esp-2);
+}
+
+.palette-linha {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding: var(--esp-2) var(--esp-3);
+  border-radius: 8px;
+  color: var(--text-primary);
+  text-decoration: none;
+}
+
+.palette-linha:hover,
+.palette-linha:focus-visible {
+  background: color-mix(in srgb, var(--primary) 12%, transparent);
+  outline: none;
+}
+
+.palette-linha small {
+  color: var(--text-muted);
+  font-size: 12px;
+}
+
+.palette-vazio {
+  margin: 0;
+  padding: var(--esp-3);
+  color: var(--text-muted);
+  font-size: var(--fs-sm, 13px);
+}
+
+.palette-dica {
+  margin: 0;
+  padding: var(--esp-2) var(--esp-3);
+  border-top: 1px solid var(--border);
+  color: var(--text-muted);
+  font-size: 12px;
+}
+
+/* ---------- Velocidade de reprodução de áudio/vídeo (js/utils/velocidade_midia.js) ---------- */
+/* Fica logo abaixo do player nos modais de mídia (WhatsApp, Arquivos, anexos de domínio). */
+.midia-velocidade {
+  display: flex;
+  align-items: center;
+  gap: var(--esp-1);
+  margin-top: var(--esp-2);
+}
+
+.midia-velocidade-btn {
+  padding: 2px 10px;
+  border: 1px solid var(--border);
+  border-radius: var(--raio-sm);
+  background: var(--bg-card);
+  color: var(--text-secondary);
+  font-size: var(--fs-xs);
+  line-height: 1.8;
+  cursor: pointer;
+}
+
+.midia-velocidade-btn:hover {
+  background: var(--bg-hover);
+  color: var(--text-primary);
+}
+
+.midia-velocidade-btn.ativa {
+  border-color: var(--accent-solid);
+  background: var(--accent-solid);
+  color: var(--accent-contrast);
+}
+
+
+/* ---------- Exportar grafo para o i2 (js/utils/exportar_i2.js) ---------- */
+/* Os três botões (CSV/XLSX/ANX) das seis telas de grafo. Andam juntos num grupo próprio porque
+   são o MESMO comando em três formatos: soltos no gap da barra, liam-se como três ações sem
+   relação entre si. Vive aqui, e não em mesa.css, porque a tela de localizações não carrega
+   mesa.css e precisa do mesmo grupo. */
+.i2-grupo {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--esp-1);
+  flex-wrap: wrap;
+}
+
+/* Na convergência o grupo não divide barra com mais nada: fica sozinho sobre o desenho,
+   alinhado à direita, para não competir com a legenda logo abaixo. */
+.conv-grafo-barra {
+  display: flex;
+  justify-content: flex-end;
+  margin-bottom: var(--esp-2);
+}
+
+.conv-grafo-barra .i2-grupo-rotulo {
+  margin-left: 0;
+}
+
+.i2-grupo-rotulo {
+  margin-left: var(--esp-2);
+  font-size: var(--fs-xs);
+  color: var(--text-secondary);
+  white-space: nowrap;
+}
+
+.i2-grupo .btn {
+  font-size: var(--fs-xs);
+  padding: 3px 8px;
+}
+
+/* ---------- Delegacias (web/delegacias.html) ---------- */
+/* Barra de filtros: mesmo vocabulário das telas de extração (busca + selects + limpar),
+   mas em escopo próprio para não herdar larguras do .arq-filtros. */
+.delegacias-card {
+  max-width: none;
+}
+
+.delegacias-filtros {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px 10px;
+  align-items: center;
+  margin: 12px 0;
+}
+
+.delegacias-filtros input[type="search"],
+.delegacias-filtros select {
+  padding: 7px 10px;
+  border-radius: 8px;
+  border: 1px solid var(--border, rgba(127, 127, 127, 0.3));
+  background: var(--surface, transparent);
+  color: inherit;
+  font-size: 13px;
+}
+
+.delegacias-filtros input[type="search"] {
+  min-width: 220px;
+  flex: 1 1 240px;
+  max-width: 360px;
+}
+
+.delegacias-filtro-info {
+  font-size: 12px;
+  color: var(--text-muted);
+  margin-left: auto;
+}
+
+.delegacias-tabela-wrap {
+  overflow-x: auto;
+  margin-top: 4px;
+}
+
+.delegacias-modal {
+  width: min(460px, 92vw);
+}
+
+/* Toggle + badge lado a lado: o checkbox opera, o badge informa. */
+.delegacia-switch {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  cursor: pointer;
+}
+
+.delegacia-switch input[type="checkbox"] {
+  width: 16px;
+  height: 16px;
+  cursor: pointer;
+  accent-color: var(--accent);
+  margin: 0;
+}
+
+.delegacia-switch input[type="checkbox"]:disabled {
+  cursor: wait;
+  opacity: 0.6;
+}
+
+.delegacia-switch-trilho {
+  display: none;
+}
+
+.delegacia-uf {
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.delegacia-acoes {
+  white-space: nowrap;
+  text-align: right;
+}
+
+.delegacia-acoes .btn + .btn {
+  margin-left: 6px;
+}
+
+.btn-sm {
+  padding: 6px 12px;
+  font-size: 12px;
+}
+
+.delegacias-erro {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 8px;
+  padding: 16px 0 4px;
+}
+
+.delegacias-erro[hidden] {
+  display: none;
+}
+
+.delegacia-skeleton .skeleton-bar {
+  display: block;
+  height: 12px;
+  border-radius: var(--raio-sm, 6px);
+  background: linear-gradient(90deg, var(--bg-hover) 25%, var(--border) 50%, var(--bg-hover) 75%);
+  background-size: 200% 100%;
+  animation: skeleton-pulso 1.4s ease-in-out infinite;
+}
+
+@media (max-width: 700px) {
+  .delegacia-acoes {
+    min-width: 150px;
+  }
+}
+
+/* ---------- Usuários (web/usuarios.html) ---------- */
+/* Reaproveita .delegacias-filtros/.delegacia-skeleton; aqui só o específico: ações e menu. */
+.usuarios-acoes {
+  white-space: nowrap;
+  text-align: right;
+}
+
+.usuarios-acoes .btn + .btn,
+.usuarios-acoes .usuarios-menu {
+  margin-left: 6px;
+}
+
+.usuarios-menu {
+  display: inline-block;
+  position: relative;
+}
+
+.usuarios-menu summary {
+  list-style: none;
+  cursor: pointer;
+}
+
+.usuarios-menu summary::-webkit-details-marker {
+  display: none;
+}
+
+.usuarios-menu-lista {
+  position: absolute;
+  right: 0;
+  top: calc(100% + 4px);
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  min-width: 160px;
+  padding: 6px;
+  border-radius: 8px;
+  border: 1px solid var(--border, rgba(127, 127, 127, 0.3));
+  background: var(--surface, var(--bg, #fff));
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.25);
+  z-index: 30;
+}
+
+.usuarios-menu-lista .btn {
+  justify-content: flex-start;
+  text-align: left;
+  text-decoration: none;
+}
+
+.usuarios-eu {
+  outline: 1px dashed var(--accent, #888);
+  outline-offset: -1px;
+}
+
+@media (max-width: 700px) {
+  .usuarios-acoes {
+    min-width: 220px;
+  }
+}

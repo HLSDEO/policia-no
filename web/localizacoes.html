@@ -1,0 +1,168 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Localizações · PolícIA</title>
+<script src="js/utils/boot_tema.js"></script>
+<link rel="icon" type="image/svg+xml" href="favicon.svg">
+<link rel="stylesheet" href="css/style.css">
+<link rel="stylesheet" href="css/entidades.css">
+<link rel="stylesheet" href="css/arquivos.css">
+<link rel="stylesheet" href="css/ufdr.css">
+<!-- o CSS do Leaflet entra junto com o JS, sob demanda, na primeira abertura da aba Grafo
+     (js/localizacoes_grafo.js → carregarLeaflet) — quem só usa a Tabela não paga esse custo -->
+<link rel="stylesheet" href="css/localizacoes_grafo.css">
+<link rel="stylesheet" href="css/chat.css">
+<link rel="stylesheet" href="css/ia_flutuante.css">
+</head>
+<body>
+<div class="app">
+
+  <div class="main" style="width:100%;">
+    <header class="topbar">
+      <h1 class="page-title">Localizações</h1>
+      <div class="topbar-actions">
+        <span class="grupo-total" id="total-registros"></span>
+        <span class="extracao-nav-container"></span>
+      </div>
+    </header>
+
+    <main class="content">
+      <div class="card" style="max-width:none;">
+
+        <div class="loc-visao-toggle" role="tablist" aria-label="Visões das localizações">
+          <button type="button" class="loc-visao-btn ativo" id="visao-tabela-btn" role="tab" aria-selected="true" aria-controls="visao-tabela">Tabela</button>
+          <button type="button" class="loc-visao-btn" id="visao-grafo-btn" role="tab" aria-selected="false" aria-controls="visao-grafo">Grafo</button>
+          <button type="button" class="loc-visao-btn" id="visao-trajetos-btn" role="tab" aria-selected="false" aria-controls="visao-trajetos">Trajetos</button>
+        </div>
+
+        <div class="arq-filtros">
+          <input type="search" id="filtro-busca" class="arq-busca" placeholder="Buscar por endereço, descrição ou app…" aria-label="Buscar por endereço, descrição ou app" autocomplete="off">
+          <select id="filtro-app" class="arq-select" aria-label="Filtrar por aplicativo">
+            <option value="">Todos os apps</option>
+          </select>
+          <select id="filtro-categoria" class="arq-select" aria-label="Filtrar por categoria">
+            <option value="">Todas as categorias</option>
+          </select>
+          <select id="filtro-periodo" class="arq-select" aria-label="Filtrar por faixa do dia">
+            <option value="">Qualquer horário</option>
+            <option value="madrugada">Madrugada (0h–6h)</option>
+            <option value="manha">Manhã (6h–12h)</option>
+            <option value="tarde">Tarde (12h–18h)</option>
+            <option value="noite">Noite (18h–0h)</option>
+          </select>
+          <select id="filtro-ordenar" class="arq-select" aria-label="Ordenar resultados">
+            <option value="recentes">Ordenar: mais recentes</option>
+            <option value="antigos">Ordenar: mais antigos</option>
+          </select>
+          <!-- só aparece quando o inquérito tem alguma camada de shapefile importada
+               (js/localizacoes_camadas.js) -->
+          <select id="filtro-area" class="arq-select hidden" title="Mostra só o que caiu dentro de uma área importada de shapefile" aria-label="Filtrar por área importada">
+            <option value="">Qualquer área</option>
+          </select>
+          <label class="arq-datas">De <input type="date" id="filtro-data-de" class="arq-select" aria-label="Data inicial"></label>
+          <label class="arq-datas">Até <input type="date" id="filtro-data-ate" class="arq-select" aria-label="Data final"></label>
+          <label class="arq-check">
+            <input type="checkbox" id="filtro-coordenadas"> Só com coordenadas
+          </label>
+          <button type="button" class="btn btn-secondary" id="limpar-filtros" title="Desfaz todos os filtros e recarrega a tela inteira">Limpar filtros</button>
+        </div>
+
+        <div id="visao-tabela" role="tabpanel" aria-labelledby="visao-tabela-btn">
+          <div class="arq-geo">
+            <button class="btn" id="btn-geocodificar" type="button" disabled>Buscar endereços (OpenStreetMap)</button>
+            <span class="arq-pag-info" id="geo-status" role="status" aria-live="polite"></span>
+          </div>
+
+          <div id="tabela"></div>
+        </div>
+
+        <div id="visao-grafo" class="hidden" role="tabpanel" aria-labelledby="visao-grafo-btn">
+          <div class="loc-grafo-controles">
+            <span class="loc-grafo-nivel" id="grafo-nivel">Aproxime o mapa para detalhar os lugares.</span>
+            <select id="grafo-cor" class="arq-select" title="O que a cor dos círculos representa">
+              <option value="recencia">Cor: última vez no lugar</option>
+              <option value="app">Cor: app de origem</option>
+            </select>
+            <select id="grafo-min-viagens" class="arq-select" title="Esconde trajetos pouco repetidos, para destacar a rotina">
+              <option value="1">Todos os deslocamentos</option>
+              <option value="2">Repetidos 2× ou mais</option>
+              <option value="5">Repetidos 5× ou mais</option>
+              <option value="0">Nenhum (só os lugares)</option>
+            </select>
+            <button class="btn" id="grafo-enquadrar" type="button">Enquadrar tudo</button>
+            <button class="btn" id="grafo-geocodificar" type="button" disabled>Nomear lugares visíveis</button>
+            <button class="btn" id="camada-importar" type="button" title="Desenha no mapa os polígonos de um shapefile (.shp) — perímetro, bairro, setor, área de risco">Importar SHP</button>
+            <span class="i2-grupo">
+              <span class="i2-grupo-rotulo">Exportar grafo:</span>
+              <button type="button" class="btn btn-secondary" id="exportar-i2-csv" title="Exporta os nós e as ligações do grafo filtrado inteiro em CSV, para importar no i2 Analyst&#39;s Notebook">CSV</button>
+              <button type="button" class="btn btn-secondary" id="exportar-i2-xlsx" title="Exporta o grafo filtrado inteiro em XLSX, em abas separadas de entidades e vínculos, para o assistente de importação do i2">XLSX</button>
+              <button type="button" class="btn btn-secondary" id="exportar-i2-anx" title="Exporta o grafo filtrado inteiro em ANX: a carta já montada, que abre direto no i2 Analyst&#39;s Notebook">ANX</button>
+              <button type="button" class="btn btn-secondary" id="exportar-i2-graphml" title="Exporta o grafo filtrado inteiro em GraphML — o formato do Gephi, do yEd e do NetworkX, para medir a rede (centralidade, comunidade, caminho) fora do i2">GraphML</button>
+            </span>
+            <span class="loc-grafo-carregando" id="grafo-status" role="status" aria-live="polite"></span>
+          </div>
+
+          <!-- uma etiqueta por camada de shapefile importada: liga/desliga o desenho, mostra
+               quantos registros caíram dentro e dá acesso a renomear/apagar -->
+          <div class="loc-camadas hidden" id="loc-camadas"></div>
+
+          <!-- antenas da operadora (quebra de sigilo telefônico): não vêm do aparelho, e por isso
+               ficam numa etiqueta própria em vez de se misturarem às camadas de shapefile -->
+          <div class="loc-camadas hidden" id="loc-erbs"></div>
+
+          <div class="loc-mapa-wrap">
+            <div id="loc-mapa"></div>
+            <aside class="loc-painel vazio" id="loc-painel">
+              <p>Clique num lugar do mapa para ver o detalhe. Os círculos maiores concentram mais registros; ao aproximar, cada um se abre nos lugares que o compõem.</p>
+            </aside>
+          </div>
+
+          <div class="loc-legenda" id="loc-legenda"></div>
+        </div>
+
+        <!-- terceira visão: os deslocamentos com origem e destino (Journey do UFDR) -->
+        <div id="visao-trajetos" class="hidden" role="tabpanel" aria-labelledby="visao-trajetos-btn" data-dominios="trajetos"></div>
+
+      </div>
+    </main>
+  </div>
+
+</div>
+
+<!-- defer: o parse do documento não para em nenhum script (a Tabela pinta antes do Leaflet, que
+     aqui nem entra — é carregado sob demanda por js/localizacoes_grafo.js). A ordem relativa de
+     execução entre os defer é a de aparição, então as dependências continuam na ordem certa. -->
+<script defer src="vendor/jquery-3.7.1.min.js"></script>
+<script defer src="js/utils/utils.js"></script>
+<script defer src="js/utils/icones.js"></script>
+<script defer src="js/utils/mapa_telas.js"></script>
+<script defer src="js/utils/toast.js"></script>
+<script defer src="js/utils/api.js"></script>
+<script defer src="js/utils/carregando.js"></script>
+<script defer src="js/utils/estados.js"></script>
+<script defer src="js/utils/estado_url.js"></script>
+<script defer src="js/utils/dialogo.js"></script>
+<script defer src="js/utils/geocodificacao.js"></script>
+<script defer src="js/utils/theme.js"></script>
+<script defer src="js/utils/sidebar.js"></script>
+<script defer src="js/utils/auth.js"></script>
+<script defer src="js/utils/avisos_ia.js"></script>
+<script defer src="js/utils/entidades.js"></script>
+<script defer src="js/utils/exportar_excel.js"></script>
+<script defer src="js/utils/navegacao_inquerito.js"></script>
+<script defer src="js/utils/tabela_paginada.js"></script>
+<script defer src="js/localizacoes_fontes.js"></script>
+<script defer src="js/localizacoes.js"></script>
+<script defer src="js/utils/exportar_i2.js"></script>
+<script defer src="js/localizacoes_grafo.js"></script>
+<script defer src="js/localizacoes_camadas.js"></script>
+<script defer src="js/localizacoes_erbs.js"></script>
+<script defer src="js/utils/velocidade_midia.js"></script>
+<script defer src="js/utils/ufdr_dominio.js"></script>
+<script defer src="js/utils/doc_trecho.js"></script>
+<script defer src="js/utils/evidencia_info.js"></script>
+<script defer src="js/utils/ia_flutuante.js"></script>
+</body>
+</html>

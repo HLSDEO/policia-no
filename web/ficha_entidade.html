@@ -1,0 +1,85 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Ficha da entidade · PolícIA</title>
+<script src="js/utils/boot_tema.js"></script>
+<link rel="icon" type="image/svg+xml" href="favicon.svg">
+<link rel="stylesheet" href="css/style.css">
+<link rel="stylesheet" href="css/grafo_fluxo.css">
+<style>
+  /* ficha em tela cheia: chips de identificação, cards de totais e a tabela de movimentos */
+  .ficha-chips { display: flex; gap: 6px; flex-wrap: wrap; margin-top: 5px; font-size: 12px; }
+  .ficha-chip { border: 1px solid var(--border); border-radius: 999px; padding: 2px 10px; background: var(--bg-card); }
+  .ficha-chip.titular { border-color: #6366f1; color: #6366f1; font-weight: 600; }
+  .ficha-chip.pep { border-color: #c026d3; color: #c026d3; font-weight: 600; }
+  .ficha-cards { display: grid; grid-template-columns: repeat(auto-fit, minmax(170px, 1fr)); gap: 10px; margin: 6px 0 18px; }
+  .ficha-card { border: 1px solid var(--border); border-radius: 10px; padding: 10px 12px; background: var(--bg-card); }
+  .ficha-card span { font-size: 11px; text-transform: uppercase; letter-spacing: .02em; opacity: .65; font-weight: 700; }
+  .ficha-card b { display: block; font-size: 16px; margin-top: 3px; font-variant-numeric: tabular-nums; }
+  .ficha-card.cred b { color: var(--gf-credito, #15803d); }
+  .ficha-card.deb b { color: var(--gf-debito, #b91c1c); }
+  .ficha-secao { font-size: 14px; margin: 18px 0 8px; }
+  .ficha-tab { width: 100%; border-collapse: collapse; font-size: 12.5px; }
+  .ficha-tab th, .ficha-tab td { padding: 5px 8px; border-bottom: 1px solid var(--border, rgba(127,127,127,.18)); text-align: left; vertical-align: top; }
+  .ficha-tab th { font-weight: 600; opacity: .7; font-size: 11px; text-transform: uppercase; letter-spacing: .02em; }
+  .ficha-tab td.ficha-v { text-align: right; white-space: nowrap; font-variant-numeric: tabular-nums; }
+  .ficha-tab td.ficha-v.cred { color: #16a34a; }
+  .ficha-tab td.ficha-v.deb { color: #dc2626; }
+  .ficha-tab tr.mais td { text-align: center; opacity: .7; font-size: 12px; }
+</style>
+</head>
+<body>
+<div class="app">
+
+  <div class="main" style="width:100%;">
+    <header class="topbar">
+      <div>
+        <h1 class="page-title">Ficha da entidade <span id="ficha-fonte" style="opacity:.6;font-weight:400;font-size:13px;"></span></h1>
+        <div style="font-size:15px;font-weight:600;margin-top:2px;" id="ficha-nome">—</div>
+        <div class="ficha-chips" id="ficha-chips"></div>
+      </div>
+      <div class="topbar-actions">
+        <a class="btn btn-secondary" id="ficha-no-grafo" href="#" style="display:none;" title="Abre o grafo desta fonte recortado para esta entidade">🕸 Ver no grafo</a>
+        <a class="btn btn-secondary" id="ficha-voltar" href="#" style="font-size:12px;padding:3px 8px;">← Voltar</a>
+      </div>
+    </header>
+
+    <main class="content">
+      <div class="card" style="max-width:none;">
+        <div class="ficha-cards" id="ficha-cards"></div>
+
+        <h2 class="ficha-secao" id="ficha-tab-titulo" style="display:none;">Movimentações</h2>
+        <table class="ficha-tab" id="ficha-tab" style="display:none;">
+          <thead><tr id="ficha-thead-tr"></tr></thead>
+          <tbody></tbody>
+        </table>
+        <p class="empty-hint" id="ficha-vazio" style="display:none;">Nada encontrado para esta entidade.</p>
+
+        <div id="ficha-extra"></div>
+      </div>
+    </main>
+  </div>
+
+</div>
+
+<script src="vendor/jquery-3.7.1.min.js"></script>
+<script src="js/utils/utils.js"></script>
+<script src="js/utils/icones.js"></script>
+<script src="js/utils/mapa_telas.js"></script>
+<script src="js/utils/toast.js"></script>
+<script src="js/utils/api.js"></script>
+<script src="js/utils/carregando.js"></script>
+<script src="js/utils/estados.js"></script>
+<script src="js/utils/estado_url.js"></script>
+<script src="js/utils/dialogo.js"></script>
+<script src="js/utils/theme.js"></script>
+<script src="js/utils/sidebar.js"></script>
+<script src="js/utils/auth.js"></script>
+<script src="js/utils/avisos_ia.js"></script>
+<!-- o motor entra aqui só pelos utilitários de formatação (GrafoFluxo.util) — nada de desenho -->
+<script src="js/utils/grafo_fluxo.js"></script>
+<script src="js/ficha_entidade.js"></script>
+</body>
+</html>

@@ -1,0 +1,85 @@
+/* Acompanhamento do turno em tempo real, exclusivo do tema Orbit. */
+:root:not([data-theme="orbit"]) .orbit-ia-live { display: none !important; }
+:root[data-theme="orbit"] .chat-digitando { display: none !important; }
+
+.orbit-ia-live {
+  width: min(780px, 82%);
+  align-self: flex-start;
+  color: var(--text-secondary);
+}
+
+.orbit-ia-live-tempo {
+  padding: 0 2px 8px;
+  border-bottom: 1px solid var(--border);
+  color: var(--text-muted);
+  font-size: 12px;
+  font-variant-numeric: tabular-nums;
+}
+
+.orbit-ia-live-card {
+  padding: 11px 13px;
+  border: 1px solid color-mix(in srgb, var(--accent) 28%, var(--border));
+  border-radius: 12px;
+  background: color-mix(in srgb, var(--bg-card) 88%, transparent);
+  box-shadow: 0 10px 30px rgba(0, 0, 0, .12);
+}
+
+.orbit-ia-live-atual {
+  min-height: 21px;
+  margin-bottom: 7px;
+  font-size: 13px;
+  font-weight: 550;
+  line-height: 1.5;
+  color: var(--text-muted);
+  background: linear-gradient(100deg, var(--text-muted) 18%, var(--text-primary) 42%, var(--text-muted) 66%);
+  background-size: 220% 100%;
+  background-clip: text;
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  animation: orbit-ia-brilho 1.65s ease-in-out infinite;
+}
+
+@keyframes orbit-ia-brilho {
+  from { background-position: 110% 0; }
+  to { background-position: -110% 0; }
+}
+
+.orbit-ia-live-details { border-top: 1px solid var(--border); padding-top: 6px; }
+.orbit-ia-live-details > summary {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  padding: 3px 0;
+  color: var(--text-muted);
+  font-size: 12px;
+  cursor: pointer;
+  list-style: none;
+  user-select: none;
+}
+.orbit-ia-live-details > summary::-webkit-details-marker { display: none; }
+.orbit-ia-live-details > summary::before { content: "▸"; font-size: 10px; transition: transform .14s ease; }
+.orbit-ia-live-details[open] > summary::before { transform: rotate(90deg); }
+
+.orbit-ia-live-corpo {
+  max-height: 350px;
+  margin-top: 7px;
+  padding: 9px 11px;
+  overflow: auto;
+  border: 1px solid var(--border);
+  border-radius: 9px;
+  background: color-mix(in srgb, var(--bg-page) 76%, transparent);
+}
+
+.orbit-ia-live-etapa + .orbit-ia-live-etapa { margin-top: 10px; padding-top: 10px; border-top: 1px dashed var(--border); }
+.orbit-ia-live-etapa-titulo { margin-bottom: 4px; color: var(--text-muted); font-size: 11px; font-weight: 750; letter-spacing: .04em; text-transform: uppercase; }
+.orbit-ia-live-raciocinio { color: var(--text-secondary); font-size: 12px; line-height: 1.55; white-space: pre-wrap; }
+.orbit-ia-live-consultas { display: grid; gap: 5px; margin: 7px 0 0; padding: 0; list-style: none; }
+.orbit-ia-live-consulta { padding: 6px 8px; border-radius: 7px; background: var(--bg-hover); font-size: 11px; }
+.orbit-ia-live-consulta strong { display: block; color: var(--text-secondary); font-weight: 650; }
+.orbit-ia-live-consulta code { display: block; margin-top: 2px; overflow-x: auto; color: var(--text-muted); white-space: pre; }
+.orbit-ia-live-vazio { color: var(--text-muted); font-size: 12px; }
+
+@media (max-width: 720px) { .orbit-ia-live { width: 100%; } }
+@media (prefers-reduced-motion: reduce) {
+  .orbit-ia-live-atual { animation: none; background: none; -webkit-text-fill-color: currentColor; }
+}

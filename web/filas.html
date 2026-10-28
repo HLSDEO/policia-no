@@ -1,0 +1,130 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Jobs &amp; Filas · PolícIA</title>
+<script src="js/utils/boot_tema.js"></script>
+<link rel="icon" type="image/svg+xml" href="favicon.svg">
+<link rel="stylesheet" href="css/style.css">
+<link rel="stylesheet" href="css/filas.css">
+</head>
+<body>
+<div class="app">
+
+  <div class="main">
+    <header class="topbar">
+      <h1 class="page-title">Jobs &amp; Filas</h1>
+    </header>
+
+    <main class="content">
+      <div class="hidden" id="admin-card">
+
+        <div class="kpi-tiles">
+          <div class="card kpi-tile">
+            <div class="card-stat" id="kpi-vagas">—</div>
+            <div class="card-stat-label">vagas de CPU em uso</div>
+          </div>
+          <div class="card kpi-tile">
+            <div class="card-stat" id="kpi-fila">—</div>
+            <div class="card-stat-label">jobs na fila</div>
+          </div>
+          <div class="card kpi-tile">
+            <div class="card-stat" id="kpi-processando">—</div>
+            <div class="card-stat-label">jobs processando</div>
+          </div>
+          <div class="card kpi-tile">
+            <div class="card-stat" id="kpi-extracoes">—</div>
+            <div class="card-stat-label" id="kpi-extracoes-label">extrações em execução</div>
+          </div>
+          <div class="card kpi-tile">
+            <div class="card-stat" id="kpi-ext-fila">—</div>
+            <div class="card-stat-label">extrações aguardando</div>
+          </div>
+        </div>
+
+        <div class="card" style="margin-top:16px; max-width:none;">
+          <div class="grupo-header">
+            <div>
+              <h2>Jobs de processamento</h2>
+              <p class="card-hint">
+                OCR, classificação de imagem, comparação facial, cópias e importações rodando no
+                servidor. Jobs pesados disputam as vagas de CPU do card acima — um job na fila está
+                apenas esperando uma delas abrir.
+              </p>
+            </div>
+          </div>
+
+          <div class="filas-filtros">
+            <select id="filtro-status" aria-label="Status do job">
+              <option value="fila" selected>Em andamento (fila)</option>
+              <option value="pendente">Pendentes</option>
+              <option value="aguardando_vaga">Aguardando vaga</option>
+              <option value="processando">Processando</option>
+              <option value="concluido">Concluídos</option>
+              <option value="cancelado">Cancelados</option>
+              <option value="erro">Com erro</option>
+              <option value="todos">Todos (histórico)</option>
+            </select>
+            <select id="filtro-tipo" aria-label="Tipo de job">
+              <option value="">Todos os tipos</option>
+            </select>
+            <input type="search" id="filtro-busca" placeholder="Inquérito, usuário ou escopo…">
+            <button type="button" class="btn" id="jobs-atualizar-btn">Atualizar</button>
+            <span class="filas-Atualizado" id="jobs-atualizado"></span>
+          </div>
+
+          <div id="jobs-lista"></div>
+        </div>
+
+        <div class="card" style="margin-top:16px; max-width:none;">
+          <div class="grupo-header">
+            <div>
+              <h2>Fila de extrações (.ufdr)</h2>
+              <p class="card-hint">
+                A fila é durável: uma extração enfileirada sobrevive a um reinício da API. O
+                despachante libera as pendentes conforme abrem as vagas simultâneas do servidor.
+              </p>
+            </div>
+          </div>
+
+          <div class="filas-filtros">
+            <select id="ext-filtro-status" aria-label="Status da extração">
+              <option value="fila" selected>Em andamento (fila)</option>
+              <option value="concluido">Concluídas</option>
+              <option value="erro">Com erro</option>
+              <option value="todas">Todas</option>
+            </select>
+            <input type="search" id="ext-filtro-busca" placeholder="Inquérito, arquivo, dispositivo ou usuário…">
+            <button type="button" class="btn" id="ext-atualizar-btn">Atualizar</button>
+            <span class="filas-Atualizado" id="ext-atualizado"></span>
+          </div>
+
+          <div id="ext-lista"></div>
+        </div>
+
+      </div>
+
+      <p class="empty-hint hidden" id="sem-permissao-hint">Esta página é só para administradores.</p>
+    </main>
+  </div>
+
+</div>
+
+<script src="vendor/jquery-3.7.1.min.js"></script>
+<script src="js/utils/utils.js"></script>
+<script src="js/utils/icones.js"></script>
+<script src="js/utils/mapa_telas.js"></script>
+<script src="js/utils/toast.js"></script>
+<script src="js/utils/api.js"></script>
+<script src="js/utils/carregando.js"></script>
+<script src="js/utils/estados.js"></script>
+<script src="js/utils/estado_url.js"></script>
+<script src="js/utils/dialogo.js"></script>
+<script src="js/utils/theme.js"></script>
+<script src="js/utils/sidebar.js"></script>
+<script src="js/utils/auth.js"></script>
+<script src="js/utils/avisos_ia.js"></script>
+<script src="js/filas.js"></script>
+</body>
+</html>

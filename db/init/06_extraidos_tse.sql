@@ -1,0 +1,138 @@
+-- ===================================================================================================================
+-- Candidatos, partidos e votacao do TSE
+--
+-- Tabelas: TSE_TB02_PARTIDOS, TSE_TB03_ELEICOES, TSE_TB01_CANDIDATOS, TSE_TB04_VOTACAO_CANDIDATO,
+--          TSE_TB05_VOTACAO_PARTIDO
+-- ===================================================================================================================
+
+-- PUBLIC no fim do search_path: e onde ficam pg_trgm, fuzzystrmatch e pgcrypto —
+-- sem ele, gin_trgm_ops e crypt()/gen_salt() nao sao encontrados sem qualificar.
+SET search_path TO DADOS_EXTRAIDOS, PUBLIC;
+
+-- 02 · partidos (derivado, sem arquivo próprio — extraído de candidatos/votação)
+CREATE TABLE TSE_TB02_PARTIDOS (
+    NR_PARTIDO  SMALLINT PRIMARY KEY,
+    SG_PARTIDO  VARCHAR(20),
+    NO_PARTIDO  VARCHAR(120)
+);
+
+-- 03 · eleições (derivado, sem arquivo próprio)
+CREATE TABLE TSE_TB03_ELEICOES (
+    CD_ELEICAO       INTEGER PRIMARY KEY,
+    NU_ANO_ELEICAO   SMALLINT NOT NULL,
+    CD_TIPO_ELEICAO  SMALLINT,
+    NO_TIPO_ELEICAO  VARCHAR(60),
+    DS_ELEICAO       VARCHAR(120),
+    DT_ELEICAO       DATE,
+    TP_ABRANGENCIA   VARCHAR(20)
+);
+
+-- 01 · candidatos
+CREATE TABLE TSE_TB01_CANDIDATOS (
+    ID_CANDIDATO             BIGINT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
+    NU_SQ_CANDIDATO          BIGINT,
+    NU_ANO_ELEICAO           SMALLINT,
+    NR_TURNO                 SMALLINT,
+    CD_ELEICAO               INTEGER,
+    SG_UF                    CHAR(2),
+    CO_UE                    VARCHAR(10),
+    NO_UE                    VARCHAR(120),
+    CD_CARGO                 SMALLINT,
+    DS_CARGO                 VARCHAR(60),
+    NR_CANDIDATO             INTEGER,
+    NO_CANDIDATO             VARCHAR(200),
+    NO_URNA_CANDIDATO        VARCHAR(80),
+    NO_SOCIAL_CANDIDATO      VARCHAR(200),
+    NU_CPF_CANDIDATO         VARCHAR(14),
+    DS_EMAIL                 VARCHAR(200),
+    CD_SITUACAO_CANDIDATURA  SMALLINT,
+    DS_SITUACAO_CANDIDATURA  VARCHAR(60),
+    TP_AGREMIACAO            VARCHAR(30),
+    NR_PARTIDO               SMALLINT,
+    NR_FEDERACAO             INTEGER,
+    NO_FEDERACAO             VARCHAR(120),
+    SG_FEDERACAO             VARCHAR(30),
+    DS_COMPOSICAO_FEDERACAO  TEXT,
+    NU_SQ_COLIGACAO          BIGINT,
+    NO_COLIGACAO             VARCHAR(200),
+    DS_COMPOSICAO_COLIGACAO  TEXT,
+    SG_UF_NASCIMENTO         VARCHAR(20),  -- às vezes "Não divulgável" em vez de sigla
+    DT_NASCIMENTO            DATE,
+    NU_TITULO_ELEITORAL      VARCHAR(14),
+    CD_GENERO                SMALLINT,
+    DS_GENERO                VARCHAR(30),
+    CD_GRAU_INSTRUCAO        SMALLINT,
+    DS_GRAU_INSTRUCAO        VARCHAR(60),
+    CD_ESTADO_CIVIL          SMALLINT,
+    DS_ESTADO_CIVIL          VARCHAR(30),
+    CD_COR_RACA              SMALLINT,
+    DS_COR_RACA              VARCHAR(30),
+    CD_OCUPACAO              INTEGER,
+    DS_OCUPACAO              VARCHAR(150),
+    CD_SIT_TOT_TURNO         SMALLINT,
+    DS_SIT_TOT_TURNO         VARCHAR(60),
+    CONSTRAINT FK31_TSE_TB01_TSE_TB03 FOREIGN KEY (CD_ELEICAO)
+        REFERENCES TSE_TB03_ELEICOES (CD_ELEICAO),
+    CONSTRAINT FK32_TSE_TB01_TSE_TB02 FOREIGN KEY (NR_PARTIDO)
+        REFERENCES TSE_TB02_PARTIDOS (NR_PARTIDO)
+);
+
+CREATE INDEX IX11_TSE_TB01_NU_SQ_CANDIDATO ON TSE_TB01_CANDIDATOS (NU_SQ_CANDIDATO);
+CREATE INDEX IX12_TSE_TB01_NU_CPF          ON TSE_TB01_CANDIDATOS (NU_CPF_CANDIDATO);
+CREATE INDEX IX26_TSE_TB01_NO_CANDIDATO_TRGM ON TSE_TB01_CANDIDATOS USING gin (NO_CANDIDATO gin_trgm_ops);
+CREATE INDEX IX27_TSE_TB01_NO_URNA_TRGM ON TSE_TB01_CANDIDATOS USING gin (NO_URNA_CANDIDATO gin_trgm_ops);
+
+-- 04 · votação por candidato, agregada por município/zona
+CREATE TABLE TSE_TB04_VOTACAO_CANDIDATO (
+    ID_VOTACAO_CANDIDATO       BIGINT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
+    CD_ELEICAO                 INTEGER,
+    NR_TURNO                   SMALLINT,
+    SG_UF                      CHAR(2),
+    CO_MUNICIPIO_TSE           INTEGER,
+    NO_MUNICIPIO               VARCHAR(120),
+    NU_ZONA                    SMALLINT,
+    CD_CARGO                   SMALLINT,
+    DS_CARGO                   VARCHAR(60),
+    NU_SQ_CANDIDATO            BIGINT,
+    NR_CANDIDATO               INTEGER,
+    NO_CANDIDATO               VARCHAR(200),
+    NO_URNA_CANDIDATO          VARCHAR(80),
+    NR_PARTIDO                 SMALLINT,
+    QT_VOTOS_NOMINAIS          INTEGER,
+    QT_VOTOS_NOMINAIS_VALIDOS  INTEGER,
+    CD_SIT_TOT_TURNO           SMALLINT,
+    DS_SIT_TOT_TURNO           VARCHAR(60),
+    CONSTRAINT FK33_TSE_TB04_TSE_TB03 FOREIGN KEY (CD_ELEICAO)
+        REFERENCES TSE_TB03_ELEICOES (CD_ELEICAO),
+    CONSTRAINT FK34_TSE_TB04_TSE_TB02 FOREIGN KEY (NR_PARTIDO)
+        REFERENCES TSE_TB02_PARTIDOS (NR_PARTIDO)
+);
+
+CREATE INDEX IX13_TSE_TB04_NU_SQ_CANDIDATO ON TSE_TB04_VOTACAO_CANDIDATO (NU_SQ_CANDIDATO);
+CREATE INDEX IX14_TSE_TB04_CO_MUNICIPIO    ON TSE_TB04_VOTACAO_CANDIDATO (CO_MUNICIPIO_TSE);
+
+-- 05 · votação por partido, agregada por município/zona
+CREATE TABLE TSE_TB05_VOTACAO_PARTIDO (
+    ID_VOTACAO_PARTIDO              BIGINT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
+    CD_ELEICAO                      INTEGER,
+    NR_TURNO                        SMALLINT,
+    SG_UF                           CHAR(2),
+    CO_MUNICIPIO_TSE                INTEGER,
+    NO_MUNICIPIO                    VARCHAR(120),
+    NU_ZONA                         SMALLINT,
+    CD_CARGO                        SMALLINT,
+    DS_CARGO                        VARCHAR(60),
+    NR_PARTIDO                      SMALLINT,
+    QT_VOTOS_LEGENDA_VALIDOS        INTEGER,
+    QT_VOTOS_NOM_CONVR_LEG_VALIDOS  INTEGER,
+    QT_TOTAL_VOTOS_LEG_VALIDOS      INTEGER,
+    QT_VOTOS_NOMINAIS_VALIDOS       INTEGER,
+    CONSTRAINT FK35_TSE_TB05_TSE_TB03 FOREIGN KEY (CD_ELEICAO)
+        REFERENCES TSE_TB03_ELEICOES (CD_ELEICAO),
+    CONSTRAINT FK36_TSE_TB05_TSE_TB02 FOREIGN KEY (NR_PARTIDO)
+        REFERENCES TSE_TB02_PARTIDOS (NR_PARTIDO)
+);
+
+CREATE INDEX IX15_TSE_TB05_CO_MUNICIPIO    ON TSE_TB05_VOTACAO_PARTIDO (CO_MUNICIPIO_TSE);
+
+RESET search_path;

@@ -1,0 +1,54 @@
+# TLS da MÍDIA DIRETA do nó (docs/no_midia_direta.md) — a única porta do nó aberta às estações.
+#
+# Este servidor NÃO é o /no/* de sempre: nada aqui conhece o token do central. A credencial do
+# /no/midia é o ticket de ~10 minutos assinado pelo central (funcoes/no_ticket.py), e o que ele
+# autoriza é UM arquivo específico. Tudo o que não for essas duas rotas morre em 404 — hash,
+# extrair, config, reiniciar, arquivo cru: continuam só na porta interna (8090), só do central.
+#
+# NO_ALLOWED_ORIGIN é substituído pelo entrypoint (envsubst) com a origem do central
+# (https://policia-es.pf.gov.br por padrão). Sem o CORS o navegador bloqueia o Range/OPTIONS.
+
+server {
+    listen 443 ssl;
+    http2 on;
+    server_name _;
+
+    # midia.crt precisa vir com a CADEIA COMPLETA (leaf + intermediárias) — é o nome que o
+    # runbook da TI entrega; não existe "ssl_trusted_certificate" aqui de propósito
+    ssl_certificate     /etc/nginx/ssl/midia.crt;
+    ssl_certificate_key /etc/nginx/ssl/midia.key;
+    ssl_protocols       TLSv1.2 TLSv1.3;
+    ssl_prefer_server_ciphers off;
+
+    add_header Access-Control-Allow-Origin  "${NO_ALLOWED_ORIGIN}" always;
+    add_header Access-Control-Allow-Methods "GET, OPTIONS"         always;
+    add_header Access-Control-Allow-Headers "Range"                always;
+    # Private Network Access (Chrome): página pública puxando subrecurso de rede privada —
+    # o preflight do navegador precisa dessa resposta, senão o fetch direto é bloqueado e
+    # o usuário cai no proxy do central sem explicação
+    add_header Access-Control-Allow-Private-Network "true"         always;
+
+    if ($request_method = OPTIONS) {
+        return 204;
+    }
+
+    location = /no/saude {
+        proxy_pass http://no:3000/no/saude;
+        access_log off;
+    }
+
+    location = /no/midia {
+        proxy_pass http://no:3000/no/midia;
+        proxy_set_header X-Real-IP $remote_addr;
+        # vídeo grande em fluxo: sem buffering (latência) e sem teto de leitura de 60 s
+        # (um download de vários GB por WiFi de delegacia passa dos minutos tranquilo)
+        proxy_buffering off;
+        proxy_read_timeout 3600s;
+        proxy_send_timeout 3600s;
+        client_max_body_size 0;
+    }
+
+    location / {
+        return 404;
+    }
+}

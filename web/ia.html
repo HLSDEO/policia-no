@@ -1,0 +1,148 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="description" content="Conversa com a IA sobre o inquérito: perguntas, respostas com citações e exportação.">
+<title>Conversa com IA do Inquérito · PolícIA</title>
+<script src="js/utils/boot_tema.js"></script>
+<link rel="icon" type="image/svg+xml" href="favicon.svg">
+<link rel="stylesheet" href="css/style.css">
+<link rel="stylesheet" href="css/chat.css">
+<link rel="stylesheet" href="css/ia_orbit_live.css">
+</head>
+<body>
+<noscript>
+  <p class="chat-noscript">Esta tela precisa de JavaScript habilitado para conversar com a IA do inquérito.</p>
+</noscript>
+
+<div class="chat-app">
+  <aside class="chat-sidebar" aria-label="Lista de conversas">
+    <div class="chat-sidebar-header">
+      <h1>Conversas de IA do inquérito</h1>
+      <button type="button" class="btn btn-primary btn-ia chat-nova-btn" id="nova-conversa-btn">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+        Nova conversa
+      </button>
+      <input type="search" id="chat-busca" class="chat-busca" placeholder="Buscar conversa… (Ctrl+K)"
+             aria-label="Buscar conversa pelo título" aria-keyshortcuts="Control+k" autocomplete="off">
+      <select id="chat-filtro-criador" class="chat-filtro-criador hidden" aria-label="Filtrar conversas por quem as criou">
+        <option value="">Todos os usuários</option>
+      </select>
+    </div>
+    <!-- role="group" e não listbox: cada item traz botões de renomear/apagar, e option não pode
+         conter controles; o aviso de lista vazia também não caberia dentro de uma listbox. -->
+    <div class="chat-conversas" id="chat-conversas" role="group" aria-label="Conversas do inquérito"></div>
+  </aside>
+
+  <main class="chat-main">
+    <span class="extracao-nav-container chat-nav-flutuante"></span>
+    <button type="button" class="chat-voltar" id="chat-voltar-btn" aria-label="Voltar para a lista de conversas" title="Voltar para a lista">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="15 18 9 12 15 6"/></svg>
+    </button>
+    <h2 class="chat-main-header" id="chat-main-header">Conversa com o Inquérito — Selecione ou crie uma conversa</h2>
+    <div class="chat-escopo-banner hidden" id="chat-escopo-banner" role="note"></div>
+    <div class="chat-toolbar hidden" id="chat-toolbar" role="toolbar" aria-label="Ações da conversa">
+      <span class="chat-cobertura-resumo hidden" id="chat-cobertura-resumo" title="Fração das respostas da IA com ao menos uma citação clicável [msg:] ou [doc:]"></span>
+      <span class="chat-toolbar-espaco"></span>
+      <details class="chat-toolbar-menu">
+        <summary class="chat-toolbar-btn chat-toolbar-menu-resumo" aria-label="Mais ações da conversa">⋯ Ações</summary>
+        <div class="chat-toolbar-menu-corpo" role="group" aria-label="Ações da conversa">
+          <button type="button" class="chat-toolbar-btn" id="chat-exportar-md" title="Baixar a conversa em .md"><span aria-hidden="true">⤓</span> .md</button>
+          <button type="button" class="chat-toolbar-btn" id="chat-imprimir" title="Imprimir ou salvar em PDF"><span aria-hidden="true">⎙</span> Imprimir/PDF</button>
+          <button type="button" class="chat-toolbar-btn" id="chat-duplicar" title="Criar uma cópia desta conversa com as mesmas mensagens"><span aria-hidden="true">⧉</span> Duplicar</button>
+          <button type="button" class="chat-toolbar-btn" id="chat-copiar-link" title="Copiar o link desta conversa para outro investigador com acesso ao inquérito"><span aria-hidden="true">🔗</span> Copiar link</button>
+        </div>
+      </details>
+    </div>
+    <!-- role="log" já é uma região viva (polite, só o que é acrescentado): o aria-live no
+         elemento era redundante e alguns leitores de tela anunciavam a mensagem duas vezes. -->
+    <div class="chat-mensagens" id="chat-mensagens" role="log" aria-label="Mensagens da conversa">
+      <div class="chat-vazio">
+        <p class="chat-vazio-titulo">Selecione uma conversa à esquerda, ou crie uma nova para começar.</p>
+        <p class="chat-vazio-dica">As respostas da IA trazem citações clicáveis <code>[msg:]</code> e <code>[doc:]</code> que abrem a prova original.</p>
+      </div>
+    </div>
+    <button type="button" class="chat-ir-fim hidden" id="chat-ir-fim">↓ Ir para o fim <span class="chat-ir-fim-novas hidden" id="chat-ir-fim-novas"></span></button>
+    <div class="chat-digitando hidden" id="chat-digitando" role="status">A IA está respondendo…</div>
+    <form class="chat-form hidden" id="chat-form" aria-label="Enviar mensagem para a IA">
+      <button type="button" class="chat-fontes-toggle hidden" id="chat-fontes-toggle"
+              aria-expanded="false" aria-controls="chat-fontes"
+              title="Escolher quais fontes do inquérito a IA pode consultar">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 4h5l2 2h9a1 1 0 0 1 1 1v11a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1V5a1 1 0 0 1 1-1z"/></svg>
+        <span id="chat-fontes-toggle-txt">Fontes</span>
+      </button>
+      <span class="chat-conteudo-toggle">
+        <label class="chat-conteudo-toggle-rotulo" for="chat-exibir-prompt">
+          <input type="checkbox" id="chat-exibir-prompt">
+          <span>Não enviar + exibir prompt</span>
+        </label>
+        <details class="chat-ajuda">
+          <summary class="chat-ajuda-resumo" aria-label="Como funciona o modo não enviar + exibir prompt">?</summary>
+          <p class="chat-ajuda-corpo">Nada é enviado à IA: o sistema monta o prompt completo — o contexto do caso e o
+            conteúdo extraído do inquérito, já anexado — e devolve o texto para você copiar aqui ou baixar em
+            <code>.md</code> e colar em outra IA.</p>
+        </details>
+      </span>
+      <div class="chat-entrada">
+        <div class="chat-input-wrap">
+          <label class="sr-only" for="chat-input">Mensagem para a IA sobre este inquérito</label>
+          <textarea id="chat-input" rows="1" placeholder="Escreva uma mensagem…" maxlength="8000"
+                    enterkeyhint="send" autocomplete="off" spellcheck="true" dir="auto"
+                    aria-describedby="chat-contador"></textarea>
+          <div class="chat-entrada-footer">
+            <span class="chat-entrada-hint"><kbd>↵</kbd> Enviar · <kbd>⇧+↵</kbd> nova linha</span>
+            <span id="chat-contador" class="chat-contador">0 / 8000</span>
+            <span id="chat-contador-live" class="sr-only" role="status" aria-live="polite"></span>
+          </div>
+        </div>
+        <button type="submit" class="btn btn-primary btn-ia" id="chat-enviar-btn">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg>
+          Enviar
+        </button>
+      </div>
+    </form>
+  </main>
+
+  <aside class="chat-fontes" id="chat-fontes" aria-label="Fontes do inquérito">
+    <div class="chat-fontes-topo">
+      <h2 class="chat-fontes-titulo">Fontes</h2>
+      <button type="button" class="chat-fontes-fechar" id="chat-fontes-fechar" aria-label="Fechar o painel de fontes" title="Fechar">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+      </button>
+    </div>
+    <div class="chat-fontes-busca hidden" id="chat-fontes-busca">
+      <input type="search" id="chat-fontes-filtro" placeholder="Filtrar fontes…" aria-label="Filtrar fontes">
+    </div>
+    <label class="chat-fonte chat-fonte-todas">
+      <span class="chat-fonte-nome">Selecionar todas</span>
+      <input type="checkbox" id="chat-fontes-todas" aria-label="Selecionar todas as fontes">
+    </label>
+    <div class="chat-fontes-lista" id="chat-fontes-lista"></div>
+    <div class="chat-fontes-rodape" id="chat-fontes-resumo" aria-live="polite"></div>
+  </aside>
+  <div class="chat-fontes-fundo" id="chat-fontes-fundo" aria-hidden="true"></div>
+</div>
+
+<script src="vendor/jquery-3.7.1.min.js" defer></script>
+<script src="js/utils/utils.js" defer></script>
+<script src="js/utils/icones.js" defer></script>
+<script src="js/utils/mapa_telas.js" defer></script>
+<script src="js/utils/toast.js" defer></script>
+<script src="js/utils/api.js" defer></script>
+<script src="js/utils/carregando.js" defer></script>
+<script src="js/utils/estados.js" defer></script>
+<script src="js/utils/estado_url.js" defer></script>
+<script src="js/utils/dialogo.js" defer></script>
+<script src="js/utils/theme.js" defer></script>
+<script src="js/utils/sidebar.js" defer></script>
+<script src="js/utils/auth.js" defer></script>
+<script src="js/utils/avisos_ia.js" defer></script>
+<script src="js/utils/navegacao_inquerito.js" defer></script>
+<script src="js/utils/doc_trecho.js" defer></script>
+<script src="js/utils/evidencia_info.js" defer></script>
+<script src="js/utils/ia_raciocinio.js" defer></script>
+<script src="js/ia_orbit_live.js" defer></script>
+<script src="js/ia.js" defer></script>
+</body>
+</html>

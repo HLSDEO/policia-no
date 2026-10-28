@@ -1,0 +1,11 @@
+# O Windows aqui está com core.autocrlf=true: sem esta regra, um clone novo traria os .sh em CRLF
+# e o bash dentro do container quebraria na primeira linha ("$'\r': command not found"). Vale para
+# db/bootstrap/00_aplicar_migracoes.sh, que o Postgres executa na primeira subida.
+*.sh text eol=lf
+
+# scripts/analyser-update não tem extensão e roda com bash no host Linux — mesma regra.
+# (analyser-resumo idem: batch da madrugada, ver docs/resumo_noturno.md)
+scripts/analyser-update text eol=lf
+scripts/analyser-resumo text eol=lf
+scripts/systemd/* text eol=lf
+nginx/no-midia-entrypoint.sh text eol=lf

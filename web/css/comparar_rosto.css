@@ -1,0 +1,220 @@
+/* Página "Comparar rosto" (web/comparar_rosto.html + js/comparar_rosto.js).
+ * Os cartões de resultado (.cmp-*) vieram de css/style.css, onde a tela vivia sozinha; a área de
+ * envio (.drop-zone) continua lá porque é compartilhada com importacao.html e inqueritos.html. */
+
+/* os dois cards da tela ocupam a largura do conteúdo, não os 560px padrão de .card */
+.card-cheia {
+  max-width: none;
+  margin: 0;
+}
+
+#resultados-wrap {
+  margin-top: 16px;
+}
+
+#resultados-count {
+  font-size: 14px;
+  vertical-align: middle;
+}
+
+/* inquérito · aparelho · limite lado a lado; empilham antes da largura dos três cards de resultado */
+.cmp-campos {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 12px;
+}
+
+#preview-wrap {
+  margin-top: 8px;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 8px;
+}
+/* o id ganha do .hidden em especificidade: sem esta linha a prévia ficaria sempre visível */
+#preview-wrap.hidden {
+  display: none;
+}
+
+#preview-img {
+  max-width: 300px;
+  max-height: 300px;
+  border-radius: 6px;
+  border: 1px solid var(--border);
+}
+
+/* ---------- filtros da lista (client-side, sobre o resultado já calculado) ---------- */
+
+.cmp-filtros {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  gap: 12px;
+  margin: 12px 0 16px;
+}
+.cmp-filtros.hidden {
+  display: none;
+}
+.cmp-filtro {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  font-size: 13px;
+}
+.cmp-filtro-rotulo {
+  color: var(--text-secondary);
+  font-size: 12px;
+}
+.cmp-filtro input,
+.cmp-filtro select {
+  padding: 7px 10px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: var(--bg-page);
+  color: var(--text-primary);
+  font-size: 13px;
+  min-width: 180px;
+}
+.cmp-filtro input:focus-visible,
+.cmp-filtro select:focus-visible {
+  outline: none;
+  border-color: var(--accent);
+  box-shadow: var(--focus-ring);
+}
+.cmp-filtro-info {
+  margin-left: auto;
+  font-size: 12px;
+  color: var(--text-muted);
+  padding-bottom: 8px;
+}
+
+/* ---------- cartões de resultado ---------- */
+
+.cmp-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+  gap: 12px;
+}
+.cmp-card {
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+}
+.cmp-img-wrap {
+  width: 100%;
+  aspect-ratio: 1;
+  overflow: hidden;
+  background: var(--bg-hover);
+  border: 0;
+  padding: 0;
+  cursor: zoom-in;
+  display: block;
+}
+.cmp-img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+/* sem prévia (arquivo apagado do .ufdr, formato que o PIL não abre): a caixa fica vazia e um
+   rótulo por baixo explica, em vez do ícone quebrado do navegador */
+.cmp-img-wrap.sem-previa::after {
+  content: "Sem prévia";
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 100%;
+  font-size: 12px;
+  color: var(--text-muted);
+}
+.cmp-info {
+  padding: 10px 12px;
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+.cmp-similaridade {
+  font-size: 20px;
+  font-weight: 700;
+}
+/* as três faixas usam os tokens de status do tema — o hex fixo que a tela escrevia via JS
+   (#2ECC71/#F1C40F/#E74C3C) dava contraste insuficiente no tema claro */
+.cmp-sim-alta { color: var(--success); }
+.cmp-sim-media { color: var(--warning); }
+.cmp-sim-baixa { color: var(--danger); }
+.cmp-caminho {
+  font-size: 12px;
+  color: var(--text-secondary);
+  font-family: monospace;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.cmp-arquivo {
+  font-size: 13px;
+  font-weight: 500;
+}
+.cmp-extracao {
+  font-size: 11px;
+  color: var(--text-muted);
+}
+.cmp-acoes {
+  padding: 6px 12px 10px;
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+.cmp-acoes .btn {
+  font-size: 12px;
+  padding: 4px 10px;
+}
+/* .btn é um botão e aqui é um link: sem isto o "No aparelho" e o "Baixar original" ficam
+   sublinhados no meio dos botões vizinhos */
+a.btn {
+  text-decoration: none;
+}
+
+/* ---------- modais ---------- */
+
+.modal-origem {
+  width: min(700px, 94vw);
+}
+.modal-midia {
+  width: min(900px, 94vw);
+}
+.midia-img {
+  display: block;
+  max-width: 100%;
+  max-height: 68vh;
+  margin: 0 auto;
+  border-radius: 8px;
+  background: var(--bg-hover);
+}
+.midia-acoes {
+  display: flex;
+  justify-content: center;
+  gap: 8px;
+  margin-top: 12px;
+  flex-wrap: wrap;
+}
+.cmp-campos-modal > .field {
+  margin-bottom: 12px;
+}
+.campo-nome {
+  margin: 0;
+  font-size: 12px;
+  color: var(--text-secondary);
+}
+.campo-valor {
+  margin: 2px 0 0;
+  font-size: 14px;
+  word-break: break-word;
+}
+.campo-caminho {
+  font-family: monospace;
+  font-size: 13px;
+  word-break: break-all;
+}

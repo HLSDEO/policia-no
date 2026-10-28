@@ -1,0 +1,146 @@
+.kpi-tiles {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  gap: 16px;
+}
+
+.kpi-tile {
+  text-align: center;
+}
+
+.kpi-tile .card-stat {
+  margin: 4px 0 4px;
+}
+
+.kpi-barra-linha {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 10px;
+}
+
+.kpi-barra-rotulo {
+  width: 220px;
+  flex-shrink: 0;
+  font-size: 13px;
+  color: var(--text-secondary);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.kpi-barra-trilha {
+  flex: 1;
+  background: var(--bg-page);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  overflow: hidden;
+  height: 20px;
+}
+
+.kpi-barra-preenchimento {
+  height: 100%;
+  background: var(--accent);
+  min-width: 2px;
+  border-radius: 6px 0 0 6px;
+}
+
+.kpi-barra-valor {
+  width: 34px;
+  flex-shrink: 0;
+  text-align: right;
+  font-size: 13px;
+  font-weight: 600;
+}
+
+.crimes-lista {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+  gap: 10px;
+}
+
+.crime-card {
+  display: flex;
+  gap: 10px;
+  padding: 10px 12px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: var(--bg-card);
+}
+
+.crime-icone {
+  font-size: 18px;
+  flex-shrink: 0;
+}
+
+.crime-corpo {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  min-width: 0;
+}
+
+.crime-corpo strong {
+  font-size: 13.5px;
+  line-height: 1.35;
+}
+
+.crime-fonte {
+  font-size: 12px;
+  color: var(--text-secondary);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.tipo-ponto {
+  display: inline-block;
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  margin-right: 6px;
+  vertical-align: middle;
+}
+
+.grupo-tabela td {
+  vertical-align: top;
+}
+
+.relacoes-container {
+  max-height: 420px;
+  overflow-y: auto;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+}
+
+.relacoes-container .grupo-tabela td:first-child,
+.relacoes-container .grupo-tabela td:last-child {
+  white-space: normal;
+}
+
+.crime-card {
+  transition: border-color 0.15s ease, background 0.15s ease, transform 0.1s ease;
+}
+.crime-card:hover {
+  border-color: var(--border);
+  background: var(--bg-hover);
+}
+.crime-card:active {
+  transform: scale(0.99);
+}
+.crime-card-ativo {
+  border-color: var(--accent) !important;
+  background: var(--tint-accent) !important;
+}
+
+/* paginação dentro do card (reaproveita .paginacao de style.css mas garante espaçamento) */
+#card-entidades .paginacao,
+#card-relacoes .paginacao,
+#card-execucoes .paginacao {
+  margin-top: 12px;
+}
+
+/* cabeçalho ordenável dentro de tabela já estilizada */
+.grupo-tabela th .tp-ordenar {
+  font-weight: 600;
+}

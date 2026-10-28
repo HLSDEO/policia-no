@@ -1,0 +1,381 @@
+/* Modal única de importação da Orbit. */
+#modal-nova-importacao-orbit {
+  z-index: 1000;
+}
+
+.nova-importacao-modal,
+.nova-importacao-modal button,
+.nova-importacao-modal input,
+.nova-importacao-modal select {
+  font-family: inherit;
+}
+
+.nova-importacao-modal {
+  width: min(900px, calc(100vw - 32px));
+  max-height: min(90vh, 860px);
+  overflow: hidden;
+}
+
+.nova-importacao-modal .modal-header > div {
+  min-width: 0;
+}
+
+.nova-importacao-modal .modal-header h2 {
+  margin: 0;
+  font-size: 16px;
+  font-weight: 700;
+}
+
+.nova-importacao-modal .modal-header p {
+  margin: 4px 0 0;
+  color: var(--text-muted);
+  font-size: 12px;
+}
+
+.nova-importacao-modal .modal-body {
+  overflow-y: auto;
+}
+
+.nova-importacao-tipos {
+  display: inline-flex;
+  gap: 3px;
+  margin: 2px 0 4px;
+  padding: 3px;
+  border: 1px solid var(--border);
+  border-radius: 9px;
+  background: var(--bg-page);
+}
+
+.nova-importacao-tipos button {
+  min-height: 32px;
+  padding: 6px 13px;
+  border: 0;
+  border-radius: 6px;
+  background: transparent;
+  color: var(--text-secondary);
+  font-size: 12px;
+  font-weight: 650;
+  cursor: pointer;
+}
+
+.nova-importacao-tipos button.ativo {
+  background: var(--accent);
+  color: var(--accent-contrast, #fff);
+}
+
+.nova-importacao-etapas {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin: 12px 0 16px;
+  padding: 11px 13px;
+  border: 1px solid var(--border);
+  border-radius: 9px;
+  background: var(--bg-page);
+}
+
+.nova-importacao-etapas .extracao-etapa {
+  display: flex;
+  min-width: 0;
+  flex: 1 1 0;
+  align-items: center;
+  gap: 8px;
+  color: var(--text-muted);
+}
+
+.nova-importacao-etapas .extracao-etapa-numero {
+  display: inline-flex;
+  width: 23px;
+  height: 23px;
+  flex: 0 0 23px;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid var(--border);
+  border-radius: 50%;
+  font-size: 11px;
+  font-weight: 750;
+}
+
+.nova-importacao-etapas .extracao-etapa-texto {
+  display: flex;
+  min-width: 0;
+  flex-direction: column;
+  gap: 1px;
+}
+
+.nova-importacao-etapas .extracao-etapa-texto strong {
+  color: var(--text-secondary);
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.nova-importacao-etapas .extracao-etapa-texto small {
+  overflow: hidden;
+  font-size: 10.5px;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.nova-importacao-etapas .extracao-etapa.ativo {
+  color: var(--accent);
+}
+
+.nova-importacao-etapas .extracao-etapa.ativo .extracao-etapa-numero {
+  border-color: var(--accent);
+  background: var(--accent);
+  color: var(--accent-contrast, #fff);
+}
+
+.nova-importacao-etapas .extracao-etapa.ativo strong {
+  color: var(--text-primary);
+}
+
+.nova-importacao-etapas .extracao-etapa.concluido {
+  color: var(--success);
+}
+
+.nova-importacao-etapas .extracao-etapa.concluido .extracao-etapa-numero {
+  border-color: var(--success);
+  background: color-mix(in srgb, var(--success) 12%, transparent);
+  color: var(--success);
+}
+
+.nova-importacao-etapas .extracao-etapa-conector {
+  width: 22px;
+  height: 1px;
+  flex: 0 0 22px;
+  background: var(--border);
+}
+
+.nova-importacao-modal .field {
+  margin-bottom: 13px;
+}
+
+.nova-importacao-modal .field label,
+.nova-importacao-modal .field-legend,
+.nova-importacao-modal .field-check {
+  font-size: 12px;
+}
+
+.nova-importacao-modal .field input,
+.nova-importacao-modal .field select {
+  font-size: 13px;
+}
+
+.nova-importacao-modal .field-help,
+.nova-importacao-hint {
+  color: var(--text-muted);
+  font-size: 11px;
+  line-height: 1.45;
+}
+
+.nova-importacao-hint {
+  margin: -4px 0 12px;
+}
+
+.nova-importacao-modal .field-inquerito {
+  margin: 0 0 14px;
+}
+
+.nova-importacao-modal input[readonly] {
+  color: var(--text-secondary);
+  cursor: default;
+  opacity: .9;
+}
+
+.nova-importacao-modal input[aria-invalid="true"]:not(:focus) {
+  border-color: rgba(239, 68, 68, .65);
+}
+
+.nova-importacao-modal .field-help.error,
+.nova-importacao-modal .form-status.error {
+  color: var(--danger, #ef4444);
+}
+
+.nova-importacao-modal .field-help.success,
+.nova-importacao-modal .form-status.success {
+  color: var(--success);
+}
+
+.nova-fonte-opcoes {
+  display: grid;
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+  gap: 6px;
+  margin-bottom: 12px;
+}
+
+.nova-fonte-opcoes button {
+  display: flex;
+  min-height: 42px;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  padding: 7px 8px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: var(--bg-page);
+  color: var(--text-secondary);
+  font-size: 11px;
+  font-weight: 650;
+  line-height: 1.25;
+  cursor: pointer;
+}
+
+.nova-fonte-opcoes button > span {
+  display: inline-flex;
+  width: 16px;
+  height: 16px;
+  flex: 0 0 16px;
+}
+
+.nova-fonte-opcoes button svg,
+.nova-fonte-revisao svg {
+  width: 100%;
+  height: 100%;
+}
+
+.nova-fonte-opcoes button:hover,
+.nova-fonte-opcoes button:focus-visible,
+.nova-fonte-opcoes button.ativo {
+  border-color: color-mix(in srgb, var(--accent) 62%, var(--border));
+  background: color-mix(in srgb, var(--accent) 12%, var(--bg-page));
+  color: color-mix(in srgb, var(--accent) 72%, white);
+}
+
+.nova-fonte-configuracao {
+  display: grid;
+  grid-template-columns: minmax(250px, 1fr) minmax(260px, 1fr);
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 13px;
+  padding: 11px;
+  border: 1px solid var(--border);
+  border-radius: 9px;
+  background: var(--bg-page);
+}
+
+.nova-fonte-configuracao .field {
+  margin: 0;
+}
+
+.nova-importacao-caso-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px;
+}
+
+.nova-importacao-modal select[multiple] {
+  min-height: 104px;
+}
+
+.nova-importacao-upload {
+  margin: 0 0 13px;
+}
+
+.nova-importacao-drop {
+  display: flex;
+  min-height: 54px;
+  align-items: center;
+  justify-content: center;
+  flex-direction: column;
+  gap: 2px;
+  padding: 9px 14px;
+  border: 1px dashed color-mix(in srgb, var(--accent) 55%, var(--border));
+  border-radius: 9px;
+  background: color-mix(in srgb, var(--accent) 5%, var(--bg-page));
+  color: var(--text-secondary);
+  font-size: 11px;
+  cursor: pointer;
+}
+
+.nova-importacao-drop strong {
+  color: var(--text-primary);
+  font-size: 12px;
+}
+
+.nova-importacao-drop.arrastando {
+  border-color: var(--accent);
+  background: color-mix(in srgb, var(--accent) 13%, var(--bg-page));
+}
+
+.nova-importacao-upload .field-help {
+  margin: 5px 0 0;
+}
+
+.nova-fonte-revisao {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  margin-top: 4px;
+  padding: 10px 11px;
+  border: 1px solid color-mix(in srgb, var(--accent) 30%, var(--border));
+  border-radius: 9px;
+  background: color-mix(in srgb, var(--accent) 7%, transparent);
+}
+
+.nova-fonte-revisao > span {
+  display: inline-flex;
+  width: 21px;
+  height: 21px;
+  flex: 0 0 21px;
+  color: color-mix(in srgb, var(--accent) 70%, white);
+}
+
+.nova-fonte-revisao strong,
+.nova-fonte-revisao small {
+  display: block;
+}
+
+.nova-fonte-revisao strong {
+  color: var(--text-primary);
+  font-size: 12px;
+}
+
+.nova-fonte-revisao small {
+  margin-top: 2px;
+  color: var(--text-muted);
+  font-size: 10.5px;
+}
+
+.nova-importacao-modal .form-actions {
+  margin-top: 13px;
+}
+
+@media (max-width: 720px) {
+  .nova-fonte-opcoes {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .nova-fonte-configuracao,
+  .nova-importacao-caso-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .nova-importacao-etapas {
+    gap: 5px;
+    padding: 10px 8px;
+  }
+
+  .nova-importacao-etapas .extracao-etapa-texto small {
+    display: none;
+  }
+
+  .nova-importacao-etapas .extracao-etapa-conector {
+    width: 10px;
+    flex-basis: 10px;
+  }
+}
+
+@media (max-width: 480px) {
+  .nova-importacao-tipos {
+    display: flex;
+  }
+
+  .nova-importacao-tipos button {
+    flex: 1 1 0;
+  }
+
+  .nova-importacao-etapas .extracao-etapa-texto strong {
+    font-size: 10px;
+  }
+}

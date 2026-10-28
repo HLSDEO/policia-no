@@ -1,0 +1,8 @@
+[Unit]
+Description=Sincroniza acesso SMB por delegacia (analyser -> Samba)
+After=network.target docker.service
+Wants=docker.service
+
+[Service]
+Type=oneshot
+ExecStart=/mnt/dados/analyser/scripts/sincronizar-samba.sh

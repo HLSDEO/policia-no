@@ -1,0 +1,182 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Hipóteses do inquérito · PolícIA</title>
+<script src="js/utils/boot_tema.js"></script>
+<link rel="icon" type="image/svg+xml" href="favicon.svg">
+<link rel="stylesheet" href="css/style.css">
+<link rel="stylesheet" href="css/hipoteses.css">
+</head>
+<body>
+<div class="app">
+
+  <div class="main" style="width:100%;">
+    <header class="topbar">
+      <h1 class="page-title">Hipóteses do inquérito</h1>
+    </header>
+
+    <main class="content">
+      <div class="card" style="max-width:none;">
+        <div class="grupo-header">
+          <div>
+            <h2 id="hipoteses-titulo-inquerito">—</h2>
+            <p class="card-hint">
+              O quadro de hipóteses do inquérito inteiro: cada hipótese tem responsável, evidências
+              a favor e contra (texto livre ou vínculo a um item importado) e pendências de
+              diligência. O chat de IA do inquérito usa o estado atual do quadro como contexto —
+              hipóteses marcadas como "não contestável pela IA" são tratadas como verdade já
+              estabelecida.
+            </p>
+          </div>
+          <button type="button" class="btn btn-primary" id="nova-hipotese-btn">Nova hipótese</button>
+        </div>
+
+        <div class="hipoteses-toolbar hidden" id="hipoteses-toolbar">
+          <input type="search" id="hipoteses-busca" class="hipoteses-busca" placeholder="Buscar hipótese por texto…">
+          <label class="hipoteses-filtro">Responsável
+            <select id="hipoteses-filtro-responsavel">
+              <option value="">Todos</option>
+            </select>
+          </label>
+          <label class="hipoteses-filtro">Natureza
+            <select id="hipoteses-filtro-natureza">
+              <option value="">Todas</option>
+              <option value="hipotese">Hipótese de trabalho</option>
+              <option value="fato">Fato apurado</option>
+              <option value="normativa">Disposição normativa</option>
+            </select>
+          </label>
+          <span class="hipoteses-contagem" id="hipoteses-contagem"></span>
+        </div>
+
+        <div class="hipoteses-quadro" id="hipoteses-quadro"></div>
+
+        <div class="hipoteses-estado hidden" id="hipoteses-estado">
+          <div class="hipoteses-spinner hidden" id="hipoteses-spinner"></div>
+          <p class="empty-hint" id="hipoteses-estado-texto"></p>
+          <div class="hipoteses-estado-acoes hidden" id="hipoteses-estado-acoes"></div>
+        </div>
+      </div>
+    </main>
+  </div>
+
+</div>
+
+<div class="modal-overlay hidden" id="modal-hipotese">
+  <div class="modal hipoteses-modal" role="dialog" aria-modal="true" aria-labelledby="modal-hipotese-titulo">
+    <div class="modal-header">
+      <h2 id="modal-hipotese-titulo">Nova hipótese</h2>
+      <button type="button" class="modal-close" id="hipotese-fechar" title="Fechar (Esc)">&times;</button>
+    </div>
+    <div class="modal-body">
+      <form id="hipotese-form" autocomplete="off">
+        <div class="field">
+          <label for="hipotese-texto-input">A hipótese (o que se pretende confirmar ou refutar)</label>
+          <textarea id="hipotese-texto-input" rows="4" required maxlength="4000"></textarea>
+          <p class="hipotese-contador" id="hipotese-contador">0 / 4000</p>
+          <p class="field-help">Ex.: "O titular da conta 12345-6 laranja movimenta valores do investigado por interposta pessoa." Ctrl+Enter salva.</p>
+        </div>
+        <div class="hipoteses-campos-linha">
+          <div class="field">
+            <label for="hipotese-status-select">Status no quadro</label>
+            <select id="hipotese-status-select">
+              <option value="proposta">Proposta</option>
+              <option value="em_analise">Em análise</option>
+              <option value="confirmada">Confirmada</option>
+              <option value="refutada">Refutada</option>
+              <option value="arquivada">Arquivada</option>
+            </select>
+          </div>
+          <div class="field">
+            <label for="hipotese-responsavel-select">Responsável</label>
+            <select id="hipotese-responsavel-select">
+              <option value="">— sem responsável —</option>
+            </select>
+          </div>
+          <div class="field">
+            <label for="hipotese-natureza-select">Natureza</label>
+            <select id="hipotese-natureza-select">
+              <option value="hipotese">Hipótese de trabalho</option>
+              <option value="fato">Fato apurado</option>
+              <option value="normativa">Disposição normativa</option>
+            </select>
+          </div>
+          <div class="field">
+            <label for="hipotese-midia-select">Mídia associada</label>
+            <select id="hipotese-midia-select">
+              <option value="">— nenhuma (hipótese do inquérito) —</option>
+            </select>
+            <p class="field-help">Ligada a uma mídia, a hipótese entra também no chat de IA específico dela.</p>
+          </div>
+        </div>
+        <div class="field">
+          <label style="display:flex; align-items:center; gap:8px; font-weight:400; margin:0;">
+            <input type="checkbox" id="hipotese-contestavel-input" style="width:auto;"> A IA pode contestar esta hipótese
+          </label>
+          <p class="field-help">Se desmarcado, a IA trata esta hipótese como verdade já estabelecida e não tenta confirmá-la, refutá-la ou pedir mais provas.</p>
+        </div>
+        <div class="form-actions">
+          <button type="submit" class="btn btn-primary" id="hipotese-salvar-btn">Salvar</button>
+          <button type="button" class="btn btn-secondary hidden" id="hipotese-apagar-btn">Apagar hipótese</button>
+          <span class="form-status" id="hipotese-status"></span>
+        </div>
+      </form>
+
+      <div id="hipotese-estrutura" class="hidden">
+        <div class="hipoteses-colunas">
+          <section class="hipoteses-coluna">
+            <h3 class="hipoteses-coluna-titulo favoravel">Evidências a favor</h3>
+            <div class="hipoteses-itens" id="evidencias-favoraveis"></div>
+            <form class="hipoteses-novo-item" id="form-evidencia-favoravel">
+              <textarea rows="2" maxlength="4000" placeholder="Nova evidência a favor…" required></textarea>
+              <select class="hipotese-item-select">
+                <option value="">Sem vínculo com item</option>
+              </select>
+              <button type="submit" class="btn btn-secondary">Adicionar</button>
+            </form>
+          </section>
+          <section class="hipoteses-coluna">
+            <h3 class="hipoteses-coluna-titulo contraria">Evidências contrárias</h3>
+            <div class="hipoteses-itens" id="evidencias-contrarias"></div>
+            <form class="hipoteses-novo-item" id="form-evidencia-contraria">
+              <textarea rows="2" maxlength="4000" placeholder="Nova evidência contra…" required></textarea>
+              <select class="hipotese-item-select">
+                <option value="">Sem vínculo com item</option>
+              </select>
+              <button type="submit" class="btn btn-secondary">Adicionar</button>
+            </form>
+          </section>
+          <section class="hipoteses-coluna">
+            <h3 class="hipoteses-coluna-titulo pendencia">Pendências</h3>
+            <div class="hipoteses-itens" id="lista-pendencias"></div>
+            <form class="hipoteses-novo-item" id="form-pendencia">
+              <textarea rows="2" maxlength="2000" placeholder="Nova pendência / diligência…" required></textarea>
+              <button type="submit" class="btn btn-secondary">Adicionar</button>
+            </form>
+          </section>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script src="vendor/jquery-3.7.1.min.js"></script>
+<script src="js/utils/utils.js"></script>
+<script src="js/utils/icones.js"></script>
+<script src="js/utils/mapa_telas.js"></script>
+<script src="js/utils/toast.js"></script>
+<script src="js/utils/api.js"></script>
+<script src="js/utils/carregando.js"></script>
+<script src="js/utils/estados.js"></script>
+<script src="js/utils/estado_url.js"></script>
+<script src="js/utils/dialogo.js"></script>
+<script src="js/utils/theme.js"></script>
+<script src="js/utils/sidebar.js"></script>
+<script src="js/utils/auth.js"></script>
+<script src="js/utils/avisos_ia.js"></script>
+<script src="js/utils/navegacao_inquerito.js"></script>
+<script src="js/hipoteses.js"></script>
+</body>
+</html>

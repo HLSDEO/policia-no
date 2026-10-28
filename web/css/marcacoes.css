@@ -1,0 +1,361 @@
+/* Página "Marcações" (marcacoes.html / js/marcacoes.js) — a árvore de Marcadores do IPED em
+ * tela cheia: à esquerda os marcadores do investigador com a contagem, à direita as conversas
+ * e mensagens etiquetadas, com conteúdo, prontas para exportar. */
+
+.mrc-pagina {
+  display: grid;
+  grid-template-columns: 300px 1fr;
+  gap: 16px;
+  align-items: start;
+}
+
+/* tabs mobile: escondidas no desktop */
+.mrc-tabs { display: none; }
+
+/* uma coluna só quando não cabem lado a lado — vira tabs em vez de empilhar tudo */
+@media (max-width: 900px) {
+  .mrc-pagina { grid-template-columns: 1fr; }
+  .mrc-tabs {
+    display: flex;
+    gap: 8px;
+    margin-bottom: 12px;
+  }
+  .mrc-tab {
+    flex: 1;
+    padding: 8px;
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    background: var(--bg-card);
+    color: var(--text-secondary);
+    cursor: pointer;
+    font-size: 13px;
+  }
+  .mrc-tab.ativo {
+    color: var(--text-primary);
+    border-color: var(--accent);
+    background: var(--bg-hover);
+    font-weight: 600;
+  }
+  .mrc-coluna-marcadores, .mrc-coluna-itens { display: none; }
+  .mrc-coluna-marcadores.mrc-ativa, .mrc-coluna-itens.mrc-ativa { display: block; }
+}
+@media (min-width: 901px) {
+  .mrc-coluna-marcadores, .mrc-coluna-itens { display: block !important; }
+}
+
+.mrc-coluna-marcadores,
+.mrc-coluna-itens {
+  max-width: none;
+}
+
+.mrc-coluna-marcadores {
+  position: sticky;
+  top: 12px;
+  max-height: calc(100vh - 120px);
+  overflow-y: auto;
+}
+
+.mrc-coluna-titulo {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  margin-bottom: 8px;
+}
+
+.mrc-titulo-sticky {
+  position: sticky;
+  top: 0;
+  z-index: 5;
+  background: var(--bg-card);
+  padding: 4px 0 8px;
+}
+
+.mrc-coluna-titulo h2 {
+  font-size: 15px;
+  margin: 0;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.mrc-acoes {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-bottom: 12px;
+}
+.mrc-acoes.hidden { display: none; }
+
+/* ---- barra de ferramentas da direita ---- */
+
+.mrc-ferramentas {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  align-items: center;
+  margin-bottom: 12px;
+  padding: 8px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: var(--bg-page);
+}
+.mrc-ferramentas.hidden { display: none; }
+.mrc-ferramentas .mrc-busca { flex: 1; min-width: 180px; }
+
+.mrc-selecao {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  align-items: center;
+  margin-bottom: 12px;
+  padding: 8px 10px;
+  border: 1px solid var(--accent);
+  border-radius: 8px;
+  font-size: 12.5px;
+}
+.mrc-selecao.hidden { display: none; }
+
+.mrc-busca {
+  width: 100%;
+  padding: 7px 10px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: var(--bg-card);
+  color: var(--text-primary);
+  font-size: 13px;
+  margin-bottom: 8px;
+}
+#busca-itens.mrc-busca { margin-bottom: 0; }
+
+/* ---- lista de marcadores ---- */
+
+.mrc-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+  padding: 8px 10px;
+  border: 1px solid transparent;
+  border-radius: 8px;
+  background: none;
+  color: var(--text-primary);
+  cursor: pointer;
+  text-align: left;
+  font-size: 13px;
+}
+
+.mrc-item:hover { background: var(--bg-hover); }
+
+.mrc-item.ativo {
+  border-color: var(--accent);
+  background: var(--bg-hover);
+  font-weight: 600;
+}
+
+.mrc-item-bola {
+  width: 14px;
+  height: 14px;
+  border-radius: 50%;
+  flex-shrink: 0;
+  display: inline-block;
+}
+
+.mrc-item-nome {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.mrc-item-qt {
+  flex-shrink: 0;
+  font-size: 11.5px;
+  color: var(--text-muted);
+  font-variant-numeric: tabular-nums;
+}
+
+/* ---- conversas e mensagens do marcador ---- */
+
+.mrc-conversa {
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  margin-bottom: 12px;
+  overflow: hidden;
+}
+
+.mrc-conversa-cabecalho {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 12px;
+  background: var(--bg-page);
+  border-bottom: 1px solid var(--border);
+  font-size: 13px;
+  font-weight: 600;
+}
+.mrc-conversa.fechada .mrc-conversa-cabecalho { border-bottom: none; }
+
+.mrc-toggle {
+  background: none;
+  border: none;
+  cursor: pointer;
+  color: var(--text-muted);
+  font-size: 14px;
+  padding: 0 2px;
+  flex-shrink: 0;
+}
+.mrc-toggle:hover { color: var(--text-primary); }
+
+.mrc-check {
+  flex-shrink: 0;
+  width: 15px;
+  height: 15px;
+  accent-color: var(--accent);
+  cursor: pointer;
+}
+
+.mrc-conversa-nome {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  color: var(--text-primary);
+  text-decoration: none;
+}
+.mrc-conversa-nome:hover { text-decoration: underline; }
+
+.mrc-fonte {
+  flex-shrink: 0;
+  font-size: 10px;
+  font-weight: 600;
+  padding: 1px 6px;
+  border-radius: 999px;
+  border: 1px solid var(--border);
+  color: var(--text-muted);
+  text-transform: uppercase;
+}
+
+/* "conversa marcada" (triagem do contato) x "mensagens marcadas" (o trecho que vira prova):
+   são marcações diferentes, e a distinção precisa estar visível na tela */
+.mrc-etiqueta {
+  flex-shrink: 0;
+  font-size: 9.5px;
+  font-weight: 700;
+  letter-spacing: .3px;
+  text-transform: uppercase;
+  padding: 2px 7px;
+  border-radius: 999px;
+  background: var(--accent-solid);
+  color: var(--accent-contrast, #fff);
+}
+
+.mrc-mini-btn {
+  flex-shrink: 0;
+  background: none;
+  border: 1px solid transparent;
+  border-radius: 6px;
+  cursor: pointer;
+  color: var(--text-muted);
+  font-size: 14px;
+  line-height: 1;
+  padding: 2px 6px;
+}
+.mrc-mini-btn:hover { color: var(--danger, #f25c5c); border-color: var(--border); background: var(--bg-hover); }
+
+.mrc-conversa-comentario {
+  padding: 8px 12px;
+  font-size: 12px;
+  color: var(--text-secondary);
+  border-bottom: 1px solid var(--border);
+  border-left: 3px solid var(--accent);
+}
+
+.mrc-msg {
+  display: flex;
+  gap: 10px;
+  padding: 8px 12px;
+  border-bottom: 1px solid var(--border);
+  font-size: 12.5px;
+  align-items: flex-start;
+}
+
+.mrc-msg:last-child { border-bottom: none; }
+.mrc-msg-vazia { color: var(--text-muted); font-style: italic; }
+
+.mrc-msg-meta {
+  flex-shrink: 0;
+  width: 148px;
+  color: var(--text-muted);
+  font-size: 11.5px;
+  line-height: 1.5;
+}
+
+.mrc-msg-corpo { flex: 1; min-width: 0; }
+
+.mrc-msg-texto { white-space: pre-wrap; word-break: break-word; }
+
+.mrc-msg-anexo,
+.mrc-msg-comentario {
+  margin-top: 4px;
+  font-size: 11.5px;
+  color: var(--text-secondary);
+}
+
+.mrc-msg-comentario { border-left: 3px solid var(--accent); padding-left: 8px; }
+
+.mrc-msg-acoes {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  align-items: flex-end;
+  flex-shrink: 0;
+}
+.mrc-msg-abrir {
+  font-size: 11.5px;
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+
+/* ---- loading / erro ---- */
+
+.mrc-loading { display: flex; flex-direction: column; gap: 8px; margin-bottom: 12px; }
+.mrc-loading.hidden { display: none; }
+.mrc-skel { height: 54px; border-radius: 8px; }
+
+.mrc-erro {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+  margin-bottom: 12px;
+  padding: 8px 10px;
+  border: 1px solid var(--danger, #f25c5c);
+  border-radius: 8px;
+  font-size: 12.5px;
+}
+.mrc-erro.hidden { display: none; }
+
+/* ---- modal de editar/criar marcador ---- */
+
+.mrc-modal-cores {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-bottom: 4px;
+}
+.mrc-cont { font-weight: 400; color: var(--text-muted); font-size: 11px; }
+
+/* ---- modais de export / mover / mesclar ---- */
+.mrc-xp-lista {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  max-height: 220px;
+  overflow-y: auto;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 8px;
+}
+.mrc-xp-item { margin: 0; }

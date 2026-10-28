@@ -1,0 +1,750 @@
+#!/usr/bin/env bash
+#
+# analyser-update — atualizador da instalação on-prem do analyser.
+#
+#   analyser-update check                consulta o GitHub e grava .deploy/controle/disponivel.json
+#   analyser-update apply [--versao X]   baixa a tag, extrai sobre a instalação, sobe com --build
+#   analyser-update apply --pedido F     idem, lendo a versão de um pedido.json (o systemd usa isto)
+#   analyser-update reiniciar [--pedido F]  `docker compose up -d` — pedido do botão "Reiniciar
+#                                        servidor" da tela Desempenho (lê solicitante do reiniciar.req)
+#   analyser-update rollback [--para X]  volta para o snapshot anterior (.deploy/versoes/)
+#   analyser-update status               versão instalada, última checada, pedido em curso
+#
+# Instalação e cutover: scripts/instalar-host.sh (uma vez por servidor). Ver docs/atualizacao.md.
+#
+# Só o host roda isto. A API (container) apenas grava pedido.json e lê os arquivos de controle —
+# nunca vê o token, que fica em .deploy/token com permissão 0600.
+
+set -euo pipefail
+
+# ------------------------------------------------------------------------------------------------
+# Configuração
+# ------------------------------------------------------------------------------------------------
+
+if [ -n "${ANALYSER_DIR:-}" ]; then
+	INSTALL_DIR="$ANALYSER_DIR"
+elif [ -f "$PWD/docker-compose.yml" ] || [ -f "$PWD/docker-compose.no.yml" ]; then
+	INSTALL_DIR="$PWD"
+else
+	for cand in /mnt/dados/analyser /opt/analyser; do
+		if [ -f "$cand/docker-compose.yml" ] || [ -f "$cand/docker-compose.no.yml" ]; then
+			INSTALL_DIR="$cand"
+			break
+		fi
+	done
+	INSTALL_DIR="${INSTALL_DIR:-/opt/analyser}"
+fi
+DEPLOY_DIR="$INSTALL_DIR/.deploy"
+TMP_APPLY=""   # dir temporario do apply; a trap EXIT limpa. Global (nao local) para a trap
+               # enxergar depois que cmd_apply retorna — com `local` + `set -u` dava
+               # "tmp: unbound variable" na saida.
+CONTROLE_DIR="$DEPLOY_DIR/controle"
+VERSOES_DIR="$DEPLOY_DIR/versoes"
+TOKEN_FILE="$DEPLOY_DIR/token"
+CONFIG_FILE="$DEPLOY_DIR/config"
+
+REPO="HLSDEO/analyser"
+GUARDAR_SNAPSHOTS=5          # quantos snapshots pré-update manter em .deploy/versoes/
+HEALTH_TIMEOUT=240           # segundos esperando a API voltar saudável após o build
+REINICIAR_TIMEOUT=180        # idem após um `up -d` sem build (botão "Reiniciar servidor")
+
+# .deploy/config pode sobrescrever REPO, INSTALL_DIR (via ANALYSER_DIR), WEB_PORT etc.
+[ -f "$CONFIG_FILE" ] && . "$CONFIG_FILE"
+
+# WEB_PORT vem do .env da instalação (é onde o nginx publica; /api/health passa por ele).
+WEB_PORT="$(sed -n 's/^WEB_PORT=//p' "$INSTALL_DIR/.env" 2>/dev/null | tr -d '[:space:]')"
+WEB_PORT="${WEB_PORT:-8080}"
+
+# Papel da instalação: central usa docker-compose.yml + /api/health + migrações; o NÓ usa
+# docker-compose.no.yml + /no/saude e NÃO tem banco (apply/rollback/reiniciar se adaptam).
+PAPEL="central"
+if grep -qE '^[[:space:]]*PAPEL[[:space:]]*=[[:space:]]*no([[:space:]]|$)' "$INSTALL_DIR/.env" 2>/dev/null; then
+	PAPEL="no"
+elif [ ! -f "$INSTALL_DIR/docker-compose.yml" ] && [ -f "$INSTALL_DIR/docker-compose.no.yml" ]; then
+	PAPEL="no"
+fi
+COMPOSE_FILE="docker-compose.yml"
+[ "$PAPEL" = "no" ] && COMPOSE_FILE="docker-compose.no.yml"
+NO_PORT="$(sed -n 's/^NO_PORT=//p' "$INSTALL_DIR/.env" 2>/dev/null | tr -d '[:space:]')"
+NO_PORT="${NO_PORT:-8090}"
+
+# Registry local de imagens no CENTRAL (ex.: REGISTRO_NO=10.27.7.19:5000). O nó normalmente NÃO
+# consegue rodar `docker build` (sem saída para registry-1.docker.io / deb.debian.org), então o
+# fluxo de update dele é: central builda e PUBLICA a imagem aqui, o nó faz PULL. Vazio = fluxo
+# antigo (build local no nó), que continua como fallback se o pull falhar.
+REGISTRO_NO="$(sed -n 's/^REGISTRO_NO=//p' "$INSTALL_DIR/.env" 2>/dev/null | tr -d '[:space:]')"
+REGISTRO_NO="${REGISTRO_NO#http://}"
+IMAGEM_NO_LOCAL="analyser-api-no:latest"   # nome que o docker-compose.no.yml espera (image:)
+
+# Wrapper do compose: no central é `docker compose ...` (compose default); no nó é
+# `docker compose -f docker-compose.no.yml ...`. Centraliza aqui para apply/rollback/
+# reiniciar não esquecerem a flag no nó.
+dc() { docker compose -f "$INSTALL_DIR/$COMPOSE_FILE" "$@"; }
+
+# O nginx resolve o upstream (api-1/api-2) no BOOT: quando o `up` RECRIOU alguma réplica com IP
+# novo, o web continua mandando tráfego para o IP velho — e isso é SILENCIOSO enquanto a outra
+# réplica mantém a health verde (o auto-cura do apply, que espera 45 s, nunca dispara). O reload
+# é quente (sem derrubar conexão) e resolve o DNS de novo. Web parado não é problema: ele vai
+# subir resolvendo certo. No nó não se aplica (um só container, nginx não existe).
+recarregar_nginx() {
+	[ "$PAPEL" = "central" ] || return 0
+	if dc exec -T web nginx -s reload 2>/dev/null; then
+		log "nginx recarregado (upstream api-1/api-2 re-resolvido)"
+	else
+		avisa "não consegui recarregar o nginx (web parado?) — se /api/ começar a dar 502, rode: docker compose -f $COMPOSE_FILE up -d --force-recreate web"
+	fi
+}
+
+# O docker cria como ROOT a pasta fonte de um bind mount que não existe — e a API (uid 1000)
+# não consegue escrever nela: o FileHandler de erros vira NullHandler e o histórico em
+# ./logs/erros*.log nunca existe (aconteceu quando ./logs foi recriado por baixo dos containers).
+# Garante a pasta ANTES do up e dá a propriedade ao uid do container (1000 = appuser na imagem).
+garantir_pastas_bind() {
+	mkdir -p "$INSTALL_DIR/logs" "$INSTALL_DIR/.cache/ufdr-indice"
+	[ "$(id -u)" = 0 ] && chown 1000:1000 "$INSTALL_DIR/logs" "$INSTALL_DIR/.cache" 2>/dev/null
+	return 0
+}
+
+# Se a PASTA host de um bind for apagada/recriada com o container já rodando, o container fica
+# montado no diretório DELETADO: as escritas vão para um inode morto e somem — o pg_dump de
+# backup "dava certo" dentro do container e ./backups no host nunca viu um arquivo (5 dias assim,
+# em silêncio). Compara o inode do host com o visto por dentro do container e RECRIOU os
+# serviços afetados; `up -d` sozinho não resolve porque a config do container não mudou.
+recriar_mounts_velhos() {
+	local stale="" cid svc src dst hi ci
+	for cid in $(dc ps -q 2>/dev/null); do
+		svc="$(docker inspect -f '{{ index .Config.Labels "com.docker.compose.service" }}' "$cid" 2>/dev/null)" || continue
+		[ -n "$svc" ] || continue
+		while read -r src dst; do
+			[ -n "${src:-}" ] && [ -d "$src" ] || continue
+			hi="$(stat -c %i "$src" 2>/dev/null)" || continue
+			ci="$(docker exec "$cid" stat -c %i "$dst" 2>/dev/null)" || continue
+			if [ -n "$ci" ] && [ "$hi" != "$ci" ]; then
+				log "mount velho em '$svc': $src foi recriada no host com o container rodando"
+				stale="$stale $svc"
+				break
+			fi
+		done < <(docker inspect -f '{{range .Mounts}}{{if eq .Type "bind"}}{{.Source}} {{.Destination}}{{"\n"}}{{end}}{{end}}' "$cid" 2>/dev/null)
+	done
+	if [ -n "$stale" ]; then
+		log "recriando containers com mount velho:$stale"
+		# shellcheck disable=SC2086
+		dc up -d --force-recreate $stale 2>&1 | tee -a "$PROGRESSO" | tail -3
+	fi
+	return 0
+}
+
+# Health da instalação: central responde /api/health via nginx ($WEB_PORT); o nó
+# responde /no/saude direto na porta dele ($NO_PORT).
+health_ok() {
+	if [ "$PAPEL" = "no" ]; then
+		curl -fsS "http://localhost:$NO_PORT/no/saude" >/dev/null 2>&1
+	else
+		curl -fsS "http://localhost:$WEB_PORT/api/health" >/dev/null 2>&1
+	fi
+}
+
+# Registry HTTP na LAN exige insecure-registries no daemon.json do host (central faz o push,
+# o nó faz o pull). Sem isso o docker recusa o registry. Rodando como root (o apply é root):
+# cria/completa o daemon.json e REINICIA o docker — durante um apply o container vai reiniciar
+# de qualquer forma, então não há prova nova sendo escrita nesse instante no nó.
+garantir_registry_inseguro() {
+	docker info 2>/dev/null | grep -qF "$REGISTRO_NO" && return 0
+	[ "$(id -u)" = 0 ] || { avisa "registry $REGISTRO_NO não está nos insecure-registries e não sou root — não vou reiniciar o docker; rode como root ou edite /etc/docker/daemon.json"; return 1; }
+	command -v python3 >/dev/null 2>&1 || { avisa "sem python3 para editar /etc/docker/daemon.json"; return 1; }
+	log "registrando $REGISTRO_NO como insecure-registry e reiniciando o docker…"
+	python3 - "$REGISTRO_NO" <<'PY'
+import json, os, sys
+reg, path = sys.argv[1], "/etc/docker/daemon.json"
+cfg = {}
+if os.path.exists(path):
+    with open(path) as f:
+        cfg = json.load(f)
+    # daemon.json pode ter comentários? não — docker exige JSON puro. OK.
+regs = cfg.setdefault("insecure-registries", [])
+if reg not in regs:
+    regs.append(reg)
+    tmp = path + ".tmp"
+    with open(tmp, "w") as f:
+        json.dump(cfg, f, indent=2)
+    os.replace(tmp, path)
+PY
+	systemctl restart docker
+	local fim=$((SECONDS + 30))
+	while [ $SECONDS -lt $fim ]; do
+		docker info >/dev/null 2>&1 && break
+		sleep 2
+	done
+	docker info 2>/dev/null | grep -qF "$REGISTRO_NO" || { avisa "registry ainda não aparece no 'docker info' após o restart"; return 1; }
+	log "insecure-registry ok"
+}
+
+# Central: builda a imagem do NÓ (mesmo contexto ./api do compose do nó) e empurra para o
+# registry com o pin da versão. Falha aqui NUNCA derruba o apply do central — o publish é um
+# extra; o nó pode continuar no build local se o registry estiver fora.
+publicar_imagem_no() {
+	local versao="$1"
+	log "publicando imagem do nó em $REGISTRO_NO/analyser-api-no:$versao…"
+	if ! docker build -t "$REGISTRO_NO/analyser-api-no:$versao" \
+		-t "$REGISTRO_NO/analyser-api-no:latest" "$INSTALL_DIR/api" 2>&1 | tee -a "$PROGRESSO" | tail -3; then
+		avisa "build da imagem do nó falhou — nó ficará na imagem antiga (ou build local dele)"
+		return 0
+	fi
+	garantir_registry_inseguro || { avisa "sem registry confiável no central — push pulado"; return 0; }
+	if docker push "$REGISTRO_NO/analyser-api-no:$versao" 2>&1 | tee -a "$PROGRESSO" | tail -2 \
+		&& docker push "$REGISTRO_NO/analyser-api-no:latest" >/dev/null 2>&1; then
+		log "imagem do nó publicada ($versao + latest)"
+	else
+		avisa "docker push falhou — nó ficará na imagem antiga"
+	fi
+	return 0
+}
+
+# Nó: tenta buscar a imagem pinada do registry; sucesso = 0 (e a imagem já está retagueada
+# para o nome que o compose espera). Falha = 1 (caller cai para build local).
+puxar_imagem_no() {
+	local versao="$1"
+	garantir_registry_inseguro || return 1
+	log "puxando $REGISTRO_NO/analyser-api-no:$versao (registry do central)…"
+	if docker pull "$REGISTRO_NO/analyser-api-no:$versao" 2>&1 | tee -a "$PROGRESSO" | tail -3; then
+		docker tag "$REGISTRO_NO/analyser-api-no:$versao" "$IMAGEM_NO_LOCAL"
+		log "imagem do nó vinda do registry ($versao)"
+		return 0
+	fi
+	avisa "pull do registry falhou — caindo para build local (que pode não ter saída p/ o Docker Hub)"
+	return 1
+}
+
+PROGRESSO="$CONTROLE_DIR/progresso.log"
+RESULTADO="$CONTROLE_DIR/resultado.json"
+PEDIDO="$CONTROLE_DIR/pedido.json"
+DISPONIVEL="$CONTROLE_DIR/disponivel.json"
+# Pedido do botão "Reiniciar servidor" (tela Desempenho): a API grava o .req, a path unit
+# analyser-reiniciar@ dispara este script, que sobe os containers e apaga o .req ao terminar
+# (sucesso ou falha) para re-armar o .path. Log/resultado separados do apply para uma coisa
+# não apagar o acompanhamento da outra.
+REINICIAR_REQ="$CONTROLE_DIR/reiniciar.req"
+REINICIAR_LOG="$CONTROLE_DIR/reiniciar.log"
+REINICIAR_RESULTADO="$CONTROLE_DIR/reiniciar-resultado.json"
+
+# ------------------------------------------------------------------------------------------------
+# Utilidades
+# ------------------------------------------------------------------------------------------------
+
+log() {
+	local linha="[$(date '+%Y-%m-%d %H:%M:%S')] $*"
+	echo "$linha"
+	# Só apply/rollback escrevem progresso.log (a tela le esse arquivo). check/status apenas
+	# ecoam pro journald. Se check (rodando como root) criasse progresso.log, o container da API
+	# (uid 1000) nao conseguiria mais trunca-lo ao iniciar a proxima atualizacao.
+	[ -n "${PROGRESSO_ATIVO:-}" ] && [ -d "$CONTROLE_DIR" ] && printf '%s\n' "$linha" >> "$PROGRESSO" 2>/dev/null || true
+}
+
+erro() { log "ERRO: $*"; }
+avisa() { log "AVISO: $*"; }
+
+token() {
+	[ -r "$TOKEN_FILE" ] || { erro "token não encontrado em $TOKEN_FILE"; exit 1; }
+	tr -d '[:space:]' < "$TOKEN_FILE"
+}
+
+gh_api() {
+	# gh_api <caminho> -> corpo JSON no stdout; falha (exit!=0) em status >= 400
+	curl -fsSL \
+		-H "Authorization: Bearer $(token)" \
+		-H "Accept: application/vnd.github+json" \
+		-H "X-GitHub-Api-Version: 2022-11-28" \
+		"https://api.github.com/repos/$REPO$1"
+}
+
+gh_raw() {
+	# gh_raw <caminho> -> conteudo BRUTO de um arquivo do repo (Accept: raw). Ex.:
+	#   gh_raw "/contents/VERSION?ref=1.7.20"
+	curl -fsSL \
+		-H "Authorization: Bearer $(token)" \
+		-H "Accept: application/vnd.github.raw" \
+		-H "X-GitHub-Api-Version: 2022-11-28" \
+		"https://api.github.com/repos/$REPO$1"
+}
+
+json_get() {
+	# json_get <chave> < json  — extrai um campo string de 1º nível. Usa python3 se houver
+	# (robusto), senão um sed simples (suficiente para os campos que lemos).
+	local chave="$1"
+	if command -v python3 >/dev/null 2>&1; then
+		python3 -c "import json,sys; d=json.load(sys.stdin); v=d.get('$chave'); print('' if v is None else v)"
+	else
+		sed -n "s/.*\"$chave\"[[:space:]]*:[[:space:]]*\"\([^\"]*\)\".*/\1/p" | head -1
+	fi
+}
+
+escrever_resultado() {
+	# escrever_resultado <ok true|false> <versao> [erro]
+	mkdir -p "$CONTROLE_DIR"
+	if command -v python3 >/dev/null 2>&1; then
+		OK="$1" VERSAO="$2" ERRO="${3:-}" python3 - <<-'PY' > "$RESULTADO"
+			import json, os
+			print(json.dumps({
+			    "ok": os.environ["OK"] == "true",
+			    "versao": os.environ["VERSAO"],
+			    "erro": os.environ["ERRO"] or None,
+			    "ts": __import__("time").strftime("%Y-%m-%dT%H:%M:%S%z"),
+			}, ensure_ascii=False))
+		PY
+	else
+		printf '{"ok":%s,"versao":"%s","erro":%s,"ts":"%s"}\n' \
+			"$1" "$2" \
+			"$( [ -n "${3:-}" ] && printf '"%s"' "$3" || printf 'null' )" \
+			"$(date '+%Y-%m-%dT%H:%M:%S%z')" > "$RESULTADO"
+	fi
+}
+
+versao_instalada() { tr -d '[:space:]' < "$INSTALL_DIR/VERSION" 2>/dev/null || echo "desconhecida"; }
+
+# 1.10.0 > 1.9.0 — comparação por componente, não lexical. Retorna 0 se $1 > $2.
+maior_que() {
+	local a b
+	IFS=. read -r -a a <<< "$(echo "$1" | grep -oE '^[0-9]+\.[0-9]+\.[0-9]+')"
+	IFS=. read -r -a b <<< "$(echo "$2" | grep -oE '^[0-9]+\.[0-9]+\.[0-9]+')"
+	for i in 0 1 2; do
+		(( ${a[i]:-0} > ${b[i]:-0} )) && return 0
+		(( ${a[i]:-0} < ${b[i]:-0} )) && return 1
+	done
+	return 1
+}
+
+# ------------------------------------------------------------------------------------------------
+# check — grava disponivel.json
+# ------------------------------------------------------------------------------------------------
+
+cmd_check() {
+	mkdir -p "$CONTROLE_DIR"
+	# checagem sob demanda: a API grava checar.req e o path unit dispara este check. Apaga aqui
+	# para o PathExists re-armar (mesmo padrao do pedido.json no apply). Roda tambem no check do
+	# timer, o que limpa um checar.req orfao deixado por host sem o path unit.
+	rm -f "$CONTROLE_DIR/checar.req" 2>/dev/null || true
+
+	local json tag
+	if ! json="$(gh_api /releases/latest 2>/dev/null)"; then
+		log "check: não foi possível consultar releases/latest (repo sem release? token?)"
+		return 1
+	fi
+	tag="$(printf '%s' "$json" | json_get tag_name | sed 's/^v//')"
+	[ -n "$tag" ] || { log "check: releases/latest sem tag_name"; return 1; }
+
+	# O VERSION da tag tem que bater com o nome dela. Se nao bater e um release cortado sem bump
+	# do VERSION (aconteceu com 1.7.11 e 1.7.19) — o apply recusaria. Marca malformado: a tela
+	# mostra o aviso e nao oferece o update.
+	local versao_na_tag="" malformado=false erro_check="" sufixo=""
+	if versao_na_tag="$(gh_raw "/contents/VERSION?ref=$tag" 2>/dev/null)"; then
+		versao_na_tag="$(printf '%s' "$versao_na_tag" | tr -d '[:space:]' | sed 's/^v//')"
+	else
+		versao_na_tag=""
+	fi
+	if [ -n "$versao_na_tag" ] && [ "$versao_na_tag" != "$tag" ]; then
+		malformado=true
+		erro_check="release $tag malformado: VERSION=$versao_na_tag na tag (bump esquecido no corte)"
+		log "check: ATENÇÃO — $erro_check"
+	fi
+
+	if command -v python3 >/dev/null 2>&1; then
+		# JSON via env var (não via pipe): `python3 -` já usa o stdin para LER o próprio script
+		# do heredoc, então um `printf | python3 - <<PY` deixaria json.load(sys.stdin) vazio.
+		GH_JSON="$json" TAG="$tag" MALF="$malformado" ERRO_CHECK="$erro_check" python3 - <<-'PY' > "$DISPONIVEL"
+			import json, os, time
+			d = json.loads(os.environ["GH_JSON"])
+			print(json.dumps({
+			    "tag": os.environ["TAG"],
+			    "notas": d.get("body") or "",
+			    "publicada_em": d.get("published_at"),
+			    "url": d.get("html_url"),
+			    "malformado": os.environ["MALF"] == "true",
+			    "erro": os.environ.get("ERRO_CHECK") or None,
+			    "verificado_em": int(time.time()),
+			}, ensure_ascii=False))
+		PY
+	elif [ "$malformado" = true ]; then
+		printf '{"tag":"%s","notas":"","malformado":true,"erro":"%s","verificado_em":%s}\n' "$tag" "$erro_check" "$(date +%s)" > "$DISPONIVEL"
+	else
+		printf '{"tag":"%s","notas":"","malformado":false,"verificado_em":%s}\n' "$tag" "$(date +%s)" > "$DISPONIVEL"
+	fi
+	[ "$malformado" = true ] && sufixo=" — MALFORMADO (nao sera oferecido)"
+	log "check: última publicada é $tag (instalada: $(versao_instalada))$sufixo"
+}
+
+# ------------------------------------------------------------------------------------------------
+# apply
+# ------------------------------------------------------------------------------------------------
+
+cmd_apply() {
+	PROGRESSO_ATIVO=1
+	local versao="" arquivo_pedido=""
+	while [ $# -gt 0 ]; do
+		case "$1" in
+			--versao) versao="$2"; shift 2 ;;
+			--pedido) arquivo_pedido="$2"; shift 2 ;;
+			*) erro "argumento desconhecido: $1"; exit 2 ;;
+		esac
+	done
+
+	mkdir -p "$CONTROLE_DIR" "$VERSOES_DIR"
+	# a API (container) pode ter criado progresso.log ao enfileirar o pedido; recria do zero
+	# como este processo (root), para o tee/append seguinte funcionar.
+	rm -f "$PROGRESSO"; : > "$PROGRESSO"; chmod 666 "$PROGRESSO" 2>/dev/null || true
+
+	if [ -n "$arquivo_pedido" ]; then
+		[ -f "$arquivo_pedido" ] || { log "apply: pedido $arquivo_pedido não existe (nada a fazer)"; exit 0; }
+		versao="$(json_get versao < "$arquivo_pedido")"
+	fi
+	if [ -z "$versao" ]; then
+		versao="$(gh_api /releases/latest | json_get tag_name | sed 's/^v//')"
+	fi
+	versao="$(printf '%s' "$versao" | tr -d '[:space:]' | sed 's/^v//')"
+	[ -n "$versao" ] || { erro "apply: versão alvo indefinida"; escrever_resultado false "" "versão alvo indefinida"; rm -f "$PEDIDO"; exit 1; }
+
+	local instalada; instalada="$(versao_instalada)"
+	log "apply: instalada=$instalada alvo=$versao"
+	if [ "$versao" = "$instalada" ]; then
+		log "apply: já está em $versao — nada a fazer"
+		escrever_resultado true "$versao" ""
+		rm -f "$PEDIDO"
+		return 0
+	fi
+	if ! maior_que "$versao" "$instalada"; then
+		erro "apply: alvo $versao não é mais novo que $instalada — recusado (use rollback para regredir)"
+		escrever_resultado false "$versao" "alvo não é mais novo que a instalada"
+		rm -f "$PEDIDO"
+		exit 1
+	fi
+
+	# trava: um apply por vez
+	exec 9>"$DEPLOY_DIR/.apply.lock"
+	flock -n 9 || { erro "apply: outro apply em andamento"; exit 1; }
+
+	TMP_APPLY="$(mktemp -d)"
+	trap '[ -n "$TMP_APPLY" ] && rm -rf "$TMP_APPLY"; rm -f "$PEDIDO"' EXIT
+
+	# 1. baixar o código-fonte da tag
+	log "baixando $REPO@$versao…"
+	if ! curl -fsSL \
+		-H "Authorization: Bearer $(token)" \
+		-H "Accept: application/vnd.github+json" \
+		"https://api.github.com/repos/$REPO/tarball/$versao" -o "$TMP_APPLY/src.tar.gz"; then
+		erro "download falhou (tag $versao existe? token tem Contents:read?)"
+		escrever_resultado false "$versao" "download da tag falhou"
+		exit 1
+	fi
+
+	# 2. extrair para staging (a tarball do GitHub tem um diretório-raiz OWNER-REPO-SHA/)
+	mkdir -p "$TMP_APPLY/staging"
+	tar -xzf "$TMP_APPLY/src.tar.gz" -C "$TMP_APPLY/staging" --strip-components=1
+	# O compose obrigatório varia com o papel: central exige docker-compose.yml, o nó exige
+	# docker-compose.no.yml. Os demais (VERSION api db) valem pros dois; web/ só existe no
+	# central mas continua no repo, então não é cobrado do nó.
+	for obrig in VERSION api db; do
+		[ -e "$TMP_APPLY/staging/$obrig" ] || { erro "staging sem '$obrig' — tarball suspeita, abortando"; escrever_resultado false "$versao" "tarball incompleta"; exit 1; }
+	done
+	if [ "$PAPEL" = "no" ]; then
+		[ -e "$TMP_APPLY/staging/docker-compose.no.yml" ] || { erro "staging sem 'docker-compose.no.yml' — tarball suspeita, abortando"; escrever_resultado false "$versao" "tarball incompleta"; exit 1; }
+	else
+		[ -e "$TMP_APPLY/staging/docker-compose.yml" ] || { erro "staging sem 'docker-compose.yml' — tarball suspeita, abortando"; escrever_resultado false "$versao" "tarball incompleta"; exit 1; }
+	fi
+	local versao_staging; versao_staging="$(tr -d '[:space:]' < "$TMP_APPLY/staging/VERSION")"
+	if [ "$versao_staging" != "$versao" ]; then
+		erro "VERSION na tag ($versao_staging) != tag pedida ($versao) — abortando"
+		escrever_resultado false "$versao" "VERSION divergente na tag"
+		exit 1
+	fi
+	log "extraído — VERSION confere ($versao_staging)"
+
+	# 3. snapshot do estado atual (real, com qualquer drift local), para rollback
+	local snap="$VERSOES_DIR/pre-$versao-$(date +%Y%m%d-%H%M%S).tar.gz"
+	log "snapshot do estado atual -> $(basename "$snap")"
+	# logs/ e backups/ ficam de fora: são dados de runtime (dumps pesados, históricos de erro),
+	# não vão para o snapshot (senior cada snapshot carregaria os dumps) nem para o rsync abaixo.
+	tar czf "$snap" -C "$INSTALL_DIR" \
+		--exclude='./.env' --exclude='./data' --exclude='./db/data' \
+		--exclude='./.deploy' --exclude='./.git' --exclude='./nginx/ssl' \
+		--exclude='./logs' --exclude='./backups' --exclude='./.cache' . 2>/dev/null || true
+	ls -1t "$VERSOES_DIR"/pre-*.tar.gz 2>/dev/null | tail -n +$((GUARDAR_SNAPSHOTS + 1)) | xargs -r rm -f
+
+	# 4. aplicar os arquivos (preserva .env, data/, db/data/, .deploy/, .git/, nginx/ssl/)
+	# nginx/ssl/ é material de TLS da máquina (chave privada, extraída do PFX institucional) —
+	# não está no git, então sem o exclude o --delete apagaria o diretório no primeiro apply.
+	# logs/ e backups/ pelo mesmo motivo: montages de bind criados pelo docker que não existem
+	# no tarball da tag — sem o exclude o --delete os apagava a CADA apply (e por baixo dos
+	# containers ainda, deixando o mount órfão: o backups gravava 5 dias num inode morto).
+	log "sincronizando arquivos…"
+	if command -v rsync >/dev/null 2>&1; then
+		rsync -a --delete \
+			--exclude='.env' --exclude='data/' --exclude='db/data/' \
+			--exclude='.deploy/' --exclude='.git/' --exclude='nginx/ssl/' \
+			--exclude='logs/' --exclude='backups/' --exclude='.cache/' \
+			"$TMP_APPLY/staging/" "$INSTALL_DIR/"
+	else
+		# sem rsync: cp -a por cima (não remove arquivo que saiu do repo — raro)
+		cp -a "$TMP_APPLY/staging/." "$INSTALL_DIR/"
+	fi
+
+	# 4b. auto-atualiza o próprio binário instalado (o processo atual já está em memória, trocar o
+	#     arquivo não o afeta — vale para o PRÓXIMO apply). As units systemd não são reinstaladas
+	#     aqui: se mudarem, rode scripts/instalar-host.sh de novo.
+	if [ -f "$INSTALL_DIR/scripts/analyser-update" ] && [ -w /usr/local/bin ]; then
+		install -m 0755 "$INSTALL_DIR/scripts/analyser-update" /usr/local/bin/analyser-update 2>/dev/null || true
+	fi
+
+	# Nota: NÃO tentamos realinhar o .git da instalação. Este service roda como root, e o git
+	# do checkout pertence ao usuário do deploy com credencial na HOME dele — de root daria
+	# "dubious ownership" e fetch sem auth. Depois do 1º apply o .git fica desatualizado de
+	# propósito: a fonte de verdade da versão é o arquivo VERSION / `analyser-update status` /
+	# a tela Servidor. Ver docs/atualizacao.md.
+
+	# 5. subir (no central a API roda as migrações pendentes sozinha no startup —
+	#    ver funcoes/migrar_utils.py — mas rodamos explícito também para capturar no log).
+	#    Nó com REGISTRO_NO: PUXA a imagem que o central publicou e sobe SEM build (a estação
+	#    não tem saída p/ o Docker Hub); sem registry ou com pull falho, cai para build local.
+	local up_flags="--build"
+	if [ "$PAPEL" = "no" ] && [ -n "$REGISTRO_NO" ]; then
+		# force-recreate: o retague do :latest muda o ID da imagem mas o compose pode não
+		# perceber, e o bind de ./VERSION (arquivo) só pega num container NOVO.
+		if puxar_imagem_no "$versao"; then up_flags="--force-recreate"; fi
+	fi
+	garantir_pastas_bind
+	log "docker compose -f $COMPOSE_FILE up -d $up_flags… (papel=$PAPEL)"
+	( dc up -d $up_flags ) 2>&1 | tee -a "$PROGRESSO"
+	recarregar_nginx
+	recriar_mounts_velhos
+
+	# 6. esperar voltar saudável (central: /api/health; nó: /no/saude)
+	if [ "$PAPEL" = "no" ]; then
+		log "aguardando /no/saude :$NO_PORT (até ${HEALTH_TIMEOUT}s)…"
+	else
+		log "aguardando /api/health (até ${HEALTH_TIMEOUT}s)…"
+	fi
+	local ok=0 fim=$((SECONDS + HEALTH_TIMEOUT)) web_recriada=0 inicio_espera=$SECONDS
+	while [ $SECONDS -lt $fim ]; do
+		if health_ok; then ok=1; break; fi
+		# nginx resolve o upstream (api) no boot: quando o apply RECRIOU a api o container do
+		# nginx apontou para um IP morto e devolve 502 para sempre. Se a api está healthy por
+		# dentro mas a health via nginx não volta em 45 s, recria o web uma vez e segue.
+		if [ "$PAPEL" = "central" ] && [ "$web_recriada" = 0 ] && [ $((SECONDS - inicio_espera)) -gt 45 ]; then
+			web_recriada=1
+			avisa "health via nginx não voltou (nginx pode estar com IP velho da api) — recriando o web…"
+			( dc up -d --force-recreate web ) 2>&1 | tee -a "$PROGRESSO" | tail -2
+		fi
+		sleep 3
+	done
+	if [ "$PAPEL" = "no" ]; then
+		[ "$ok" = 1 ] || { erro "nó não respondeu /no/saude a tempo — verifique 'docker compose -f $COMPOSE_FILE logs no'"; escrever_resultado false "$versao" "health check do nó falhou após o build"; exit 1; }
+	else
+		[ "$ok" = 1 ] || { erro "API não respondeu /api/health a tempo — verifique 'docker compose logs api-1'"; escrever_resultado false "$versao" "health check falhou após o build"; exit 1; }
+	fi
+
+	# 7. migrações (central; idempotente; a maior parte já rodou no startup). O nó não tem
+	# banco — pula sem erro.
+	if [ "$PAPEL" = "no" ]; then
+		log "papel=no — sem banco local, migrações não se aplicam (pulado)"
+	else
+		log "conferindo migrações de schema…"
+		# api-1: com réplicas (api-1/api-2) o `exec` precisa de um alvo fixo — as migrações são
+		# idempotentes e o runner tem trava própria; qualquer uma das duas serve, usamos a primeira.
+		( cd "$INSTALL_DIR" && docker compose exec -T api-1 python /app/tools/migrar.py ) 2>&1 | tee -a "$PROGRESSO" || {
+			erro "runner de migração retornou erro — a API pode estar com schema incompleto"
+			escrever_resultado false "$versao" "migração falhou"
+			exit 1
+		}
+	fi
+
+	# 7b. central com registry configurado: publica a imagem do NÓ neste release para os nós
+	# fazerem pull (cache do build do api aproveita tudo — sai em segundos).
+	if [ "$PAPEL" = "central" ] && [ -n "$REGISTRO_NO" ]; then
+		publicar_imagem_no "$versao"
+	fi
+
+	# 8. build-info + resultado
+	local instalada_agora; instalada_agora="$(versao_instalada)"
+	printf '{"tag":"%s","aplicada_em":"%s","por":"analyser-update"}\n' \
+		"$instalada_agora" "$(date '+%Y-%m-%dT%H:%M:%S%z')" > "$DEPLOY_DIR/build-info"
+	if [ "$instalada_agora" = "$versao" ]; then
+		log "OK — instalação agora em $versao"
+		escrever_resultado true "$versao" ""
+	else
+		erro "após o build, VERSION diz $instalada_agora (esperado $versao)"
+		escrever_resultado false "$versao" "VERSION pós-build divergente ($instalada_agora)"
+		exit 1
+	fi
+}
+
+# ------------------------------------------------------------------------------------------------
+# reiniciar — `docker compose up -d` a pedido da tela Desempenho
+# ------------------------------------------------------------------------------------------------
+
+cmd_reiniciar() {
+	local arquivo_pedido="$REINICIAR_REQ"
+	while [ $# -gt 0 ]; do
+		case "$1" in
+			--pedido) arquivo_pedido="$2"; shift 2 ;;
+			*) erro "argumento desconhecido: $1"; exit 2 ;;
+		esac
+	done
+
+	# log() e escrever_resultado() usam as globais $PROGRESSO/$RESULTADO, e cada invocação
+	# deste script roda um comando só e sai — então apontá-las para os arquivos do reinício
+	# aqui não vaza para mais nada.
+	PROGRESSO="$REINICIAR_LOG"
+	RESULTADO="$REINICIAR_RESULTADO"
+	PROGRESSO_ATIVO=1
+
+	# A path unit re-arma quando o pedido some: remove no fim em qualquer caso. O caminho é
+	# expandido AGORA no trap — com variável local + `set -u` o EXIT o veria vazio (mesmo
+	# motivo do TMP_APPLY global).
+	local req="$arquivo_pedido"
+	# shellcheck disable=SC2064
+	trap "rm -f '$req'" EXIT
+
+	local solicitante=""
+	[ -f "$req" ] && solicitante="$(json_get solicitante < "$req")"
+	[ -n "$solicitante" ] || solicitante="?"
+
+	# o log pode ter sido criado pela API (uid do container) ao enfileirar o pedido; recria
+	# como este processo (root), como o apply faz com o progresso.log.
+	rm -f "$PROGRESSO"; : > "$PROGRESSO"; chmod 666 "$PROGRESSO" 2>/dev/null || true
+
+	# trava: um reinício por vez. Contra um apply simultâneo este lock não protege (é outro
+	# arquivo) — mas os dois terminam em `docker compose up`, idempotente, e o apply espera o
+	# health no fim de qualquer forma.
+	exec 9>"$DEPLOY_DIR/.reiniciar.lock"
+	flock -n 9 || { erro "reiniciar: outro reinício em andamento"; escrever_resultado false "$(versao_instalada)" "outro reinício em andamento"; exit 1; }
+
+	garantir_pastas_bind
+	log "reiniciar: pedido de $solicitante — docker compose -f $COMPOSE_FILE up -d… (papel=$PAPEL)"
+	if ( dc up -d ) 2>&1 | tee -a "$PROGRESSO"; then
+		# `up -d` só recria container cuja CONFIG mudou (o que o compose interpola: API_WORKERS,
+		# PG_*…). Mas o pedido desta tela é justamente aplicar as variáveis que a API lê do .env
+		# MONTADO no boot (DB_POOL_MAX, API_THREADS_REQUISICAO, CACHE_*), que não aparecem no
+		# compose e deixariam o botão sem efeito. Então o serviço reinicia de verdade — as duas
+		# réplicas UMA DE CADA VEZ: enquanto uma sobe a outra segue atendendo (failover do nginx),
+		# sem janela. No nó (container único) o restart é o próprio fim do botão.
+		if [ "$PAPEL" = "central" ]; then
+			log "reiniciar: reiniciando api-1, depois api-2 (uma de cada vez — sem janela)…"
+			dc restart api-1 2>&1 | tee -a "$PROGRESSO" | tail -1
+			dc restart api-2 2>&1 | tee -a "$PROGRESSO" | tail -1
+		else
+			dc restart no 2>&1 | tee -a "$PROGRESSO" | tail -1
+		fi
+		recarregar_nginx
+		recriar_mounts_velhos
+		if [ "$PAPEL" = "no" ]; then
+			log "compose ok — aguardando /no/saude :$NO_PORT (até ${REINICIAR_TIMEOUT}s)…"
+		else
+			log "compose ok — aguardando /api/health (até ${REINICIAR_TIMEOUT}s)…"
+		fi
+	else
+		erro "docker compose -f $COMPOSE_FILE up -d falhou — ver logs no servidor"
+		escrever_resultado false "$(versao_instalada)" "docker compose up -d falhou"
+		exit 1
+	fi
+
+	local ok=0 fim=$((SECONDS + REINICIAR_TIMEOUT))
+	while [ $SECONDS -lt $fim ]; do
+		if health_ok; then ok=1; break; fi
+		sleep 3
+	done
+	if [ "$ok" = 1 ]; then
+		if [ "$PAPEL" = "no" ]; then
+			log "OK — nó respondeu /no/saude"
+		else
+			log "OK — API respondeu /api/health"
+		fi
+		escrever_resultado true "$(versao_instalada)" ""
+	else
+		if [ "$PAPEL" = "no" ]; then
+			erro "nó não respondeu /no/saude a tempo — verifique 'docker compose -f $COMPOSE_FILE logs no'"
+		else
+			erro "API não respondeu /api/health a tempo — verifique 'docker compose logs api-1'"
+		fi
+		escrever_resultado false "$(versao_instalada)" "health check falhou após o up"
+		exit 1
+	fi
+}
+
+# ------------------------------------------------------------------------------------------------
+# rollback
+# ------------------------------------------------------------------------------------------------
+
+cmd_rollback() {
+	PROGRESSO_ATIVO=1
+	local alvo=""
+	[ "${1:-}" = "--para" ] && alvo="$2"
+	local snap
+	if [ -n "$alvo" ]; then
+		snap="$(ls -1t "$VERSOES_DIR"/pre-"$alvo"-*.tar.gz 2>/dev/null | head -1)"
+	else
+		snap="$(ls -1t "$VERSOES_DIR"/pre-*.tar.gz 2>/dev/null | head -1)"
+	fi
+	[ -n "$snap" ] && [ -f "$snap" ] || { erro "nenhum snapshot em $VERSOES_DIR"; exit 1; }
+
+	rm -f "$PROGRESSO"; : > "$PROGRESSO"; chmod 666 "$PROGRESSO" 2>/dev/null || true
+	log "rollback a partir de $(basename "$snap") (papel=$PAPEL, compose=$COMPOSE_FILE)"
+	tar xzf "$snap" -C "$INSTALL_DIR"
+	# Nó com registry: o snapshot trouxe o VERSION antigo — tenta a imagem PINADA daquela
+	# versão no registry (o central publica com o pin de cada release). Sem isso, build local.
+	local up_flags="--build"
+	if [ "$PAPEL" = "no" ] && [ -n "$REGISTRO_NO" ]; then
+		local versao_snap; versao_snap="$(tr -d '[:space:]' < "$INSTALL_DIR/VERSION" 2>/dev/null || echo '')"
+		[ -n "$versao_snap" ] && puxar_imagem_no "$versao_snap" && up_flags="--force-recreate"
+	fi
+	garantir_pastas_bind
+	( dc up -d $up_flags ) 2>&1 | tee -a "$PROGRESSO"
+	recarregar_nginx
+	recriar_mounts_velhos
+	if [ "$PAPEL" = "no" ]; then
+		log "aguardando /no/saude :$NO_PORT…"
+	else
+		log "aguardando /api/health…"
+	fi
+	local fim=$((SECONDS + HEALTH_TIMEOUT))
+	while [ $SECONDS -lt $fim ]; do
+		health_ok && break
+		sleep 3
+	done
+	log "rollback concluído — instalação em $(versao_instalada)"
+	escrever_resultado true "$(versao_instalada)" ""
+}
+
+# ------------------------------------------------------------------------------------------------
+# status
+# ------------------------------------------------------------------------------------------------
+
+cmd_status() {
+	echo "instalação:  $INSTALL_DIR  (papel=$PAPEL, compose=$COMPOSE_FILE)"
+	[ -n "$REGISTRO_NO" ] && echo "registry:    $REGISTRO_NO ($( [ "$PAPEL" = "central" ] && echo 'publica' || echo 'puxa' ))"
+	echo "instalada:   $(versao_instalada)"
+	if [ -f "$DISPONIVEL" ]; then
+		echo "disponível:  $(json_get tag < "$DISPONIVEL")  (checado em $(json_get verificado_em < "$DISPONIVEL"))"
+	else
+		echo "disponível:  — (rode 'analyser-update check')"
+	fi
+	[ -f "$PEDIDO" ] && echo "pedido:      EM ANDAMENTO ($(json_get versao < "$PEDIDO"))" || echo "pedido:      nenhum"
+	[ -f "$REINICIAR_REQ" ] && echo "reinicio:    EM ANDAMENTO (pedido de $(json_get solicitante < "$REINICIAR_REQ"))" || echo "reinicio:    nenhum"
+	echo "snapshots:   $(ls -1 "$VERSOES_DIR"/pre-*.tar.gz 2>/dev/null | wc -l) em $VERSOES_DIR"
+}
+
+# ------------------------------------------------------------------------------------------------
+
+# Marcador "existe agente de host aqui": é o que a API checa (funcoes/versao_utils.py) para
+# decidir se mostra o botão "Atualizar". No Docker Desktop / Windows este arquivo nunca existe,
+# então o botão não aparece e ninguém clica num pedido que nada consumiria.
+if [ -d "$DEPLOY_DIR" ]; then
+	printf 'instancia=%s\natualizado=%s\n' "$(systemd-escape -p "$INSTALL_DIR" 2>/dev/null || echo "$INSTALL_DIR")" \
+		"$(date '+%Y-%m-%dT%H:%M:%S%z')" > "$DEPLOY_DIR/agente" 2>/dev/null || true
+fi
+
+case "${1:-}" in
+	check)    shift; cmd_check "$@" ;;
+	apply)    shift; cmd_apply "$@" ;;
+	reiniciar) shift; cmd_reiniciar "$@" ;;
+	rollback) shift; cmd_rollback "$@" ;;
+	status)   shift; cmd_status "$@" ;;
+	*) echo "uso: analyser-update {check|apply [--versao X|--pedido F]|reiniciar [--pedido F]|rollback [--para X]|status}" >&2; exit 2 ;;
+esac

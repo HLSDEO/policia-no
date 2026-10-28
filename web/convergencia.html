@@ -1,0 +1,213 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Convergência · PolícIA</title>
+<script src="js/utils/boot_tema.js"></script>
+<link rel="icon" type="image/svg+xml" href="favicon.svg">
+<link rel="stylesheet" href="css/style.css">
+<link rel="stylesheet" href="css/mesa.css">
+<style>
+  .conv-score-label { display: inline-flex; align-items: center; gap: 6px; font-size: 13px; white-space: nowrap; }
+  .conv-score-label input { margin: 0; }
+
+  /* Controles de visualização do grafo — os mesmos botões da Mesa de Inquérito, mas sempre
+     visíveis aqui (lá a barra mora no tema Orbit; esta página não carrega mesa_orbit.css). */
+  .conv-viewport-controls {
+    position: absolute; top: 12px; right: 12px; z-index: 6;
+    display: flex; align-items: center; padding: 4px;
+    border: 1px solid var(--border); border-radius: 8px;
+    background: var(--bg-elevated, var(--bg-card));
+    box-shadow: var(--shadow, 0 2px 8px rgba(0, 0, 0, 0.25));
+  }
+  .conv-viewport-controls .mesa-viewport-btn {
+    min-width: 30px; height: 30px;
+    display: inline-flex; align-items: center; justify-content: center; gap: 6px;
+    padding: 0 8px; border: 0; border-right: 1px solid var(--border);
+    background: transparent; color: var(--text-secondary);
+    font: 650 14px/1 inherit; cursor: pointer;
+  }
+  .conv-viewport-controls .mesa-viewport-btn:last-child { border-right: 0; }
+  .conv-viewport-controls .mesa-viewport-btn:hover,
+  .conv-viewport-controls .mesa-viewport-btn:focus-visible {
+    border-radius: 5px; background: var(--bg-hover); color: var(--text-primary); outline: none;
+  }
+  .conv-viewport-controls .mesa-viewport-fit,
+  .conv-viewport-controls .mesa-viewport-fullscreen { padding-inline: 10px; font-size: 11.5px; }
+  .conv-elos-label {
+    display: inline-flex; align-items: center; gap: 6px;
+    font-size: 12.5px; color: var(--text-secondary); cursor: pointer; white-space: nowrap;
+  }
+  .conv-elos-label input { margin: 0; }
+  /* dois grupos na barra (exportar | análise): sem quebra, ela sangrava em telas estreitas */
+  .conv-grafo-barra { gap: 14px; flex-wrap: wrap; }
+</style>
+</head>
+<body>
+<div class="app">
+
+  <div class="main">
+    <header class="topbar">
+      <h1 class="page-title">Convergência</h1>
+      <div class="topbar-actions">
+        <label for="convergencia-delegacia-select" style="font-size:13px; font-weight:500; white-space:nowrap;">Delegacia:</label>
+        <select id="convergencia-delegacia-select" style="min-width:150px;" class="inv-filtro">
+          <option value="">Todas as delegacias</option>
+        </select>
+      </div>
+    </header>
+
+    <main class="content">
+      <p class="card-hint" style="margin:0 0 16px;">Sinais que cruzam <strong>mais de um inquérito</strong> — do exato (CPF, telefone, e-mail, chave PIX, IMEI) ao aproximado (nome parecido, local visitado em comum). A restrição por caso continua valendo: você só vê os inquéritos aos quais já tem acesso. Sinais <strong>aproximados</strong> são hipótese, não confirmação — confira antes de tratar como vínculo.</p>
+
+      <div class="card" style="max-width:none;" id="conv-inqueritos-card">
+        <div class="grupo-header" style="flex-wrap:wrap;">
+          <h2>Pares com sinal em comum</h2>
+          <div style="display:flex; gap:8px; align-items:center; flex-wrap:wrap;">
+            <div class="mesa-visao-toggle">
+              <button type="button" class="mesa-visao-btn ativo" id="visao-lista-btn">Lista</button>
+              <button type="button" class="mesa-visao-btn" id="visao-grafo-btn">Grafo</button>
+            </div>
+            <button type="button" class="btn btn-secondary" id="atualizar-btn">Atualizar</button>
+          </div>
+        </div>
+
+        <div class="investigacoes-toolbar" style="margin-top:12px;">
+          <div class="inv-busca">
+            <svg class="inv-busca-icone" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4.3-4.3"/></svg>
+            <input type="search" id="convergencia-busca" placeholder="Buscar por inquérito, valor do sinal ou entidade…" autocomplete="off">
+          </div>
+          <select id="filtro-tipo" class="inv-filtro">
+            <option value="">Todos os tipos</option>
+            <option value="cpf">CPF</option>
+            <option value="cnpj">CNPJ</option>
+            <option value="telefone">Telefone</option>
+            <option value="email">E-mail</option>
+            <option value="nome">Nome aproximado</option>
+            <option value="imei">IMEI</option>
+            <option value="iccid">ICCID do chip</option>
+            <option value="imsi">IMSI do chip</option>
+            <option value="serial">Nº de série do aparelho</option>
+            <option value="mac">MAC do aparelho</option>
+            <option value="placa">Placa de veículo</option>
+            <option value="local">Local em comum</option>
+            <option value="local_rede">Ponto de rede em comum</option>
+            <option value="co_presenca">Aparelho em comum por perto</option>
+          </select>
+          <select id="filtro-confianca" class="inv-filtro">
+            <option value="">Exata e aproximada</option>
+            <option value="exata">Só exata</option>
+            <option value="aproximada">Só aproximada</option>
+          </select>
+          <select id="filtro-min-sinais" class="inv-filtro" title="Mostra só os pares com pelo menos este número de sinais (contados já com os filtros de tipo, confiança e busca)">
+            <option value="0">Qualquer nº de sinais</option>
+            <option value="2">≥ 2 sinais</option>
+            <option value="5">≥ 5 sinais</option>
+            <option value="10">≥ 10 sinais</option>
+            <option value="25">≥ 25 sinais</option>
+            <option value="50">≥ 50 sinais</option>
+            <option value="100">≥ 100 sinais</option>
+          </select>
+          <span class="conv-score-label" title="Dos sinais aproximados com percentual (nome parecido), mostra só os com score acima do corte. Sinais aproximados sem percentual (local, rede, co-presença) ficam de fora quando ativo; os exatos ficam sempre.">
+            <label for="filtro-min-score">Score ≥</label>
+            <input type="number" id="filtro-min-score" class="inv-filtro" min="0" max="100" step="5" placeholder="0" style="width:64px;">
+            <span>%</span>
+          </span>
+          <select id="filtro-ordem" class="inv-filtro">
+            <option value="sinais">Mais sinais primeiro</option>
+            <option value="inquerito">Número do inquérito</option>
+          </select>
+          <button type="button" class="btn btn-secondary btn-small" id="conv-inq-excel" title="Exporta todos os sinais filtrados — uma linha por sinal, com os dois inquéritos do par — em Excel">⬇ Excel</button>
+        </div>
+
+        <p class="card-hint" id="convergencia-totais" style="margin:0 0 4px; font-weight:500; display:none;"></p>
+
+        <div id="convergencia-lista" style="margin-top:16px;">
+          <div style="display:flex; align-items:center; gap:8px; justify-content:center; padding:24px 0;">
+            <span class="spinner"></span> <span>Carregando…</span>
+          </div>
+        </div>
+        <div class="paginacao hidden" id="convergencia-paginacao"></div>
+
+        <div id="convergencia-grafo-area" class="hidden" style="margin-top:16px;">
+          <div class="conv-grafo-barra">
+          <span class="i2-grupo">
+            <span class="i2-grupo-rotulo">Exportar grafo:</span>
+            <button type="button" class="btn btn-secondary" id="exportar-i2-csv" title="Exporta os nós e as ligações do grafo filtrado inteiro em CSV, para importar no i2 Analyst&#39;s Notebook">CSV</button>
+            <button type="button" class="btn btn-secondary" id="exportar-i2-xlsx" title="Exporta o grafo filtrado inteiro em XLSX, em abas separadas de entidades e vínculos, para o assistente de importação do i2">XLSX</button>
+            <button type="button" class="btn btn-secondary" id="exportar-i2-anx" title="Exporta o grafo filtrado inteiro em ANX: a carta já montada, que abre direto no i2 Analyst&#39;s Notebook">ANX</button>
+            <button type="button" class="btn btn-secondary" id="exportar-i2-graphml" title="Exporta o grafo filtrado inteiro em GraphML — o formato do Gephi, do yEd e do NetworkX, para medir a rede (centralidade, comunidade, caminho) fora do i2">GraphML</button>
+            <button type="button" class="btn btn-secondary" id="conv-exportar-png" title="Baixa o quadro desenhado como imagem PNG, com título e legenda, para colar em relatório">PNG</button>
+          </span>
+          <span class="i2-grupo">
+            <button type="button" class="btn btn-secondary" id="conv-analise-btn" title="Retrato do desenho atual: inquéritos que mais convergem, elos críticos (pontos de articulação e pontes) e comunidades de casos. Cada item é clicável.">Análise</button>
+            <label class="conv-elos-label" title="Destaca em vermelho as ligações que, cortadas, separam grupos de inquéritos (pontes) e os inquéritos que seguram o grupo de pé sozinhos (pontos de articulação)">
+              <input type="checkbox" id="conv-elos-criticos"> Elos críticos
+            </label>
+          </span>
+          </div>
+          <div class="mesa-legenda" id="mesa-legenda"></div>
+          <div class="mesa-legenda mesa-legenda-comunidades" id="conv-legenda-comunidades"></div>
+          <div class="mesa-grafo-wrap" id="conv-grafo-wrap">
+            <div class="mesa-loading hidden" id="conv-layout-status">
+              <div class="mesa-loading-spinner"></div>
+              <div class="mesa-loading-text">Organizando grafo…</div>
+            </div>
+            <div class="conv-viewport-controls" role="group" aria-label="Controles de visualização do grafo">
+              <button type="button" class="mesa-viewport-btn" id="conv-zoom-in" title="Ampliar o grafo" aria-label="Ampliar">+</button>
+              <button type="button" class="mesa-viewport-btn" id="conv-zoom-out" title="Reduzir o grafo" aria-label="Reduzir">-</button>
+              <button type="button" class="mesa-viewport-btn mesa-viewport-fit" id="conv-enquadrar" title="Mostrar todos os inquéritos atualmente visíveis"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 7V5a2 2 0 0 1 2-2h2"/><path d="M17 3h2a2 2 0 0 1 2 2v2"/><path d="M21 17v2a2 2 0 0 1-2 2h-2"/><path d="M7 21H5a2 2 0 0 1-2-2v-2"/></svg><span>Enquadrar tudo</span></button>
+              <button type="button" class="mesa-viewport-btn mesa-viewport-fullscreen" id="conv-tela-cheia" title="Exibir o quadro em tela cheia" aria-label="Exibir em tela cheia"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M8 3H5a2 2 0 0 0-2 2v3"/><path d="M21 8V5a2 2 0 0 0-2-2h-3"/><path d="M3 16v3a2 2 0 0 0 2 2h3"/><path d="M16 21h3a2 2 0 0 0 2-2v-3"/></svg><span>Tela cheia</span></button>
+            </div>
+            <svg id="mesa-grafo" preserveAspectRatio="xMidYMid meet"></svg>
+            <canvas id="mesa-minimapa" class="mesa-minimapa mesa-minimapa-vazio" width="184" height="124" title="Mapa do quadro: clique ou arraste para navegar"></canvas>
+          </div>
+          <p class="empty-hint hidden" id="mesa-vazio">Nenhuma convergência para desenhar.</p>
+        </div>
+      </div>
+    </main>
+  </div>
+
+</div>
+
+<div class="modal-overlay hidden" id="modal-par">
+  <div class="modal" style="width:min(960px, 94vw);">
+    <div class="modal-header">
+      <h2 id="par-titulo">Convergência</h2>
+      <button type="button" class="modal-close" id="par-fechar">&times;</button>
+    </div>
+    <div class="modal-body" id="par-corpo"></div>
+  </div>
+</div>
+
+<div class="modal-overlay hidden" id="modal-analise">
+  <div class="modal" style="width:min(720px, 94vw); max-height:86vh; display:flex; flex-direction:column;">
+    <div class="modal-header">
+      <h2>Análise da rede de convergência</h2>
+      <button type="button" class="modal-close" id="analise-fechar">&times;</button>
+    </div>
+    <div class="modal-body" style="overflow-y:auto;" id="analise-corpo"></div>
+  </div>
+</div>
+
+<script src="vendor/jquery-3.7.1.min.js"></script>
+<script src="js/utils/utils.js"></script>
+<script src="js/utils/icones.js"></script>
+<script src="js/utils/mapa_telas.js"></script>
+<script src="js/utils/toast.js"></script>
+<script src="js/utils/api.js"></script>
+<script src="js/utils/carregando.js"></script>
+<script src="js/utils/estados.js"></script>
+<script src="js/utils/estado_url.js"></script>
+<script src="js/utils/dialogo.js"></script>
+<script src="js/utils/theme.js"></script>
+<script src="js/utils/sidebar.js"></script>
+<script src="js/utils/auth.js"></script>
+<script src="js/utils/avisos_ia.js"></script>
+<script src="js/utils/exportar_excel.js"></script>
+<script src="js/utils/exportar_i2.js"></script>
+<script src="js/utils/exportar_png.js"></script>
+<script src="js/convergencia.js"></script>
+</body>
+</html>

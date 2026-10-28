@@ -1,0 +1,78 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Dispositivos da conta · PolícIA</title>
+<script src="js/utils/boot_tema.js"></script>
+<link rel="icon" type="image/svg+xml" href="favicon.svg">
+<link rel="stylesheet" href="css/style.css">
+<link rel="stylesheet" href="css/arquivos.css">
+<link rel="stylesheet" href="css/caso_graficos.css">
+<link rel="stylesheet" href="css/chat.css">
+<link rel="stylesheet" href="css/ia_flutuante.css">
+</head>
+<body>
+<div class="app">
+
+  <div class="main" style="width:100%;">
+    <header class="topbar">
+      <h1 class="page-title">Dispositivos da conta</h1>
+      <div class="topbar-actions">
+        <span class="grupo-total" id="total-registros"></span>
+        <span class="extracao-nav-container"></span>
+      </div>
+    </header>
+
+    <main class="content">
+
+      <div class="kpi-tiles" id="dvc-kpis" style="margin-bottom:16px;">
+        <div class="card kpi-tile">
+          <div class="card-stat" id="kpi-total">—</div>
+          <div class="card-stat-label">dispositivos conhecidos</div>
+        </div>
+      </div>
+
+      <div class="card" style="margin-bottom:16px; max-width:none;">
+        <h2>Por fabricante</h2>
+        <div id="dvc-por-fabricante"></div>
+        <p class="empty-hint hidden" id="dvc-por-fabricante-vazio">Nenhum registro.</p>
+      </div>
+
+      <div class="card" style="max-width:none;">
+
+        <div class="arq-filtros">
+          <input type="search" id="filtro-busca" class="arq-busca" placeholder="Buscar por nome, fabricante, Android ID ou IMEI…" aria-label="Buscar por nome, fabricante, Android ID ou IMEI" autocomplete="off">
+        </div>
+
+        <div id="tabela"></div>
+
+      </div>
+    </main>
+  </div>
+
+</div>
+
+<script src="vendor/jquery-3.7.1.min.js"></script>
+<script src="js/utils/utils.js"></script>
+<script src="js/utils/icones.js"></script>
+<script src="js/utils/mapa_telas.js"></script>
+<script src="js/utils/toast.js"></script>
+<script src="js/utils/api.js"></script>
+<script src="js/utils/carregando.js"></script>
+<script src="js/utils/estados.js"></script>
+<script src="js/utils/estado_url.js"></script>
+<script src="js/utils/dialogo.js"></script>
+<script src="js/utils/theme.js"></script>
+<script src="js/utils/sidebar.js"></script>
+<script src="js/utils/auth.js"></script>
+<script src="js/utils/avisos_ia.js"></script>
+<script src="js/utils/exportar_excel.js"></script>
+<script src="js/utils/navegacao_inquerito.js"></script>
+<script src="js/utils/tabela_paginada.js"></script>
+<script src="js/dispositivos_conta.js"></script>
+<script src="js/utils/doc_trecho.js"></script>
+<script src="js/utils/evidencia_info.js"></script>
+<script src="js/utils/ia_flutuante.js"></script>
+</body>
+</html>

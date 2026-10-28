@@ -1,0 +1,179 @@
+# ===================================================================================================================
+# Builds no cluster (OpenShift) — 4 imagens a partir DESTE repositório Git, uma por Dockerfile.
+#
+# Cole este arquivo inteiro no console (Developer → Import YAML) no projeto pf-policia, ou:
+#   oc apply -f openshift-builds.yaml
+#
+# Nenhum trigger automático: cada build é iniciado manualmente (console: Builds → Start Build,
+# ou CLI: oc start-build). Depois que os 4 terminarem, aplicar o openshift.yaml (deploy).
+#
+# O repositório é PÚBLICO — se um dia ficar privado, crie um Secret de PAT e descomente o
+# sourceSecret de cada BuildConfig:
+#   oc create secret generic github-policia --type=kubernetes.io/basic-auth \
+#     --from-literal=username=<usuario> --from-literal=password=<token-PAT>
+# ===================================================================================================================
+apiVersion: v1
+kind: List
+items:
+
+  # ---------------------------------------------------------------------------------------------------------------
+  # API (Dockerfile.api) — build PESADO: torch CPU + transformers (~2 GB baixados no pip).
+  # Por isso os limits de CPU/memória e o deadline de 1,5 h — o default da fila de builds
+  # (10 min, memória padrão) derrubaria esse build no meio do pip install.
+  # ---------------------------------------------------------------------------------------------------------------
+  - apiVersion: image.openshift.io/v1
+    kind: ImageStream
+    metadata:
+      name: analyser-api
+      labels: {app: pf-policia}
+    spec: {}
+  - apiVersion: build.openshift.io/v1
+    kind: BuildConfig
+    metadata:
+      name: analyser-api
+      labels: {app: pf-policia}
+    spec:
+      runPolicy: Serial
+      completionDeadlineSeconds: 5400        # 1,5 h de teto para o build
+      failedBuildsHistoryLimit: 2
+      successfulBuildsHistoryLimit: 2
+      triggers: []                           # manual (console/CLI) — sem webhook
+      source:
+        type: Git
+        git:
+          uri: https://github.com/HLSDEO/policia.git
+          ref: main
+        # sourceSecret: {name: github-policia}   # descomente se o repo ficar privado
+      strategy:
+        type: Docker
+        dockerStrategy:
+          dockerfilePath: Dockerfile.api
+          imageOptimizationPolicy: SkipLayers   # nada roda no build além de pip/apt; pula a
+                                                # otimização que executa a imagem no final
+          resources:
+            requests: {cpu: "1", memory: 2Gi}
+            limits: {cpu: "4", memory: 8Gi}
+      output:
+        to:
+          kind: ImageStreamTag
+          name: analyser-api:latest
+
+  # ---------------------------------------------------------------------------------------------------------------
+  # Web (Dockerfile.web) — nginx-unprivileged + estáticos de web/ embutidos.
+  # ---------------------------------------------------------------------------------------------------------------
+  - apiVersion: image.openshift.io/v1
+    kind: ImageStream
+    metadata:
+      name: analyser-web
+      labels: {app: pf-policia}
+    spec: {}
+  - apiVersion: build.openshift.io/v1
+    kind: BuildConfig
+    metadata:
+      name: analyser-web
+      labels: {app: pf-policia}
+    spec:
+      runPolicy: Serial
+      completionDeadlineSeconds: 1800
+      failedBuildsHistoryLimit: 2
+      successfulBuildsHistoryLimit: 2
+      triggers: []
+      source:
+        type: Git
+        git:
+          uri: https://github.com/HLSDEO/policia.git
+          ref: main
+        # sourceSecret: {name: github-policia}
+      strategy:
+        type: Docker
+        dockerStrategy:
+          dockerfilePath: Dockerfile.web
+          resources:
+            requests: {cpu: 250m, memory: 512Mi}
+            limits: {cpu: "2", memory: 2Gi}
+      output:
+        to:
+          kind: ImageStreamTag
+          name: analyser-web:latest
+
+  # ---------------------------------------------------------------------------------------------------------------
+  # Postgres (Dockerfile.postgres) — base Red Hat + hook de schema.
+  # Se o build falhar com 401/403 puxando registry.redhat.io/rhel9/postgresql-16 (cluster sem
+  # entitlement), descomente os buildArgs abaixo: usa a imagem COMUNITÁRIA sclorg, idêntica em
+  # entrypoint/pacotes (inclusive pgvector), que o cluster puxa sem login.
+  # ---------------------------------------------------------------------------------------------------------------
+  - apiVersion: image.openshift.io/v1
+    kind: ImageStream
+    metadata:
+      name: analyser-postgres
+      labels: {app: pf-policia}
+    spec: {}
+  - apiVersion: build.openshift.io/v1
+    kind: BuildConfig
+    metadata:
+      name: analyser-postgres
+      labels: {app: pf-policia}
+    spec:
+      runPolicy: Serial
+      completionDeadlineSeconds: 1800
+      failedBuildsHistoryLimit: 2
+      successfulBuildsHistoryLimit: 2
+      triggers: []
+      source:
+        type: Git
+        git:
+          uri: https://github.com/HLSDEO/policia.git
+          ref: main
+        # sourceSecret: {name: github-policia}
+      strategy:
+        type: Docker
+        dockerStrategy:
+          dockerfilePath: Dockerfile.postgres
+          # buildArgs:
+          #   - name: POSTGRES_BASE
+          #     value: quay.io/sclorg/postgresql-16-c9s
+          resources:
+            requests: {cpu: 250m, memory: 512Mi}
+            limits: {cpu: "2", memory: 2Gi}
+      output:
+        to:
+          kind: ImageStreamTag
+          name: analyser-postgres:latest
+
+  # ---------------------------------------------------------------------------------------------------------------
+  # PgBouncer (Dockerfile.pgbouncer) — leve.
+  # ---------------------------------------------------------------------------------------------------------------
+  - apiVersion: image.openshift.io/v1
+    kind: ImageStream
+    metadata:
+      name: analyser-pgbouncer
+      labels: {app: pf-policia}
+    spec: {}
+  - apiVersion: build.openshift.io/v1
+    kind: BuildConfig
+    metadata:
+      name: analyser-pgbouncer
+      labels: {app: pf-policia}
+    spec:
+      runPolicy: Serial
+      completionDeadlineSeconds: 1200
+      failedBuildsHistoryLimit: 2
+      successfulBuildsHistoryLimit: 2
+      triggers: []
+      source:
+        type: Git
+        git:
+          uri: https://github.com/HLSDEO/policia.git
+          ref: main
+        # sourceSecret: {name: github-policia}
+      strategy:
+        type: Docker
+        dockerStrategy:
+          dockerfilePath: Dockerfile.pgbouncer
+          resources:
+            requests: {cpu: 250m, memory: 512Mi}
+            limits: {cpu: "1", memory: 1Gi}
+      output:
+        to:
+          kind: ImageStreamTag
+          name: analyser-pgbouncer:latest

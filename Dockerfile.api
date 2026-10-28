@@ -1,0 +1,58 @@
+# Imagem da API (e do serviço `tunel`, mesma imagem com command diferente).
+# Adaptada do analyser (api/Dockerfile) para o OpenShift:
+#  - SEM `USER` fixo: o OpenShift injeta um UID arbitrário (pertencente ao grupo root),
+#    então tudo em /app precisa ser group-writable (chgrp 0 + chmod g+rwX no fim).
+#  - Bind mounts read-only do compose (VERSION, db/migracoes, db/import, docs) viram COPY:
+#    os caminhos são exatamente os que migrar_utils.py (DIR_MIGRACOES), versao_utils.py
+#    (/app/VERSION) e a rota de documentação já esperam — zero mudança de código.
+#  - O .env (que a API lê E escreve via env_utils.py) NÃO vai na imagem: vai por Secret +
+#    emptyDir montado em /app/runtime (ver openshift.yaml e ENV_FILE abaixo).
+#  - Pastas graváveis de runtime (data, logs, .cache) são PVCs/emptyDirs no pod; as cópias
+#    da imagem existem só para o processo subir sem erro caso o mount falhe.
+FROM python:3.12-slim
+
+WORKDIR /app
+
+# psql: scripts de import (\set/\if). ffmpeg: miniaturas de vídeo (funcoes/midia_temp.py).
+# SEM tesseract e SEM JRE: OCR e IPED rodam no nó da delegacia — o central não processa
+# importações nem modelos (docs/no_descentralizado.md).
+RUN apt-get update \
+    && apt-get install --no-install-recommends -y \
+        postgresql-client \
+        ffmpeg \
+    && rm -rf /var/lib/apt/lists/*
+
+COPY api/requirements.txt .
+RUN pip install --no-cache-dir -r requirements.txt
+
+COPY api/main.py api/tunel_app.py api/logging.json ./
+# sitecustomize.py: importado por TODO interpretador Python — desliga o ping/pong do
+# supervisor do uvicorn --workers (ver api/sitecustomize.py).
+COPY api/sitecustomize.py /usr/local/lib/python3.12/site-packages/sitecustomize.py
+COPY api/funcoes ./funcoes
+COPY api/rotas ./rotas
+COPY api/tools ./tools
+
+# Ex-bind-mounts read-only do compose → embutidos na imagem (rebuild a cada mudança,
+# como no fluxo de deploy por imagem do OpenShift).
+COPY VERSION /app/VERSION
+COPY db/migracoes /app/db/migracoes
+COPY db/import /app/db/import
+COPY docs /app/docs
+
+# índice dos .ufdr remotos (ponte de leitura por faixas) — no pod vira PVC. Modelos de IA
+# não existem mais aqui: ficam no nó da delegacia.
+RUN mkdir -p /app/.cache/ufdr-indice /app/data /app/logs /app/runtime
+
+# OpenShift: UID arbitrário com GID 0 (root). Sem USER fixo e com permissão de grupo,
+# qualquer UID atribuído pelo SCC escreve em /app (caches, runtime, logs fallback).
+RUN chgrp -R 0 /app \
+    && chmod -R g+rwX /app \
+    && chmod -R a+r /app
+
+ENV PORT=3000
+# env_utils.py lê ENV_FILE (default /app/.env); o pod monta aqui o emptyDir seedado do Secret.
+ENV ENV_FILE=/app/runtime/.env
+EXPOSE 3000
+
+CMD ["sh", "-c", "exec uvicorn main:app --host 0.0.0.0 --port 3000 --workers ${API_WORKERS:-1} --log-config logging.json"]

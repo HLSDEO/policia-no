@@ -1,0 +1,111 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Buscar entidades · PolícIA</title>
+<script src="js/utils/boot_tema.js"></script>
+<link rel="icon" type="image/svg+xml" href="favicon.svg">
+<link rel="stylesheet" href="css/style.css">
+<link rel="stylesheet" href="css/entidades.css">
+<link rel="stylesheet" href="css/busca_entidades.css">
+</head>
+<body>
+<div class="app">
+
+  <div class="main" style="width:100%;">
+    <header class="topbar">
+      <h1 class="page-title">Buscar entidades no material do inquérito</h1>
+    </header>
+
+    <main class="content">
+      <div class="card" style="max-width:none;">
+        <h2>O que procurar</h2>
+        <p class="card-hint">
+          Uma lista de pessoas, empresas, documentos ou arquivos para verificar onde cada item é
+          citado em <strong>tudo o que foi importado</strong> neste inquérito: RIF, extrato do
+          SIMBA, inquérito em PDF, IRPF, IPEI, telefonia, documentos anexados, celular, contas na
+          nuvem e a mesa de análise. Cada linha aceita <strong>um único termo</strong> — nome,
+          CPF/CNPJ, telefone ou hash (MD5/SHA-1/SHA-256) — e o tipo é reconhecido automaticamente.
+        </p>
+
+        <div class="field">
+          <label for="inquerito-select">Inquérito</label>
+          <select id="inquerito-select"></select>
+        </div>
+
+        <div id="entidades-lista"></div>
+
+        <div class="form-actions" style="margin-bottom:14px;">
+          <button type="button" class="btn btn-secondary" id="adicionar-entidade-btn">
+            + Adicionar entidade
+          </button>
+          <button type="button" class="btn btn-secondary" id="colar-lista-btn"
+                  title="Colar vários nomes de uma vez, um por linha (aceita &quot;nome;CPF;telefone&quot;)">
+            Colar lista…
+          </button>
+        </div>
+
+        <fieldset class="be-opcoes">
+          <legend>Como procurar</legend>
+          <label class="be-check">
+            <input type="checkbox" id="aproximada-check" checked>
+            <span>
+              <strong>Incluir correspondências aproximadas</strong>
+              <small>Nome parecido (grafia diferente, nome do meio ausente, erro de digitação) e
+                menção no texto tolerante a acento e à pontuação — é o que acha o CPF partido pela
+                quebra de linha do PDF. Desmarcado, só o que casa exatamente.</small>
+            </span>
+          </label>
+        </fieldset>
+
+        <fieldset class="be-opcoes">
+          <legend>Onde procurar</legend>
+          <div id="grupos-lista" class="be-grupos"></div>
+          <p class="card-hint" id="grupos-vazio" style="display:none;">
+            Nada importado neste inquérito ainda.
+          </p>
+        </fieldset>
+
+        <div class="form-actions">
+          <button type="button" class="btn btn-primary" id="buscar-btn">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4.3-4.3"/></svg>
+            Buscar
+          </button>
+          <span class="form-status" id="buscar-status"></span>
+        </div>
+      </div>
+
+      <div class="card" style="max-width:none; margin-top:16px; display:none;" id="resultados-card">
+        <div class="be-cabecalho-resultados">
+          <h2>Resultados</h2>
+          <label class="be-check be-check-inline">
+            <input type="checkbox" id="so-fortes-check">
+            <span>Só correspondências fortes (hash, documento, telefone ou nome exato)</span>
+          </label>
+        </div>
+        <div id="resultados-conteudo"></div>
+      </div>
+    </main>
+  </div>
+
+</div>
+
+<script src="vendor/jquery-3.7.1.min.js"></script>
+<script src="js/utils/utils.js"></script>
+<script src="js/utils/icones.js"></script>
+<script src="js/utils/mapa_telas.js"></script>
+<script src="js/utils/toast.js"></script>
+<script src="js/utils/api.js"></script>
+<script src="js/utils/carregando.js"></script>
+<script src="js/utils/estados.js"></script>
+<script src="js/utils/estado_url.js"></script>
+<script src="js/utils/dialogo.js"></script>
+<script src="js/utils/theme.js"></script>
+<script src="js/utils/sidebar.js"></script>
+<script src="js/utils/auth.js"></script>
+<script src="js/utils/avisos_ia.js"></script>
+<script src="js/utils/entidades.js"></script>
+<script src="js/busca_entidades.js"></script>
+</body>
+</html>

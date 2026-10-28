@@ -1,0 +1,1134 @@
+/* css/inqueritos.css */
+/* Tokens só desta tela. Os globais que estavam repetidos aqui (--bg-card, --bg-page,
+ * --text-*, --border, --accent, --success, --warning) nunca chegavam a valer: `:root` perde
+ * em especificidade pra `:root[data-theme="…"]` do style.css, então foram removidos em vez
+ * de ficarem passando a impressão de que a tela tem paleta própria.
+ *
+ * O que sobrou ganhou valor por tema: no claro os tons pensados pra fundo escuro davam
+ * 1.9–2.5:1 sobre o cartão branco — os números grandes do painel eram os piores. */
+:root,
+:root[data-theme="dark"] {
+  --accent-light: #c4a0ff;
+  --success-bg: rgba(61, 220, 151, 0.18);
+  --warning-bg: rgba(252, 196, 77, 0.18);
+  --blue-progress: #7cb3ff;
+  --shadow-3d: 0 8px 24px rgba(0, 0, 0, 0.5), 0 24px 50px rgba(0, 0, 0, 0.65);
+  --stat-laranja: #fcc44d;
+  --stat-verde-agua: #2dd4bf;
+  --stat-roxo: #c084fc;
+  --stat-verde: #3ddc97;
+  --stat-amarelo: #fdd978;
+}
+
+:root[data-theme="light"] {
+  --accent-light: #9333ea;
+  --success-bg: #dcfce7;
+  --warning-bg: #fef3c7;
+  --blue-progress: #2563eb;
+  --shadow-3d: 0 12px 32px rgba(16, 24, 40, 0.14);
+  --stat-laranja: #b45309;
+  --stat-verde-agua: #0f766e;
+  --stat-roxo: #7e22ce;
+  --stat-verde: #15803d;
+  --stat-amarelo: #a16207;
+}
+
+:root {
+  --perspective: 1500px;
+}
+
+/* Evita inline style="width:100%" no HTML */
+.main--full {
+  width: 100%;
+}
+
+/* [hidden] precisa vencer display:flex/grid dos cards */
+[hidden] {
+  display: none !important;
+}
+
+/* Toolbar Card */
+.toolbar-card {
+  max-width: none;
+  margin-bottom: 16px;
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+}
+
+/* fieldset sem estilo padrão do navegador */
+fieldset.investigacoes-toolbar {
+  border: none;
+  margin: 0;
+  padding: 0;
+  min-width: 0;
+}
+
+#inq-limpar svg {
+  width: 14px;
+  height: 14px;
+  flex-shrink: 0;
+}
+
+#inq-limpar:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+
+.investigacoes-toolbar {
+  display: flex;
+  gap: 12px;
+  flex-wrap: wrap;
+  align-items: center;
+}
+
+.inv-busca {
+  position: relative;
+  flex-grow: 1;
+  min-width: 220px;
+}
+
+.inv-busca-icone {
+  position: absolute;
+  left: 12px;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 18px;
+  height: 18px;
+  color: var(--text-muted);
+  pointer-events: none;
+}
+
+#inq-busca {
+  width: 100%;
+  padding: 10px 12px 10px 40px;
+  border-radius: 8px;
+  border: 1px solid var(--border);
+  background: var(--bg-page);
+  color: var(--text-primary);
+}
+
+#inq-busca:focus-visible {
+  outline: none;
+  border-color: var(--accent);
+  box-shadow: var(--focus-ring);
+}
+
+.inv-filtro {
+  padding: 10px 12px;
+  border-radius: 8px;
+  border: 1px solid var(--border);
+  background: var(--bg-page);
+  color: var(--text-primary);
+  font-size: 13px;
+  outline: none;
+  min-width: 0;
+}
+
+.inv-filtro:focus-visible {
+  border-color: var(--accent);
+  box-shadow: var(--focus-ring);
+}
+
+.toolbar-footer {
+  margin-top: 12px;
+  padding-top: 10px;
+  border-top: 1px solid var(--border);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.inv-total {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--text-secondary);
+  font-variant-numeric: tabular-nums;
+}
+
+.inv-total strong {
+  color: var(--text-primary);
+}
+
+/* Skeleton */
+.skeleton-card {
+  pointer-events: none;
+}
+
+.skeleton-bloco {
+  display: block;
+  background: linear-gradient(90deg, var(--border) 25%, var(--bg-hover) 50%, var(--border) 75%);
+  background-size: 200% 100%;
+  animation: skeleton-shimmer 1.2s ease-in-out infinite;
+  border-radius: 6px;
+}
+
+.skeleton-linha-curta {
+  height: 10px;
+  width: 60%;
+}
+
+.skeleton-linha-longa {
+  height: 10px;
+  width: 90%;
+}
+
+.skeleton-num {
+  height: 28px;
+  width: 50%;
+}
+
+.skeleton-linha-card {
+  height: 96px;
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  background: linear-gradient(90deg, var(--border) 25%, var(--bg-hover) 50%, var(--border) 75%);
+  background-size: 200% 100%;
+  animation: skeleton-shimmer 1.2s ease-in-out infinite;
+  margin-bottom: 12px;
+}
+
+@keyframes skeleton-shimmer {
+  0% { background-position: 200% 0; }
+  100% { background-position: -200% 0; }
+}
+
+.carregando-bloco {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 24px;
+  justify-content: center;
+  color: var(--text-secondary);
+  font-size: 14px;
+}
+
+.lista-carregando {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  padding: 8px 0;
+}
+
+/* Carousel Container & 3D Perspective */
+.carousel-card-container {
+  max-width: none;
+  padding: 0;
+  background: none;
+  border: none;
+  position: relative;
+  overflow: hidden;
+}
+
+.carousel-perspective {
+  perspective: var(--perspective);
+  perspective-origin: 50% 50%;
+  width: 100%;
+  height: auto;
+  overflow: visible;
+}
+
+/* Os cards ficam empilhados numa unica celula de grid (nao mais absolutos), de
+   modo que a pista mede o card mais alto sozinha. Com altura fixa, um card mais
+   alto que ela vazava para cima e o overflow do container comia o topo. */
+.carousel-track {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  justify-items: center;
+  align-items: center;
+  transform-style: preserve-3d;
+  width: 100%;
+  position: relative;
+  padding: 24px 0;
+}
+
+/* Carousel Card Base & 3D Positioning */
+.carousel-card {
+  grid-area: 1 / 1;
+  position: relative;
+  width: clamp(320px, 30vw, 420px);
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 24px;
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  box-shadow: var(--shadow-3d);
+  transition: transform 0.6s ease-out, opacity 0.6s ease-out, filter 0.6s ease-out, border-color 0.3s ease;
+  transform-origin: center center;
+  cursor: pointer;
+  backface-visibility: hidden;
+}
+
+/* 3D Efeito Visual - Definido via classes adicionadas pelo JS */
+.carousel-card.active {
+  transform: translateX(0) scale(1);
+  opacity: 1;
+  filter: blur(0);
+  z-index: 100;
+  border-color: var(--accent);
+}
+
+.carousel-card.prev {
+  transform: translateX(-120%) rotateY(15deg) scale(0.9);
+  opacity: 0.5;
+  filter: blur(4px);
+  z-index: 50;
+}
+
+.carousel-card.next {
+  transform: translateX(120%) rotateY(-15deg) scale(0.9);
+  opacity: 0.5;
+  filter: blur(4px);
+  z-index: 50;
+}
+
+/* Hidden Cards in Track */
+.carousel-card:not(.active):not(.prev):not(.next) {
+  opacity: 0;
+  transform: translateX(0) scale(0.8) rotateY(0);
+  pointer-events: none;
+}
+
+/* Card Header */
+.inq-card-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.inq-id {
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--accent-light);
+  letter-spacing: 0.02em;
+}
+
+.inq-tipo-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 2px 8px;
+  border-radius: 999px;
+  font-size: 10px;
+  font-weight: 800;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  border: 1px solid var(--border);
+  background: var(--bg-page);
+  color: var(--text-muted);
+}
+
+.inq-tipo-badge.caso {
+  background: var(--tint-accent);
+  color: var(--tint-accent-text);
+  border-color: transparent;
+}
+
+.inq-tipo-badge.inquerito {
+  background: var(--bg-hover);
+  color: var(--text-secondary);
+}
+
+.inq-status {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 4px 10px;
+  border-radius: 16px;
+  font-size: 11px;
+  font-weight: 600;
+  white-space: nowrap;
+}
+/* o selo leva o ícone de status inline (ampulheta/visto); sem isso o svg ocupa o
+   tamanho intrínseco de 24px e estoura a bolha de 11px */
+.inq-status svg {
+  width: 12px;
+  height: 12px;
+  flex: none;
+}
+
+.inq-status.processado {
+  background: var(--success-bg);
+  color: var(--success);
+}
+
+.inq-status.andamento {
+  background: var(--warning-bg);
+  color: var(--warning);
+}
+
+/* Card Body: IPL Number & Description */
+.inq-body {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.inq-title-full {
+  font-size: 24px;
+  font-weight: 800;
+  color: var(--text-primary);
+  line-height: 1.2;
+  overflow-wrap: anywhere;
+}
+.inq-title-full strong {
+  font-weight: 900;
+  color: var(--accent);
+  display: block;
+  margin-top: 2px;
+  font-size: 22px;
+}
+
+.inq-descricao {
+  font-size: 13px;
+  color: var(--text-secondary);
+  line-height: 1.5;
+}
+
+/* Metadados */
+.inq-meta {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  padding-top: 16px;
+  border-top: 1px solid var(--border);
+}
+
+.inq-meta-full {
+  grid-column: 1 / -1;
+}
+
+.inq-meta-label {
+  font-size: 10px;
+  text-transform: uppercase;
+  color: var(--text-muted);
+  font-weight: 700;
+  letter-spacing: 0.04em;
+}
+
+.inq-meta-value {
+  font-size: 12px;
+  color: var(--text-secondary);
+  font-weight: 500;
+  overflow-wrap: anywhere;
+}
+
+/* Progress Bar */
+.inq-progress {
+  width: 100%;
+  height: 6px;
+  background: var(--border);
+  border-radius: 3px;
+  overflow: hidden;
+  margin-top: 6px;
+}
+
+.inq-progress-bar {
+  height: 100%;
+  background: var(--blue-progress);
+  border-radius: 3px;
+  width: 0%;
+  transition: width 0.6s ease;
+}
+
+.inq-progress--indeterminado .inq-progress-bar {
+  width: 40% !important;
+  animation: progresso-indeterminado 1.1s ease-in-out infinite alternate;
+}
+
+@keyframes progresso-indeterminado {
+  0% { transform: translateX(-30%); }
+  100% { transform: translateX(160%); }
+}
+
+/* Resumo Grade */
+.inq-summary {
+  padding-top: 16px;
+  border-top: 1px solid var(--border);
+}
+
+.inq-summary-title {
+  font-size: 10px;
+  text-transform: uppercase;
+  color: var(--text-muted);
+  font-weight: 700;
+  margin-bottom: 12px;
+  letter-spacing: 0.05em;
+}
+
+.inq-summary-grade {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+}
+
+/* quando "Outros" foi quebrado em 3, a grade continua 2-col mas sem buracos */
+.inq-summary-grade--quebrado {
+  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+}
+
+@media (max-width: 480px) {
+  .inq-summary-grade,
+  .inq-summary-grade--quebrado {
+    grid-template-columns: 1fr;
+  }
+}
+
+.inq-mini-card {
+  background: var(--bg-page);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 12px;
+  display: flex;
+  gap: 10px;
+  align-items: center;
+  min-width: 0;
+}
+
+.inq-mini-icon {
+  width: 20px;
+  height: 20px;
+  flex-shrink: 0;
+}
+
+.inq-mini-icon.ufdr { color: var(--blue-progress); }
+.inq-mini-icon.rif { color: var(--warning); }
+.inq-mini-icon.simba { color: var(--success); }
+.inq-mini-icon.documentos { color: var(--stat-roxo); }
+.inq-mini-icon.ipl { color: #f97316; }
+.inq-mini-icon.irpf { color: #0ea5e9; }
+.inq-mini-icon.ipei { color: #14b8a6; }
+.inq-mini-icon.telefonia { color: #f59e0b; }
+
+.inq-mini-info {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+
+.inq-mini-label {
+  font-size: 12px;
+  color: var(--text-secondary);
+  font-weight: 500;
+}
+
+.inq-mini-value {
+  font-size: 11px;
+  color: var(--text-muted);
+  overflow-wrap: anywhere;
+}
+
+/* Card Footer - os tres botoes em uma unica linha */
+.inq-footer {
+  display: flex;
+  justify-content: flex-start;
+  align-items: stretch;
+  gap: 6px;
+  flex-wrap: nowrap;
+  margin-top: 8px;
+}
+
+.inq-footer .btn {
+  flex: 0 1 auto;
+  min-width: 0;
+  padding: 9px 11px;
+  font-size: 13px;
+  gap: 6px;
+  white-space: nowrap;
+  overflow: hidden;
+}
+
+.inq-footer .btn svg {
+  width: 14px;
+  height: 14px;
+}
+
+/* Badge redondo dos botoes IA/Mesa: menor, para casar com a altura do primario */
+.inq-footer .btn-ia svg,
+.inq-footer .btn-mesa svg {
+  padding: 4px;
+}
+
+/* Card estreito: mantem os tres botoes na linha encurtando o rotulo */
+@media (max-width: 1340px) {
+  .inq-footer { gap: 5px; }
+  .inq-footer .btn { padding: 8px 10px; font-size: 12.5px; }
+  .inq-footer .btn-rotulo-extra { display: none; }
+}
+
+.inq-keyboard-tip-blue {
+  font-size: 11px;
+  color: var(--accent-light);
+}
+
+/* Carousel Buttons (Side arrows) */
+.carousel-btn {
+  position: absolute;
+  top: 50%;
+  transform: translateY(-50%);
+  z-index: 150;
+  width: 48px;
+  height: 48px;
+  border-radius: 50%;
+  border: 1px solid var(--border);
+  background: var(--bg-card);
+  color: var(--text-primary);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  box-shadow: var(--shadow);
+  transition: all 0.2s ease;
+}
+
+.carousel-btn svg { width: 24px; height: 24px; }
+
+.carousel-btn:hover:not(:disabled) {
+  background: var(--bg-hover);
+  border-color: var(--accent-light);
+}
+
+.carousel-btn:active:not(:disabled) { transform: translateY(-50%) scale(0.95); }
+
+.carousel-btn:disabled { opacity: 0.3; cursor: not-allowed; }
+
+.carousel-btn-prev { left: 24px; }
+.carousel-btn-next { right: 24px; }
+
+/* Carousel Footer Controls (Indicators & Keyboard Tip) */
+.carousel-footer-controls {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+  margin-top: 16px;
+  padding-bottom: 8px;
+}
+
+.carousel-indicators {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+  justify-content: center;
+}
+
+.carousel-indicator {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  border: none;
+  background: var(--border);
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.carousel-indicator.active {
+  background: var(--accent-light);
+  transform: scale(1.2);
+}
+
+.carousel-indicator:focus-visible {
+  outline: none;
+  box-shadow: var(--focus-ring);
+}
+
+.carousel-keyboard-tip {
+  font-size: 11px;
+  color: var(--text-muted);
+  text-align: center;
+}
+
+/* Um único card (ou nenhum): não há para onde navegar, então some com os
+   controles de navegação e encolhe a pista, que é dimensionada para o efeito 3D. */
+.carousel-card-container.carrossel-unico .carousel-footer-controls {
+  display: none;
+}
+
+.carousel-card-container.carrossel-unico .carousel-track {
+  padding: 12px 0;
+}
+
+.carousel-card-container.carrossel-unico .carousel-card {
+  cursor: default;
+}
+
+/* Outros elementos */
+.empty-hint { text-align: center; color: var(--text-muted); padding: 40px 16px; line-height: 1.5; }
+.empty-hint.hidden { display: none; }
+.empty-hint p { margin: 0 0 12px; }
+.empty-hint .btn { margin: 0 auto; }
+
+@media (max-width: 1200px) {
+  .carousel-card.prev { transform: translateX(-100%) rotateY(10deg) scale(0.85); }
+  .carousel-card.next { transform: translateX(100%) rotateY(-10deg) scale(0.85); }
+}
+
+@media (max-width: 900px) {
+  .carousel-card { width: clamp(280px, 60vw, 380px); }
+  .carousel-card.prev, .carousel-card.next { transform: translateX(0) scale(0.8); opacity: 0; filter: blur(8px); }
+  .carousel-btn { width: 36px; height: 36px; }
+  .carousel-btn-prev { left: 12px; }
+  .carousel-btn-next { right: 12px; }
+}
+
+@media (max-width: 600px) {
+  .carousel-track { padding: 12px 0; }
+  .carousel-card { width: 100%; max-width: 100%; }
+  .carousel-card.prev, .carousel-card.next { display: none; }
+  .carousel-card:not(.active) { display: none; }
+  .carousel-perspective { perspective: none; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .carousel-card { transition: none; }
+  .skeleton-bloco, .skeleton-linha-card { animation: none; }
+  .inq-progress--indeterminado .inq-progress-bar { animation: none; }
+}
+
+#atualizar-btn svg.spinning { animation: spin 1s linear infinite; }
+@keyframes spin { to { transform: rotate(360deg); } }
+/* Stats Section (Substituindo o antigo .stats-card) */
+.stats-section {
+  width: 100%;
+  margin-bottom: 24px;
+}
+
+.section-title {
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  margin-bottom: 12px;
+}
+
+.inqueritos-stats-grid {
+  display: grid;
+  grid-template-columns: repeat(5, 1fr);
+  gap: 16px;
+}
+
+.stat-card {
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 16px 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+  min-width: 0;
+}
+
+.stat-label {
+  font-size: 11px;
+  text-transform: uppercase;
+  color: var(--text-muted);
+  font-weight: 600;
+}
+
+.stat-value {
+  font-size: 28px;
+  font-weight: 800;
+  line-height: 1;
+  overflow-wrap: anywhere;
+}
+
+.stat-subtext {
+  font-size: 11px;
+  color: var(--text-muted);
+  line-height: 1.4;
+}
+
+/* Stats clicáveis: <button> com aparência de card */
+.stat-action {
+  cursor: pointer;
+  font: inherit;
+  text-align: left;
+  color: inherit;
+  transition: border-color 0.15s ease, box-shadow 0.15s ease, transform 0.15s ease;
+}
+
+.stat-action:hover {
+  border-color: var(--accent);
+}
+
+.stat-action:focus-visible {
+  outline: none;
+  border-color: var(--accent);
+  box-shadow: var(--focus-ring);
+}
+
+.stat-action.ativo {
+  border-color: var(--accent);
+  box-shadow: var(--focus-ring);
+}
+
+.stats-hint {
+  margin: 8px 2px 0;
+  font-size: 11px;
+  color: var(--text-muted);
+}
+
+/* Cores específicas dos números baseadas na imagem */
+.color-orange { color: var(--stat-laranja); }
+.color-teal { color: var(--stat-verde-agua); }
+.color-purple { color: var(--stat-roxo); }
+.color-green { color: var(--stat-verde); }
+.color-yellow { color: var(--stat-amarelo); }
+
+/* Responsividade do Grid */
+@media (max-width: 1200px) {
+  .inqueritos-stats-grid {
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  }
+}
+
+@media (max-width: 768px) {
+  .inqueritos-stats-grid {
+    grid-template-columns: 1fr 1fr;
+  }
+}
+
+@media (max-width: 480px) {
+  .inqueritos-stats-grid {
+    grid-template-columns: 1fr;
+  }
+}
+/* ---------- Alternância de modo de visualização (carrossel / lista) ---------- */
+.inv-modo {
+  display: inline-flex;
+  align-items: stretch;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  overflow: hidden;
+  background: var(--bg-page);
+}
+
+.inv-modo-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  padding: 10px 14px;
+  border: none;
+  background: transparent;
+  color: var(--text-secondary);
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background-color 0.15s ease, color 0.15s ease;
+}
+
+.inv-modo-btn + .inv-modo-btn {
+  border-left: 1px solid var(--border);
+}
+
+.inv-modo-btn svg {
+  width: 16px;
+  height: 16px;
+  flex-shrink: 0;
+}
+
+.inv-modo-btn:hover:not(.ativo) {
+  background: var(--bg-hover);
+  color: var(--text-primary);
+}
+
+.inv-modo-btn.ativo {
+  background: var(--accent-solid);
+  color: var(--accent-contrast);
+}
+
+.inv-modo-btn:focus-visible {
+  outline: none;
+  box-shadow: inset var(--focus-ring);
+}
+
+@media (max-width: 700px) {
+  .inv-modo-btn span { display: none; }
+  .inv-modo-btn { padding: 10px 12px; }
+}
+
+/* ---------- Modo lista ---------- */
+.lista-view {
+  max-width: none;
+  padding: 16px;
+}
+
+.lista-view .investigacoes-lista {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+/* Cada inquérito vira uma faixa: dados à esquerda, ações à direita. */
+.inq-lista-card {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 12px 20px;
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 16px;
+}
+
+.inq-lista-principal {
+  display: flex;
+  flex-direction: column;
+  gap: 7px;
+  min-width: 0;
+}
+
+.inq-lista-topo {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.inq-lista-numero {
+  font-size: 16px;
+  font-weight: 800;
+  color: var(--text-primary);
+  overflow-wrap: anywhere;
+}
+
+.inq-lista-numero small {
+  margin-right: 6px;
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--text-muted);
+}
+
+.inq-lista-meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 2px 18px;
+  font-size: 12px;
+  color: var(--text-muted);
+}
+
+.inq-lista-meta strong {
+  color: var(--text-secondary);
+  font-weight: 600;
+}
+
+.inq-lista-contadores {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 2px;
+}
+
+.inq-lista-cont {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 3px 10px;
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  background: var(--bg-page);
+  font-size: 11px;
+  color: var(--text-secondary);
+  max-width: 100%;
+}
+
+a.inq-lista-cont,
+a.inq-mini-card {
+  text-decoration: none;
+  cursor: pointer;
+  transition: border-color 0.15s ease, background-color 0.15s ease, box-shadow 0.15s ease;
+}
+
+a.inq-lista-cont:hover,
+a.inq-mini-card:hover {
+  border-color: var(--accent);
+  background: var(--bg-hover);
+  color: var(--text-secondary);
+}
+
+a.inq-lista-cont:focus-visible,
+a.inq-mini-card:focus-visible {
+  outline: none;
+  border-color: var(--accent);
+  box-shadow: var(--focus-ring);
+}
+
+a.inq-mini-card {
+  color: inherit;
+}
+
+.inq-lista-cont .inq-mini-icon {
+  width: 14px;
+  height: 14px;
+  display: inline-flex;
+}
+
+.inq-lista-cont .inq-mini-icon svg {
+  width: 14px;
+  height: 14px;
+}
+
+.inq-lista-cont strong {
+  color: var(--text-primary);
+  font-weight: 700;
+}
+
+/* Contador zerado: atenuado, mas ainda clicável */
+.inq-lista-cont--zero {
+  opacity: 0.6;
+}
+
+/* Evita que o scroll da paginação cole a lista no topo */
+.investigacoes-lista {
+  scroll-margin-top: 76px;
+}
+
+.inq-lista-progresso {
+  margin-top: 6px;
+  max-width: 280px;
+}
+
+.inq-lista-progresso .inq-meta-label {
+  margin-bottom: 4px;
+}
+
+.inq-lista-acoes {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+@media (max-width: 900px) {
+  .inq-lista-card {
+    grid-template-columns: minmax(0, 1fr);
+  }
+  .inq-lista-acoes {
+    justify-content: flex-start;
+  }
+}
+
+.lista-paginacao {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 16px;
+  margin-top: 16px;
+  padding-top: 16px;
+  border-top: 1px solid var(--border);
+  flex-wrap: wrap;
+}
+
+.lista-pag-info {
+  font-size: 13px;
+  color: var(--text-secondary);
+  font-variant-numeric: tabular-nums;
+  text-align: center;
+}
+
+/* Caso genérico — borda diferenciada + tint sutil */
+.caso-card {
+  border-left: 4px solid var(--stat-roxo, #a855f7);
+  background: linear-gradient(90deg, rgba(192, 132, 252, 0.06), transparent 22%);
+}
+
+.caso-card.inq-lista-card {
+  background: linear-gradient(90deg, rgba(192, 132, 252, 0.08), var(--bg-card) 28%);
+}
+
+.inq-lista-card.caso-card .inq-lista-numero small {
+  color: var(--stat-roxo);
+}
+
+/* ---------- Botão + Importar (quarto botão do card) ---------- */
+.btn-importar {
+  /* Ícone branco sobre o círculo: #f59e0b dava 2.2:1 com o branco. */
+  --btn-accent: #b45309;
+  background: var(--bg-hover);
+  border: 1px solid var(--border);
+  color: var(--text-primary);
+  padding: 6px 14px 6px 6px;
+}
+.btn-importar:hover {
+  background: var(--bg-card);
+  border-color: var(--btn-accent);
+}
+.btn-importar svg {
+  width: 15px;
+  height: 15px;
+  padding: 6px;
+  box-sizing: content-box;
+  border-radius: 50%;
+  background: var(--btn-accent);
+  stroke: #ffffff;
+}
+.inq-footer .btn-importar svg {
+  padding: 4px;
+}
+
+/* Modal Importar — reaproveita .extracao-tabs mas dentro de modal precisa de padding menor */
+#modal-importar .modal {
+  border: 1px solid var(--border);
+}
+#modal-importar .modal-body .extracao-tabs {
+  margin-bottom: 16px;
+}
+#modal-importar .field-inquerito {
+  margin-bottom: 16px;
+}
+#modal-importar .extracao-tab-panel .card-hint,
+#modal-importar #modal-imp-caso .card-hint {
+  margin-bottom: 14px;
+}
+#modal-importar .form-actions {
+  margin-top: 16px;
+}
+#modal-importar .form-status {
+  flex: 1;
+  min-width: 0;
+  word-break: break-word;
+}
+
+/* No carrossel o card tem largura fixa (no máximo 420px), então os quatro
+   botões não cabem em uma linha: viram uma grade 2x2, alinhada com os
+   mini-cards do resumo logo acima. Em linha única eles eram truncados. */
+.carousel-card .inq-footer {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 8px;
+  margin-top: auto;
+}
+
+.carousel-card .inq-footer .btn {
+  justify-content: center;
+  min-width: 0;
+  padding: 9px 10px;
+}
+
+/* Rótulo longo ("Mesa de inquérito") encolhe com reticências em vez de estourar */
+.carousel-card .inq-footer .btn > span {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* Quando o card tem 4 botões, evita estouro — quarto botão quebra linha em telas estreitas */
+@media (max-width: 420px) {
+  .inq-footer {
+    flex-wrap: wrap;
+  }
+  .inq-lista-acoes {
+    gap: 6px;
+  }
+}
+

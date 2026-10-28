@@ -1,0 +1,408 @@
+<!-- inqueritos.html -->
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="description" content="PolícIA — lista de inquéritos e casos de inteligência com filtros por delegacia, status e tipo.">
+<meta name="theme-color" content="#0f1117">
+<meta name="color-scheme" content="dark light">
+<title>Inquéritos · PolícIA</title>
+<script src="js/utils/boot_tema.js"></script>
+<link rel="icon" type="image/svg+xml" href="favicon.svg">
+<link rel="stylesheet" href="css/style.css">
+<link rel="stylesheet" href="css/inqueritos.css">
+<link rel="stylesheet" href="vendor/tom-select.min.css">
+<link rel="stylesheet" href="css/tomselect-theme.css">
+</head>
+<body>
+<div class="app">
+
+  <div class="main">
+
+    <header class="topbar">
+      <h1 class="page-title">Inquéritos</h1>
+      <div class="topbar-actions">
+        <span class="grupo-total inv-total" id="inq-total-topo" aria-live="polite" aria-atomic="true"></span>
+      </div>
+    </header>
+
+    <main class="content" id="conteudo-principal" role="main" tabindex="-1">
+
+      <!-- Stats: skeleton visível até carregar -->
+      <div id="stats-skeleton" class="stats-section" aria-hidden="true">
+        <div class="inqueritos-stats-grid">
+          <div class="card stat-card skeleton-card"><span class="skeleton-bloco skeleton-linha-curta"></span><span class="skeleton-bloco skeleton-num"></span><span class="skeleton-bloco skeleton-linha-longa"></span></div>
+          <div class="card stat-card skeleton-card"><span class="skeleton-bloco skeleton-linha-curta"></span><span class="skeleton-bloco skeleton-num"></span><span class="skeleton-bloco skeleton-linha-longa"></span></div>
+          <div class="card stat-card skeleton-card"><span class="skeleton-bloco skeleton-linha-curta"></span><span class="skeleton-bloco skeleton-num"></span><span class="skeleton-bloco skeleton-linha-longa"></span></div>
+          <div class="card stat-card skeleton-card"><span class="skeleton-bloco skeleton-linha-curta"></span><span class="skeleton-bloco skeleton-num"></span><span class="skeleton-bloco skeleton-linha-longa"></span></div>
+          <div class="card stat-card skeleton-card"><span class="skeleton-bloco skeleton-linha-curta"></span><span class="skeleton-bloco skeleton-num"></span><span class="skeleton-bloco skeleton-linha-longa"></span></div>
+        </div>
+      </div>
+
+      <div id="stats-card" class="stats-section hidden" aria-live="polite" aria-busy="true">
+        <div class="inqueritos-stats-grid" role="group" aria-label="Estatísticas — clique para filtrar">
+          <button type="button" class="card stat-card stat-action" data-stat-filtro="todos" aria-pressed="false" title="Mostrar todos os inquéritos e casos">
+            <span class="stat-label" id="label-stat-inqueritos">Inquéritos</span>
+            <span class="stat-value color-orange" id="stat-inqueritos" aria-labelledby="label-stat-inqueritos">0</span>
+            <span class="stat-subtext" title="Total de inquéritos e casos de inteligência">total de inquéritos</span>
+          </button>
+          <div class="card stat-card" title="UFDR + SIMBA + RIF + IPL + IRPF + IPED + documentos concluídos">
+            <span class="stat-label" id="label-stat-importacoes">Importações processadas</span>
+            <span class="stat-value color-teal" id="stat-importacoes" aria-labelledby="label-stat-importacoes">0</span>
+            <span class="stat-subtext" title="UFDR + SIMBA + RIF + IPL + IRPF + IPED + documentos concluídos">UFDR + SIMBA + RIF + IPL + IRPF + IPED + documentos concluídos</span>
+          </div>
+          <div class="card stat-card" title="Mensagens de UFDR concluído">
+            <span class="stat-label" id="label-stat-mensagens">Mensagens importadas</span>
+            <span class="stat-value color-purple" id="stat-mensagens" aria-labelledby="label-stat-mensagens">0</span>
+            <span class="stat-subtext" title="Mensagens de UFDR concluído">Mensagens de UFDR concluído</span>
+          </div>
+          <div class="card stat-card" title="Marcadores inseridos pelos analistas">
+            <span class="stat-label" id="label-stat-marcadores">Marcadores realizados</span>
+            <span class="stat-value color-green" id="stat-relatorios" aria-labelledby="label-stat-marcadores">0</span>
+            <span class="stat-subtext" title="Marcadores inseridos pelos analistas">Marcadores inseridos pelos analistas</span>
+          </div>
+          <button type="button" class="card stat-card stat-action" data-stat-filtro="caso" aria-pressed="false" title="Filtrar só casos de inteligência">
+            <span class="stat-label" id="label-stat-casos">Casos de inteligência</span>
+            <span class="stat-value color-yellow" id="stat-casos" aria-labelledby="label-stat-casos">0</span>
+            <span class="stat-subtext" title="Inquéritos marcados como caso">inquéritos marcados como caso</span>
+          </button>
+        </div>
+        <p class="stats-hint" id="stats-hint">Clique em Inquéritos ou Casos para filtrar a lista.</p>
+      </div>
+
+      <div id="stats-erro" class="card hidden" role="alert" aria-live="assertive"></div>
+
+      <div class="card toolbar-card">
+        <fieldset class="investigacoes-toolbar" aria-label="Filtros de investigações">
+          <legend class="sr-only">Filtros de investigações</legend>
+          <label for="inq-busca" class="sr-only">Buscar por número do inquérito, delegacia ou responsável</label>
+          <div class="inv-busca">
+            <svg class="inv-busca-icone" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4.3-4.3"/></svg>
+            <input type="search" id="inq-busca" placeholder="Buscar por número do inquérito, delegacia ou responsável…" autocomplete="off" aria-label="Buscar investigação">
+          </div>
+
+          <label for="inq-filtro-tipo" class="sr-only">Filtrar por tipo</label>
+          <select id="inq-filtro-tipo" class="inv-filtro" aria-label="Filtrar por tipo">
+            <option value="">Todos os tipos</option>
+            <option value="inquerito">Só inquéritos</option>
+            <option value="caso">Só casos de inteligência</option>
+          </select>
+
+          <label for="inq-filtro-status" class="sr-only">Filtrar por status</label>
+          <select id="inq-filtro-status" class="inv-filtro" aria-label="Filtrar por status">
+            <option value="todos">Todos os status</option>
+            <option value="ativo">Ativos</option>
+            <option value="arquivado">Arquivados</option>
+          </select>
+
+          <label for="inq-filtro-delegacia" class="sr-only">Filtrar por delegacia</label>
+          <select id="inq-filtro-delegacia" class="inv-filtro" aria-label="Filtrar por delegacia">
+            <option value="">Todas as delegacias</option>
+          </select>
+
+          <label for="inq-ordem" class="sr-only">Ordenar</label>
+          <select id="inq-ordem" class="inv-filtro" aria-label="Ordenar investigações">
+            <option value="recente">Mais recentes</option>
+            <option value="antigo">Mais antigos</option>
+            <option value="nome_az">Nome A → Z</option>
+            <option value="nome_za">Nome Z → A</option>
+            <option value="mais_dados">Mais dados</option>
+          </select>
+
+          <label for="inq-por-pagina" class="sr-only">Itens por página</label>
+          <select id="inq-por-pagina" class="inv-filtro" aria-label="Itens por página">
+            <option value="12">12 por página</option>
+            <option value="24">24 por página</option>
+            <option value="48">48 por página</option>
+          </select>
+
+          <button type="button" class="btn btn-secondary btn-small" id="inq-limpar" title="Limpar busca e filtros">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+            Limpar
+          </button>
+
+          <div class="inv-modo" role="group" aria-label="Modo de visualização">
+            <button type="button" class="inv-modo-btn" data-modo="lista" aria-pressed="false" aria-controls="lista-view carrossel-view" title="Ver em lista">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><line x1="8" y1="6" x2="21" y2="6"/><line x1="8" y1="12" x2="21" y2="12"/><line x1="8" y1="18" x2="21" y2="18"/><line x1="3.5" y1="6" x2="3.51" y2="6"/><line x1="3.5" y1="12" x2="3.51" y2="12"/><line x1="3.5" y1="18" x2="3.51" y2="18"/></svg>
+              <span>Lista</span>
+            </button>
+            <button type="button" class="inv-modo-btn" data-modo="carrossel" aria-pressed="false" aria-controls="lista-view carrossel-view" title="Ver em carrossel">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="9" y="4" width="6" height="16" rx="1.5"/><path d="M5 8v8M19 8v8"/></svg>
+              <span>Carrossel</span>
+            </button>
+          </div>
+        </fieldset>
+        <div class="toolbar-footer">
+          <span id="inq-total" class="inv-total" aria-live="polite" aria-atomic="true"></span>
+        </div>
+      </div>
+
+      <!-- Carrossel -->
+      <div class="card carousel-card-container hidden" id="carrossel-view" hidden aria-hidden="true">
+        <div class="carousel-perspective">
+          <div class="carousel-track" id="carousel-track" role="list" aria-label="Lista de inquéritos" aria-roledescription="carrossel"></div>
+        </div>
+
+        <button type="button" class="carousel-btn carousel-btn-prev hidden" id="carousel-prev" aria-label="Inquérito anterior" title="Anterior">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><polyline points="15 18 9 12 15 6"/></svg>
+        </button>
+        <button type="button" class="carousel-btn carousel-btn-next hidden" id="carousel-next" aria-label="Próximo inquérito" title="Próximo">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><polyline points="9 18 15 12 9 6"/></svg>
+        </button>
+
+        <div class="carousel-footer-controls">
+          <div class="carousel-indicators" id="carousel-indicators" role="tablist" aria-label="Navegação do carrossel"></div>
+          <p class="carousel-keyboard-tip">Use as setas do teclado ou os controles laterais para navegar</p>
+        </div>
+
+        <p class="empty-hint hidden" id="carousel-vazio" role="status" aria-live="polite">Nenhuma investigação encontrada.</p>
+      </div>
+
+      <!-- Lista + paginação -->
+      <div class="card lista-view hidden" id="lista-view" hidden aria-hidden="true">
+        <div id="lista-carregando" class="lista-carregando hidden" aria-hidden="true">
+          <div class="skeleton-linha-card"></div>
+          <div class="skeleton-linha-card"></div>
+          <div class="skeleton-linha-card"></div>
+        </div>
+        <div class="investigacoes-lista" id="inq-lista" role="list" aria-label="Lista de investigações"></div>
+        <div class="empty-hint hidden" id="lista-vazio" role="status" aria-live="polite">
+          <p id="lista-vazio-texto">Nenhuma investigação encontrada.</p>
+          <button type="button" class="btn btn-secondary btn-small" id="lista-limpar-filtros">Limpar filtros</button>
+        </div>
+        <nav id="lista-paginacao" class="lista-paginacao hidden" role="navigation" aria-label="Paginação">
+          <button type="button" class="btn btn-secondary btn-small" id="lista-first" aria-label="Primeira página">« Primeira</button>
+          <button type="button" class="btn btn-secondary btn-small" id="lista-prev" aria-label="Página anterior">‹ Anterior</button>
+          <span id="lista-pag-info" class="lista-pag-info" aria-live="polite" aria-atomic="true"></span>
+          <button type="button" class="btn btn-secondary btn-small" id="lista-next" aria-label="Próxima página">Próxima ›</button>
+          <button type="button" class="btn btn-secondary btn-small" id="lista-last" aria-label="Última página">Última »</button>
+        </nav>
+      </div>
+
+      <!-- Carregando geral -->
+      <div id="inqueritos-carregando" class="card hidden" aria-live="polite" aria-busy="true">
+        <div class="carregando-bloco"><span class="spinner" aria-hidden="true"></span> Carregando investigações…</div>
+      </div>
+      <div id="inqueritos-erro" class="card hidden" role="alert"></div>
+
+    </main>
+  </div>
+
+</div>
+
+<!-- Modal Importar — reutiliza layout de importacao.html com número/caso pré-preenchido -->
+<div class="modal-overlay hidden" id="modal-importar" role="dialog" aria-modal="true" aria-labelledby="modal-importar-titulo" aria-describedby="modal-imp-inquerito-hint">
+  <div class="modal" style="width:min(920px, 96vw); max-height:90vh; overflow:hidden; display:flex; flex-direction:column;">
+    <div class="modal-header">
+      <h2 id="modal-importar-titulo">Importar — <span id="modal-importar-subtitulo"></span></h2>
+      <button type="button" class="modal-close" id="modal-importar-fechar" aria-label="Fechar">&times;</button>
+    </div>
+    <div class="modal-body" style="overflow-y:auto;">
+
+      <!-- Modo inquérito: número pré-preenchido + abas de fonte -->
+      <div id="modal-imp-inquerito">
+        <p class="card-hint" id="modal-imp-inquerito-hint">Escolha a fonte abaixo e informe o arquivo. O número do inquérito já está preenchido a partir do card.</p>
+
+        <fieldset class="field field-inquerito" aria-describedby="modal-inquerito-help">
+          <legend class="field-legend">Número do inquérito (ePol)</legend>
+          <label for="modal-inquerito-input" class="sr-only">Número do inquérito (ePol)</label>
+          <input type="text" id="modal-inquerito-input" autocomplete="off" required aria-required="true" aria-describedby="modal-inquerito-help" pattern=".*\S.*">
+          <p class="field-help" id="modal-inquerito-help">Preenchido automaticamente. Pode editar se necessário.</p>
+        </fieldset>
+
+        <div class="extracao-tabs" role="tablist" aria-label="Fonte de extração">
+          <button type="button" class="extracao-tab active" id="modal-tab-ufdr" data-modal-tab="ufdr" role="tab" aria-selected="true" aria-controls="modal-panel-ufdr" title="Arquivo .ufdr — indexação Cellebrite de um aparelho">
+            <svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="5" y="2" width="14" height="20" rx="2" ry="2"/><line x1="12" y1="18" x2="12.01" y2="18"/></svg>
+            Indexação Cellebrite (UFDR)
+          </button>
+          <button type="button" class="extracao-tab" id="modal-tab-rif" data-modal-tab="rif" role="tab" aria-selected="false" aria-controls="modal-panel-rif" title="RIF do COAF — pasta com CSVs e PDF em data/">
+            <svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="16" rx="2"/><line x1="3" y1="9" x2="21" y2="9"/><line x1="8" y1="13" x2="8" y2="17"/><line x1="12" y1="13" x2="12" y2="17"/><line x1="16" y1="13" x2="16" y2="17"/></svg>
+            RIF - COAF (CSV)
+          </button>
+          <button type="button" class="extracao-tab" id="modal-tab-simba" data-modal-tab="simba" role="tab" aria-selected="false" aria-controls="modal-panel-simba" title="Relatório R304 do SIMBA — extrato bancário">
+            <svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m3 10 9-6 9 6"/><path d="M5 10v8M9 10v8M15 10v8M19 10v8M3 21h18"/></svg>
+            Bancário SIMBA R304 (CSV)
+          </button>
+          <button type="button" class="extracao-tab" id="modal-tab-iped" data-modal-tab="iped" role="tab" aria-selected="false" aria-controls="modal-panel-iped" title="Pasta-caso processada pelo IPED (índice + storage + JRE embutido)">
+            <svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M8 3v18M3 8h5M3 16h5"/></svg>
+            Nuvem IPED (pasta do caso)
+          </button>
+          <button type="button" class="extracao-tab" id="modal-tab-documento" data-modal-tab="documento" role="tab" aria-selected="false" aria-controls="modal-panel-documento" title="PDF, CSV, XLS, XLSX, DOCX, TXT, HTML ou ZIP relacionado ao inquérito">
+            <svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 4h5l2 2h9a1 1 0 0 1 1 1v11a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1V5a1 1 0 0 1 1-1z"/></svg>
+            Arquivo genérico
+          </button>
+        </div>
+
+        <div class="extracao-tab-panel" id="modal-panel-ufdr" role="tabpanel" aria-labelledby="modal-tab-ufdr" tabindex="0">
+          <form id="modal-ufdr-form" autocomplete="off" novalidate>
+            <p class="card-hint">Aponta um arquivo .ufdr (extração Cellebrite). O número do inquérito acima será usado.</p>
+            <div class="field">
+              <label for="modal-arquivo-select">Arquivo .ufdr</label>
+              <select id="modal-arquivo-select" required aria-required="true" aria-describedby="modal-arquivo-help"></select>
+              <p class="field-help" id="modal-arquivo-help"></p>
+            </div>
+            <div class="field">
+              <label for="modal-qualidade-select">Qualidade da transcrição de áudio</label>
+              <select id="modal-qualidade-select" aria-describedby="modal-qualidade-help">
+                <option value="nenhuma">Nenhuma (não transcrever)</option>
+                <option value="base">Baixa (mais rápida)</option>
+                <option value="small" selected>Média (recomendado)</option>
+                <option value="large-v3">Alta (mais precisa)</option>
+              </select>
+              <p class="field-help" id="modal-qualidade-help">Modelos maiores são mais precisos, mas bem mais lentos. Escolha "Nenhuma" para pular a transcrição.</p>
+            </div>
+            <div class="field">
+              <label class="field-check" for="modal-transcrever-video-check">
+                <input type="checkbox" id="modal-transcrever-video-check">
+                Transcrever também o áudio dos vídeos
+              </label>
+              <p class="field-help">Inclui os vídeos das conversas na transcrição.</p>
+            </div>
+            <div class="form-actions">
+              <button type="submit" class="btn btn-primary" id="modal-ufdr-btn">
+                <svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+                Importar
+              </button>
+              <span class="form-status" id="modal-ufdr-status" role="status" aria-live="polite"></span>
+              <a href="investigacao.html" class="btn btn-secondary hidden" id="modal-ufdr-link" hidden>Ver andamento</a>
+            </div>
+          </form>
+        </div>
+
+        <div class="extracao-tab-panel hidden" id="modal-panel-iped" role="tabpanel" aria-labelledby="modal-tab-iped" tabindex="0" hidden>
+          <form id="modal-iped-form" autocomplete="off" novalidate>
+            <p class="card-hint">Importa uma pasta-caso inteira processada pelo IPED — escolha a pasta em data/ que tem IPEDConfig.txt/index dentro.</p>
+            <div class="field">
+              <label for="modal-iped-select">Pasta do caso do IPED (em data/)</label>
+              <select id="modal-iped-select" required aria-required="true" aria-describedby="modal-iped-help"></select>
+              <p class="field-help" id="modal-iped-help"></p>
+            </div>
+            <div class="field hidden" id="modal-iped-conta-campo" hidden>
+              <label for="modal-iped-conta-input">Conta identificada (confirme ou edite)</label>
+              <input type="text" id="modal-iped-conta-input" placeholder="ex.: alvo@gmail.com" autocomplete="off" aria-describedby="modal-iped-conta-help">
+              <p class="field-help" id="modal-iped-conta-help">A pasta em data/ será renomeada para este valor ao final da importação — deixe em branco para não renomear.</p>
+            </div>
+            <div class="form-actions">
+              <button type="submit" class="btn btn-primary" id="modal-iped-btn">
+                <svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+                Importar
+              </button>
+              <span class="form-status" id="modal-iped-status" role="status" aria-live="polite"></span>
+              <a href="investigacao.html" class="btn btn-secondary hidden" id="modal-iped-link" hidden>Ver andamento</a>
+            </div>
+          </form>
+        </div>
+
+        <div class="extracao-tab-panel hidden" id="modal-panel-documento" role="tabpanel" aria-labelledby="modal-tab-documento" tabindex="0" hidden>
+          <form id="modal-documento-form" autocomplete="off" novalidate>
+            <p class="card-hint">Anexa aos dados do inquérito o texto extraído. Sendo PDF de um inquérito, ele vira bloco na lista de investigações.</p>
+            <div class="field">
+              <label for="modal-documento-upload-input">Enviar do seu computador</label>
+              <label id="modal-documento-drop-zone" class="drop-zone drop-zone-compacta" for="modal-documento-upload-input">
+                <span id="modal-documento-drop-text">Arraste os arquivos (ou a pasta inteira) aqui, ou clique para escolher</span>
+                <input type="file" id="modal-documento-upload-input" multiple accept=".pdf,.csv,.xls,.xlsx,.docx,.txt,.html,.htm,.zip,.jpg,.jpeg,.png" class="sr-only">
+              </label>
+              <p class="field-help" id="modal-documento-upload-help">Os arquivos vão para a pasta da delegacia deste inquérito e já aparecem escolhidos na lista abaixo. Até 50 MB por arquivo (ajustável em Administração → Desempenho) — exceto o ZIP, sem limite de tamanho (como o .ufdr).</p>
+              <p class="form-status" id="modal-documento-upload-status" role="status" aria-live="polite"></p>
+            </div>
+            <div class="field">
+              <label for="modal-documento-select">Documentos (PDF, CSV, XLS, XLSX, DOCX, TXT, HTML ou ZIP)</label>
+              <select id="modal-documento-select" multiple required aria-required="true" aria-describedby="modal-documento-help"></select>
+              <p class="field-help" id="modal-documento-help"></p>
+            </div>
+            <div class="form-actions">
+              <button type="submit" class="btn btn-primary" id="modal-documento-btn">
+                <svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="9" y1="13" x2="15" y2="13"/><line x1="9" y1="17" x2="15" y2="17"/></svg>
+                Importar
+              </button>
+              <span class="form-status" id="modal-documento-status" role="status" aria-live="polite"></span>
+              <a href="investigacao.html" class="btn btn-secondary hidden" id="modal-documento-link" hidden>Ver andamento</a>
+            </div>
+          </form>
+        </div>
+
+        <div class="extracao-tab-panel hidden" id="modal-panel-rif" role="tabpanel" aria-labelledby="modal-tab-rif" tabindex="0" hidden>
+          <form id="modal-rif-form" autocomplete="off" novalidate>
+            <p class="card-hint">Importa um RIF (Relatório de Inteligência Financeira do COAF) — pasta com RIF no nome, enviada pelo navegador ou já em data/.</p>
+            <div class="field">
+              <label for="modal-rif-upload-input">Enviar do seu computador</label>
+              <label id="modal-rif-drop-zone" class="drop-zone drop-zone-compacta" for="modal-rif-upload-input">
+                <span id="modal-rif-drop-text">Arraste a pasta do RIF aqui ou clique para escolher a pasta</span>
+                <input type="file" id="modal-rif-upload-input" webkitdirectory accept=".csv,.pdf" class="sr-only">
+              </label>
+              <p class="field-help" id="modal-rif-upload-help">A pasta inteira (os CSVs e o PDF) vai para a pasta da delegacia deste inquérito e já aparece escolhida na lista abaixo. Só CSV e PDF entram — os demais arquivos da pasta são ignorados. O import usa *_Comunicacoes, *_Envolvidos, *_Ocorrencias e o 1º PDF.</p>
+              <p class="form-status" id="modal-rif-upload-status" role="status" aria-live="polite"></p>
+            </div>
+            <div class="field">
+              <label for="modal-rif-select">Pasta do RIF (em data/)</label>
+              <select id="modal-rif-select" required aria-required="true" aria-describedby="modal-rif-help"></select>
+              <p class="field-help" id="modal-rif-help"></p>
+            </div>
+            <div class="form-actions">
+              <button type="submit" class="btn btn-primary" id="modal-rif-btn">
+                <svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2 4 6v6c0 5 3.4 8.5 8 10 4.6-1.5 8-5 8-10V6l-8-4z"/><path d="m9 12 2 2 4-4"/></svg>
+                Importar
+              </button>
+              <span class="form-status" id="modal-rif-status" role="status" aria-live="polite"></span>
+              <a href="investigacao.html" class="btn btn-secondary hidden" id="modal-rif-link" hidden>Ver andamento</a>
+            </div>
+          </form>
+        </div>
+
+        <div class="extracao-tab-panel hidden" id="modal-panel-simba" role="tabpanel" aria-labelledby="modal-tab-simba" tabindex="0" hidden>
+          <form id="modal-simba-form" autocomplete="off" novalidate>
+            <p class="card-hint">Importa o relatório R304 do SIMBA — arquivo *R304*.csv enviado pelo navegador ou já em data/.</p>
+            <div class="field">
+              <label for="modal-simba-upload-input">Enviar do seu computador</label>
+              <label id="modal-simba-drop-zone" class="drop-zone drop-zone-compacta" for="modal-simba-upload-input">
+                <span id="modal-simba-drop-text">Arraste o CSV aqui ou clique para escolher</span>
+                <input type="file" id="modal-simba-upload-input" accept=".csv" class="sr-only">
+              </label>
+              <p class="field-help" id="modal-simba-upload-help">O CSV vai para a pasta da delegacia deste inquérito e já aparece escolhido na lista abaixo. Só o relatório R304 é aceito — o cabeçalho é conferido na hora.</p>
+              <p class="form-status" id="modal-simba-upload-status" role="status" aria-live="polite"></p>
+            </div>
+            <div class="field">
+              <label for="modal-simba-select">Arquivo do SIMBA (R304, em data/)</label>
+              <select id="modal-simba-select" required aria-required="true" aria-describedby="modal-simba-help"></select>
+              <p class="field-help" id="modal-simba-help"></p>
+            </div>
+            <div class="form-actions">
+              <button type="submit" class="btn btn-primary" id="modal-simba-btn">
+                <svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m3 10 9-6 9 6"/><path d="M5 10v8M9 10v8M15 10v8M19 10v8M3 21h18"/></svg>
+                Importar
+              </button>
+              <span class="form-status" id="modal-simba-status" role="status" aria-live="polite"></span>
+              <a href="investigacao.html" class="btn btn-secondary hidden" id="modal-simba-link" hidden>Ver andamento</a>
+            </div>
+          </form>
+        </div>
+      </div>
+
+      <!-- Modo caso removido: caso de inteligência é um inquérito com a flag (ver importacao.html) -->
+
+    </div>
+  </div>
+</div>
+
+<script src="vendor/jquery-3.7.1.min.js"></script>
+<script src="js/utils/utils.js"></script>
+<script src="js/utils/pasta_arraste.js"></script>
+<script src="js/utils/icones.js"></script>
+<script src="js/utils/mapa_telas.js"></script>
+<script src="js/utils/toast.js"></script>
+<script src="js/utils/api.js"></script>
+<script src="js/utils/carregando.js"></script>
+<script src="js/utils/estados.js"></script>
+<script src="js/utils/dialogo.js"></script>
+<script src="js/utils/theme.js"></script>
+<script src="js/utils/sidebar.js"></script>
+<script src="js/utils/auth.js"></script>
+<script src="js/utils/avisos_ia.js"></script>
+<script src="js/utils/navegacao_inquerito.js"></script>
+<script src="js/utils/inquerito_utils.js"></script>
+<script src="js/inqueritos.js"></script>
+<script src="vendor/tom-select.complete.min.js"></script>
+<script src="js/inqueritos_importar.js"></script>
+</body>
+</html>

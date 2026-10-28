@@ -1,0 +1,1431 @@
+/* Paleta própria do WhatsApp Web (independente das variáveis genéricas do app) —
+   cada tema (claro/escuro) usa as cores reais do WhatsApp, não as do resto do analyser.
+   A Orbit preserva exatamente a versão escura da tela principal. */
+
+:root[data-theme="dark"] .wa-app,
+:root[data-theme="orbit"] .wa-app {
+  --wa-bg-sidebar: #111b21;
+  --wa-bg-header: #202c33;
+  --wa-bg-chat: #0b141a;
+  --wa-bg-hover: #202c33;
+  --wa-bg-active: #2a3942;
+  --wa-border: #222d34;
+  --wa-text-primary: #e9edef;
+  --wa-text-secondary: #8696a0;
+  --wa-bubble-sent: #005c4b;
+  --wa-bubble-received: #202c33;
+  --wa-accent: #00a884;
+  --wa-check-lida: #53bdeb;
+  --wa-dot: rgba(255, 255, 255, 0.04);
+}
+
+:root[data-theme="light"] .wa-app {
+  --wa-bg-sidebar: #ffffff;
+  --wa-bg-header: #f0f2f5;
+  --wa-bg-chat: #efeae2;
+  --wa-bg-hover: #f5f6f6;
+  --wa-bg-active: #e9edef;
+  --wa-border: #e9edef;
+  --wa-text-primary: #111b21;
+  --wa-text-secondary: #667781;
+  --wa-bubble-sent: #d9fdd3;
+  --wa-bubble-received: #ffffff;
+  --wa-accent: #008069;
+  --wa-check-lida: #53bdeb;
+  --wa-dot: rgba(0, 0, 0, 0.045);
+}
+
+.wa-app {
+  display: flex;
+  height: 100vh;
+  background: var(--wa-bg-chat);
+  color: var(--wa-text-primary);
+  font-size: 14px;
+}
+
+.wa-app.has-topnav {
+  flex-direction: column;
+}
+
+.wa-app.has-topnav > .topnav {
+  flex-shrink: 0;
+  position: sticky;
+  top: 0;
+  z-index: 250;
+}
+
+/* ---------- Divisor de dia (chip de data centralizado, estilo WhatsApp) ---------- */
+
+.wa-divisor-dia {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 6px;
+  margin: 12px 0;
+}
+
+.wa-divisor-dia span {
+  background: var(--wa-bg-header);
+  color: var(--wa-text-secondary);
+  font-size: 12px;
+  text-transform: uppercase;
+  letter-spacing: 0.02em;
+  padding: 5px 12px;
+  border-radius: 8px;
+  box-shadow: 0 1px 0 rgba(0, 0, 0, 0.1);
+}
+
+.wa-divisor-marcar {
+  background: var(--wa-bg-header);
+  color: var(--wa-text-secondary);
+  border: none;
+  font-size: 11px;
+  letter-spacing: 0.02em;
+  padding: 5px 10px;
+  border-radius: 8px;
+  box-shadow: 0 1px 0 rgba(0, 0, 0, 0.1);
+  cursor: pointer;
+}
+
+.wa-divisor-marcar:hover {
+  color: var(--wa-text-primary);
+  background: var(--wa-bg-active);
+}
+
+/* ---------- Avatares ---------- */
+
+.wa-avatar {
+  flex-shrink: 0;
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #fff;
+  font-weight: 600;
+  font-size: 14px;
+  text-transform: uppercase;
+  user-select: none;
+}
+
+.wa-avatar-app {
+  background: var(--wa-accent);
+  font-size: 18px;
+}
+
+.wa-avatar-sm {
+  width: 26px;
+  height: 26px;
+  font-size: 11px;
+}
+
+/* foto de perfil real (troca o avatar de iniciais no cabeçalho da conversa) */
+.wa-avatar-foto {
+  object-fit: cover;
+  background: transparent;
+}
+
+/* clicável para abrir a foto maior no modal de mídia */
+.wa-avatar-foto-clicavel {
+  cursor: pointer;
+}
+
+/* ---------- Sidebar ---------- */
+
+/* Largura fluida: 340px é o ideal em tela cheia, mas era fixo — num notebook 1366 ou com a
+ * janela dividida ao lado do ePol ele continuava com os mesmos 340px e comia a conversa, que é
+ * o que o investigador está lendo. Abaixo de 860px a tela vira painel único (ver o @media no
+ * fim do arquivo). */
+.wa-sidebar {
+  width: clamp(260px, 28vw, 340px);
+  flex-shrink: 0;
+  background: var(--wa-bg-sidebar);
+  border-right: 1px solid var(--wa-border);
+  display: flex;
+  flex-direction: column;
+}
+
+.wa-sidebar-header {
+  background: var(--wa-bg-sidebar);
+}
+
+.wa-sidebar-topo {
+  padding: 10px 16px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.wa-sidebar-titulos {
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+}
+
+.wa-sidebar-header h1 {
+  margin: 0;
+  font-size: 15px;
+  font-weight: 600;
+}
+
+.wa-sidebar-header span {
+  font-size: 12px;
+  color: var(--wa-text-secondary);
+}
+
+.wa-busca {
+  position: relative;
+  padding: 8px 12px 10px;
+}
+
+.wa-busca-icone {
+  position: absolute;
+  left: 24px;
+  top: 50%;
+  transform: translateY(-50%);
+  font-size: 13px;
+  opacity: 0.6;
+  pointer-events: none;
+}
+
+.wa-busca input {
+  width: 100%;
+  padding: 8px 12px 8px 34px;
+  border-radius: 8px;
+  border: none;
+  background: var(--wa-bg-sidebar);
+  color: var(--wa-text-primary);
+  font-size: 13.5px;
+  outline: none;
+}
+
+:root[data-theme="dark"] .wa-busca input,
+:root[data-theme="orbit"] .wa-busca input {
+  background: #2a3942;
+}
+
+.wa-conversas {
+  flex: 1;
+  overflow-y: auto;
+}
+
+.wa-conversa-item {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 10px 16px;
+  border-bottom: 1px solid var(--wa-border);
+  cursor: pointer;
+}
+
+.wa-conversa-item:hover {
+  background: var(--wa-bg-hover);
+}
+
+.wa-conversa-item.active {
+  background: var(--wa-bg-active);
+}
+
+.wa-conversa-corpo {
+  min-width: 0;
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.wa-conversa-linha1 {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.wa-conversa-nome {
+  font-size: 14px;
+  font-weight: 500;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.wa-conversa-preview {
+  font-size: 12.5px;
+  color: var(--wa-text-secondary);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* 🗒️ de marcar a CONVERSA inteira. Discreto por padrão para não competir com o nome e a
+   prévia — aparece no hover do item, e fica sempre visível quando a conversa já está marcada
+   (o widget acrescenta .tem-marcacao e o contorno da cor do marcador). */
+.wa-conversa-marcar {
+  flex-shrink: 0;
+  opacity: 0;
+  transition: opacity 0.15s;
+}
+
+.wa-conversa-item:hover .wa-conversa-marcar,
+.wa-conversa-marcar:focus-visible,
+.wa-conversa-marcar.tem-marcacao {
+  opacity: 1;
+}
+
+.wa-badge-status {
+  font-size: 10px;
+  font-weight: 600;
+  color: var(--wa-text-secondary);
+  background: var(--wa-bg-hover);
+  border: 1px solid var(--wa-border);
+  border-radius: 8px;
+  padding: 1px 6px;
+  flex-shrink: 0;
+  white-space: nowrap;
+}
+
+/* Canal e lista de transmissão herdam a forma do badge de Status (mesma família: conteúdo de
+   mão única, não conversa) e mudam só a cor, para se distinguirem entre si de relance. */
+.wa-badge-status.canal {
+  color: #8e7cc3;
+  border-color: #8e7cc3;
+  background: rgba(142, 124, 195, .12);
+}
+.wa-badge-status.transmissao {
+  color: #d99b3c;
+  border-color: #d99b3c;
+  background: rgba(217, 155, 60, .12);
+}
+
+/* ---------- Filtros da lista (Todos / Conversas / Grupos / Status) ---------- */
+
+.wa-filtros {
+  display: flex;
+  gap: 6px;
+  padding: 0 12px 10px;
+  flex-wrap: wrap;
+}
+
+.wa-filtro {
+  flex: 1 1 auto;
+  padding: 5px 8px;
+  border-radius: 8px;
+  border: 1px solid var(--wa-border);
+  background: transparent;
+  color: var(--wa-text-secondary);
+  font-size: 11.5px;
+  font-weight: 600;
+  font-family: inherit;
+  cursor: pointer;
+  white-space: nowrap;
+}
+
+.wa-filtro:hover { background: var(--wa-bg-hover); }
+
+.wa-filtro.ativo {
+  background: var(--wa-accent, #00a884);
+  border-color: var(--wa-accent, #00a884);
+  color: #fff;
+}
+
+.wa-filtro-conta {
+  opacity: .7;
+  font-weight: 400;
+  margin-left: 3px;
+}
+
+/* ---------- Filtro de conteúdo da conversa aberta (Tudo / Textos / Mídias) ----------
+   Vive entre a barra dos participantes e as mensagens, e só aparece com uma conversa aberta
+   (js/whatsapp.js tira o .hidden). Reaproveita os chips .wa-filtro da lista lateral, só que
+   sem esticar — aqui eles ficam do tamanho do rótulo, encostados à esquerda. */
+
+.wa-filtros-conteudo {
+  display: flex;
+  gap: 6px;
+  padding: 8px 16px;
+  background: var(--wa-bg-header);
+  border-bottom: 1px solid var(--wa-border);
+}
+
+.wa-filtros-conteudo .wa-filtro {
+  flex: 0 0 auto;
+}
+
+.wa-conversa-data {
+  font-size: 11px;
+  color: var(--wa-text-secondary);
+  flex-shrink: 0;
+}
+
+/* ---------- Busca na conversa (à direita da barra dos participantes) ----------
+   Antes ficava no cabeçalho, espremida entre o nome da conversa e a trilha + "Navegar"
+   (flutuantes, de js/navegacao_inquerito.js). Na barra dos participantes ela tem a linha para
+   si — os chips ficam à esquerda e a caixa encosta na direita. */
+
+.wa-conversa-busca {
+  position: relative;
+  flex: 0 1 280px;
+  min-width: 200px;
+  margin-left: auto;
+}
+
+.wa-conversa-busca-input {
+  width: 100%;
+  padding: 6px 30px 6px 34px;
+  border-radius: 999px;
+  border: 1px solid var(--wa-border);
+  background: var(--wa-bg-sidebar);
+  color: var(--wa-text-primary);
+  font-size: 13px;
+  outline: none;
+  transition: border-color 0.15s, box-shadow 0.15s;
+}
+
+.wa-conversa-busca-input:focus {
+  border-color: var(--wa-accent);
+  box-shadow: 0 0 0 2px var(--wa-accent-alpha, rgba(0, 168, 132, 0.2));
+}
+
+:root[data-theme="dark"] .wa-conversa-busca-input,
+:root[data-theme="orbit"] .wa-conversa-busca-input {
+  background: #2a3942;
+}
+
+.wa-conversa-busca .wa-busca-icone {
+  position: absolute;
+  left: 12px;
+  top: 50%;
+  transform: translateY(-50%);
+  font-size: 13px;
+  opacity: 0.6;
+  pointer-events: none;
+}
+
+/* aparece só com texto digitado (js/whatsapp.js tira o .hidden) */
+.wa-conversa-busca-limpar {
+  position: absolute;
+  right: 6px;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 20px;
+  height: 20px;
+  padding: 0;
+  border: none;
+  border-radius: 50%;
+  background: transparent;
+  color: var(--wa-text-secondary);
+  font-size: 15px;
+  line-height: 1;
+  cursor: pointer;
+}
+
+.wa-conversa-busca-limpar:hover {
+  background: var(--wa-bg-hover);
+  color: var(--wa-text-primary);
+}
+
+.wa-busca-resultados {
+  position: absolute;
+  top: calc(100% + 6px);
+  right: 0;
+  width: 380px;
+  max-width: 80vw;
+  z-index: 10;
+  background: var(--wa-bg-header);
+  border: 1px solid var(--wa-border);
+  border-radius: 8px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.25);
+  max-height: 320px;
+  overflow-y: auto;
+}
+
+/* cabeçalho fixo com a contagem: o painel corta em 20 resultados e sem isso não dava para saber
+ * se aquilo era tudo o que existia */
+.wa-busca-resumo {
+  position: sticky;
+  top: 0;
+  z-index: 1;
+  padding: 7px 12px;
+  background: var(--wa-bg-header);
+  border-bottom: 1px solid var(--wa-border);
+  font-size: 11.5px;
+  font-weight: 600;
+  color: var(--wa-text-secondary);
+  text-transform: uppercase;
+  letter-spacing: 0.3px;
+}
+
+/* "Buscando…", "Nenhuma mensagem com …", falha de rede */
+.wa-busca-aviso {
+  padding: 14px 12px;
+  font-size: 13px;
+  color: var(--wa-text-secondary);
+  text-align: center;
+}
+
+.wa-busca-resultado-item {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  padding: 10px 12px;
+  border-bottom: 1px solid var(--wa-border);
+  cursor: pointer;
+  transition: background 0.1s;
+}
+
+.wa-busca-resultado-item:last-child {
+  border-bottom: none;
+}
+
+/* .ativo = item sob o mouse OU escolhido pelas setas do teclado (js/whatsapp.js) */
+.wa-busca-resultado-item.ativo {
+  background: var(--wa-bg-hover);
+}
+
+/* remetente e data na mesma linha; a data encosta à direita e não empurra o nome */
+.wa-busca-resultado-topo {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 8px;
+  margin-bottom: 2px;
+}
+
+.wa-busca-resultado-avatar {
+  flex-shrink: 0;
+}
+
+.wa-busca-resultado-conteudo {
+  min-width: 0;
+  flex: 1;
+}
+
+.wa-busca-resultado-remetente {
+  font-size: 12.5px;
+  font-weight: 600;
+  color: var(--wa-accent);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.wa-busca-resultado-texto {
+  font-size: 13px;
+  line-height: 1.3;
+  color: var(--wa-text-primary);
+  white-space: pre-wrap;
+  overflow-wrap: break-word;
+}
+
+.wa-busca-resultado-texto .destaque {
+  background: var(--wa-accent);
+  color: #fff;
+  padding: 0 2px;
+  border-radius: 2px;
+}
+
+.wa-busca-resultado-data {
+  font-size: 11px;
+  color: var(--wa-text-secondary);
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+
+.wa-busca-resultado-transcricao {
+  font-size: 11.5px;
+  color: var(--wa-text-secondary);
+  font-style: italic;
+  margin-top: 2px;
+  padding-left: 8px;
+  border-left: 2px solid var(--wa-border);
+}
+
+/* ---------- Área principal ---------- */
+
+.wa-main {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  position: relative;
+}
+
+/* padding-right reserva o canto onde a trilha + o botão "Navegar" flutuam (absolutos, injetados
+ * por js/navegacao_inquerito.js). Sem a reserva o nome da conversa passava por baixo deles; com
+ * ela, o nome corta com reticências — que é o comportamento esperado. Abaixo de 1100px a trilha
+ * some (regra em style.css) e sobra só o botão, daí a reserva menor. */
+.wa-main-header {
+  min-height: 59px;
+  padding: 0 var(--nav-flutuante-reserva, 410px) 0 16px;
+  background: var(--wa-bg-header);
+  border-bottom: 1px solid var(--wa-border);
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+@media (max-width: 1100px) {
+  .wa-main-header {
+    --nav-flutuante-reserva: 130px;
+  }
+}
+
+.wa-main-header-vazio {
+  color: var(--wa-text-secondary);
+  font-size: 14px;
+}
+
+/* Volta da conversa para a lista no modo painel único; só aparece dentro do @media do fim
+ * do arquivo (em tela larga os dois painéis convivem e não há para onde voltar). */
+.wa-voltar {
+  display: none;
+  flex-shrink: 0;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  margin-left: -4px;
+  border: none;
+  border-radius: 50%;
+  background: transparent;
+  color: var(--wa-text-primary);
+  font-size: 20px;
+  line-height: 1;
+  cursor: pointer;
+}
+
+.wa-voltar:hover {
+  background: var(--wa-bg-active);
+}
+
+.wa-main-header-info {
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+}
+
+/* nome + badge ("Status") na mesma linha; min-width:0 deixa o nome encolher e cortar */
+.wa-main-header-linha {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  min-width: 0;
+}
+
+/* corta com reticências em vez de empurrar o cabeçalho (nomes de grupo e JIDs são longos) */
+.wa-main-header-nome {
+  font-size: 15px;
+  font-weight: 500;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.wa-main-header-sub {
+  font-size: 12px;
+  color: var(--wa-text-secondary);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* Relatório da conversa aberta: botão no cabeçalho, à esquerda (o canto direito é reserva
+ * da trilha flutuante). Estilo próprio (não .btn) para acompanhar o tema WhatsApp da página. */
+.wa-header-relatorio {
+  flex-shrink: 0;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 12px;
+  border: 1px solid var(--wa-accent);
+  border-radius: 18px;
+  background: transparent;
+  color: var(--wa-accent);
+  font-size: 13px;
+  white-space: nowrap;
+  cursor: pointer;
+}
+
+.wa-header-relatorio:hover {
+  background: var(--wa-accent);
+  color: #fff;
+}
+
+.wa-mensagens {
+  flex: 1;
+  overflow-y: auto;
+  padding: 20px 6%;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  background-color: var(--wa-bg-chat);
+  background-image: radial-gradient(var(--wa-dot) 1.5px, transparent 1.5px);
+  background-size: 22px 22px;
+}
+
+.wa-bolha-linha {
+  display: flex;
+  margin: 2px 0;
+}
+
+/* destaque temporário da mensagem aberta por deep-link vindo de um achado da IA */
+.wa-bolha-linha.wa-destaque {
+  animation: wa-destaque-flash 2.4s ease-out;
+  border-radius: 10px;
+}
+
+@keyframes wa-destaque-flash {
+  0%, 40% { background: var(--accent); }
+  100% { background: transparent; }
+}
+
+.wa-bolha-linha.enviada {
+  justify-content: flex-end;
+}
+
+.wa-bolha {
+  position: relative;
+  max-width: 65%;
+  padding: 6px 9px;
+  border-radius: 7.5px;
+  background: var(--wa-bubble-received);
+  font-size: 14px;
+  line-height: 1.35;
+  box-shadow: 0 1px 0.5px rgba(0, 0, 0, 0.13);
+}
+
+:root[data-theme="dark"] .wa-bolha,
+:root[data-theme="orbit"] .wa-bolha {
+  box-shadow: 0 1px 0.5px rgba(0, 0, 0, 0.3), inset 0 0 0 1px rgba(255, 255, 255, 0.04);
+}
+
+.wa-bolha-linha:not(.enviada) .wa-bolha::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: -7px;
+  width: 0;
+  height: 0;
+  border-top: 8px solid var(--wa-bubble-received);
+  border-left: 8px solid transparent;
+}
+
+.wa-bolha-linha.enviada .wa-bolha {
+  background: var(--wa-bubble-sent);
+}
+
+.wa-bolha-linha.enviada .wa-bolha::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  right: -7px;
+  width: 0;
+  height: 0;
+  border-top: 8px solid var(--wa-bubble-sent);
+  border-right: 8px solid transparent;
+}
+
+.wa-bolha-remetente {
+  font-size: 12.5px;
+  font-weight: 700;
+  margin-bottom: 2px;
+  color: var(--wa-accent);
+}
+
+/* "↪ Encaminhada": o UFDR marca isso na mensagem (rótulo Forwarded) e o IPED mostra.
+   Discreto de propósito — é metadado, não conteúdo. */
+.wa-bolha-encaminhada {
+  font-size: 12px;
+  font-style: italic;
+  color: var(--wa-text-secondary);
+  margin-bottom: 2px;
+}
+
+/* Tarja da mensagem CITADA, no alto da bolha — mesmo lugar do WhatsApp e do IPED.
+   A barra colorida à esquerda é o que dá a leitura imediata de "isto é citação, não é o
+   texto da mensagem". */
+.wa-bolha-citada {
+  display: flex;
+  gap: 6px;
+  align-items: stretch;
+  margin-bottom: 3px;
+  padding: 4px 8px;
+  border-radius: 5px;
+  border-left: 4px solid var(--wa-accent);
+  background: rgba(128, 128, 128, 0.12);
+  cursor: pointer;
+  overflow: hidden;
+}
+
+.wa-bolha-citada:hover {
+  background: rgba(128, 128, 128, 0.2);
+}
+
+/* citada que não existe na extração: não leva a lugar nenhum, então não finge ser clicável */
+.wa-bolha-citada-ausente {
+  border-left-color: var(--wa-text-secondary);
+  cursor: default;
+}
+
+.wa-bolha-citada-ausente:hover {
+  background: rgba(128, 128, 128, 0.12);
+}
+
+.wa-citada-texto {
+  min-width: 0;   /* deixa o text-overflow funcionar dentro do flex */
+}
+
+.wa-citada-autor {
+  font-size: 12.5px;
+  font-weight: 600;
+  color: var(--wa-accent);
+}
+
+/* "Status citado" e afins: de onde veio a mensagem citada, quando não é desta conversa */
+.wa-citada-origem {
+  font-size: 11.5px;
+  font-style: italic;
+  color: var(--wa-text-secondary);
+}
+
+/* quadro da mídia citada, encostado à direita da tarja (mesmo lugar do WhatsApp) */
+.wa-citada-miniatura {
+  flex-shrink: 0;
+  width: 44px;
+  height: 44px;
+  object-fit: cover;
+  border-radius: 4px;
+  margin-left: auto;
+}
+
+/* uma linha só: a citação é referência, o conteúdo inteiro está na mensagem de destino */
+.wa-citada-corpo {
+  font-size: 13px;
+  color: var(--wa-text-secondary);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* Miniatura de mídia cujo arquivo original não veio na extração: a imagem aparece normal e a
+   legenda abaixo diz o que era e o que falta. Antes o card oferecia "▶ assistir" e abria um
+   player vazio, escondendo a única coisa visível daquela mídia. */
+.wa-anexo-miniatura {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.wa-anexo-miniatura-legenda {
+  font-size: 11.5px;
+  font-style: italic;
+  color: var(--wa-text-secondary);
+  overflow-wrap: anywhere;
+}
+
+.wa-bolha-texto {
+  white-space: pre-wrap;
+  overflow-wrap: break-word;
+}
+
+/* legenda da mídia (Title do anexo): é texto da mensagem, não rótulo do card — some do card
+   e aparece aqui inteira, como o IPED e o próprio WhatsApp mostram */
+.wa-anexo-legenda {
+  margin-top: 4px;
+}
+
+/* mídia de visualização única: o ⓵ verde, no mesmo lugar da marca de encaminhada */
+.wa-visualizacao-unica {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  margin-top: 2px;
+  font-size: 11.5px;
+  font-weight: 600;
+  color: var(--wa-accent);
+}
+
+.wa-visualizacao-unica-icone {
+  flex-shrink: 0;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 14px;
+  height: 14px;
+  border: 1.5px solid currentColor;
+  border-radius: 50%;
+  font-size: 9px;
+  font-weight: 700;
+  line-height: 1;
+}
+
+.wa-link {
+  color: var(--wa-check-lida);
+  text-decoration: underline;
+}
+
+.wa-anexo-card {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 8px;
+  margin-top: 2px;
+  border-radius: 6px;
+  background: rgba(255, 255, 255, 0.04);
+}
+
+:root[data-theme="light"] .wa-anexo-card {
+  background: rgba(0, 0, 0, 0.035);
+}
+
+.wa-anexo-icone {
+  flex-shrink: 0;
+  width: 38px;
+  height: 38px;
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 17px;
+  background: #667781;
+}
+
+.wa-anexo-icone-pdf { background: #e14b4b; }
+.wa-anexo-icone-image { background: #4fb3d9; }
+.wa-anexo-icone-audio { background: #9b8afb; }
+.wa-anexo-icone-video { background: #f2789f; }
+.wa-anexo-icone-localizacao { background: #4caf50; }
+
+.wa-anexo-info {
+  min-width: 0;
+}
+
+.wa-anexo-nome {
+  font-size: 13px;
+  font-weight: 500;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 220px;
+}
+
+.wa-anexo-tipo {
+  font-size: 11.5px;
+  color: var(--wa-text-secondary);
+  text-transform: lowercase;
+}
+
+.wa-anexo-imagem {
+  display: block;
+  max-width: 260px;
+  max-height: 260px;
+  border-radius: 6px;
+  margin-top: 2px;
+  cursor: pointer;
+  object-fit: cover;
+}
+
+.wa-anexo-imagem-wrap {
+  display: inline-block;
+  margin-top: 2px;
+  position: relative;
+}
+
+.wa-badge-figurinha {
+  position: absolute;
+  top: 6px;
+  left: 6px;
+  z-index: 1;
+  background: rgba(0, 0, 0, 0.65);
+  color: #fff;
+  font-size: 10px;
+  font-weight: 600;
+  padding: 2px 7px;
+  border-radius: 4px;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+  backdrop-filter: blur(4px);
+  pointer-events: none;
+}
+
+.wa-anexo-imagem-sticker {
+  background: rgba(255, 255, 255, 0.03);
+  padding: 4px;
+}
+
+/* placeholder enquanto o binário do anexo é lido do .ufdr (e estado de erro) */
+.wa-anexo-carregando {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  min-width: 140px;
+  min-height: 90px;
+  padding: 12px;
+  border-radius: 6px;
+  background: rgba(128, 128, 128, 0.12);
+  color: var(--wa-text-secondary);
+  font-size: 12px;
+}
+
+/* anexo sem binário disponível: claramente não abre */
+.wa-anexo-indisponivel {
+  opacity: 0.6;
+}
+
+.wa-anexo-acao {
+  font-size: 11.5px;
+  font-weight: 600;
+  color: var(--wa-accent);
+  margin-top: 2px;
+}
+
+.wa-anexo-indisponivel .wa-anexo-acao {
+  color: var(--wa-text-secondary);
+  font-weight: 400;
+}
+
+.wa-midia-carregando {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  padding: 48px;
+  color: var(--wa-text-secondary);
+  font-size: 14px;
+}
+
+.wa-anexo-clicavel {
+  cursor: pointer;
+}
+
+.wa-anexo-clicavel:hover {
+  background: rgba(255, 255, 255, 0.08);
+}
+
+:root[data-theme="light"] .wa-anexo-clicavel:hover {
+  background: rgba(0, 0, 0, 0.06);
+}
+
+.wa-modal-midia {
+  width: auto;
+  max-width: 92vw;
+}
+
+.wa-midia-imagem {
+  display: block;
+  max-width: 100%;
+  max-height: 74vh;
+  border-radius: 6px;
+}
+
+.wa-midia-audio {
+  width: min(420px, 80vw);
+}
+
+.wa-midia-transcricao {
+  width: min(420px, 80vw);
+  margin-top: 14px;
+  padding-top: 12px;
+  /* o modal fica fora de .wa-app, onde as variáveis --wa-* não valem: usa as globais do app */
+  border-top: 1px solid var(--border);
+}
+
+.wa-midia-transcricao-cabecalho {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  margin-bottom: 6px;
+}
+
+.wa-midia-transcricao-rotulo {
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  color: var(--text-secondary);
+}
+
+.wa-midia-transcricao-corrigir {
+  background: none;
+  border: none;
+  cursor: pointer;
+  font-size: 12px;
+  color: var(--accent, #4fb3d9);
+  padding: 0;
+}
+
+.wa-midia-transcricao-corrigir:hover {
+  text-decoration: underline;
+}
+
+.wa-midia-transcricao-texto {
+  font-size: 13.5px;
+  line-height: 1.5;
+  max-height: 30vh;
+  overflow-y: auto;
+  white-space: pre-wrap;
+}
+
+.wa-midia-transcricao-texto.wa-midia-transcricao-vazia {
+  color: var(--text-secondary);
+  font-style: italic;
+}
+
+/* edição da transcrição dentro do próprio modal, logo abaixo do player */
+.wa-midia-transcricao-editor textarea.dialogo-campo {
+  min-height: 90px;
+  resize: vertical;
+}
+
+.wa-midia-transcricao-acoes {
+  display: flex;
+  gap: 8px;
+  margin-top: 8px;
+}
+
+.wa-midia-transcricao-acoes .btn {
+  padding: 6px 14px;
+  font-size: 13px;
+}
+
+.wa-midia-video {
+  display: block;
+  max-width: 100%;
+  max-height: 74vh;
+  border-radius: 6px;
+  background: #000;
+}
+
+.wa-bolha-transcricao {
+  font-size: 12.5px;
+  opacity: 0.9;
+  margin-top: 4px;
+  padding-top: 4px;
+  border-top: 1px dashed currentColor;
+  border-top-color: rgba(128, 128, 128, 0.3);
+}
+
+.wa-bolha-rodape {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  flex-wrap: wrap;   /* com o carimbo completo o rodapé é largo: em bolha estreita quebra em vez de estourar */
+  gap: 4px;
+  margin-top: 2px;
+}
+
+/* carimbo completo (data, hora e fuso) — nowrap para não quebrar em duas linhas na bolha estreita */
+.wa-bolha-hora {
+  font-size: 11px;
+  color: var(--wa-text-secondary);
+  white-space: nowrap;
+  font-variant-numeric: tabular-nums;
+}
+
+.wa-check {
+  font-size: 13px;
+  color: var(--wa-text-secondary);
+  letter-spacing: -2px;
+  margin-right: -2px;
+}
+
+.wa-check-lida {
+  color: var(--wa-check-lida);
+}
+
+.wa-vazio {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--wa-text-secondary);
+  font-size: 13px;
+}
+
+/* ---------- Associação de contato (pessoa/local) ---------- */
+
+/* barra abaixo do cabeçalho: chips de contato à esquerda, busca na conversa à direita.
+ * A lista de membros de um grupo (flex-basis:100%) entra como filha direta daqui para cair na
+ * linha de baixo — se ficasse dentro dos chips, expandi-la desalinharia a busca. */
+.wa-participantes {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 16px;
+  background: var(--wa-bg-header);
+  border-bottom: 1px solid var(--wa-border);
+}
+
+.wa-participantes-chips {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+  flex: 1 1 auto;
+  min-width: 0;
+}
+
+.wa-participante-chip {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 5px 6px 5px 12px;
+  border-radius: 999px;
+  background: var(--wa-bg-sidebar);
+  border: 1px solid var(--wa-border);
+  font-size: 12.5px;
+}
+
+.wa-participante-nome {
+  font-weight: 600;
+}
+
+.wa-participante-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  color: var(--wa-text-secondary);
+}
+
+.wa-participante-associar {
+  border: none;
+  background: var(--wa-accent);
+  color: #fff;
+  font-size: 12px;
+  font-weight: 600;
+  padding: 4px 10px;
+  border-radius: 999px;
+  cursor: pointer;
+}
+
+.wa-participante-associar:hover {
+  filter: brightness(1.1);
+}
+
+/* nome + telefone empilhados dentro do chip */
+.wa-participante-ident {
+  display: flex;
+  flex-direction: column;
+  line-height: 1.25;
+}
+
+.wa-participante-tel {
+  color: var(--wa-text-secondary);
+  font-size: 11px;
+}
+
+/* grupo: cabeçalho recolhível + lista rolável (não domina a tela) */
+.wa-participantes-toggle {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 14px;
+  border-radius: 999px;
+  background: var(--wa-bg-sidebar);
+  border: 1px solid var(--wa-border);
+  color: var(--wa-text-primary);
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.wa-participantes-toggle:hover {
+  background: var(--wa-bg-active);
+}
+
+.wa-participantes-seta {
+  color: var(--wa-text-secondary);
+  font-size: 11px;
+}
+
+.wa-participantes-lista {
+  flex-basis: 100%;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 8px;
+  max-height: 40vh;
+  overflow-y: auto;
+}
+
+/* botão de paginação (carregar mensagens anteriores/posteriores) */
+.wa-carregar-mais-wrap {
+  display: flex;
+  justify-content: center;
+  padding: 8px 0;
+}
+
+.wa-carregar-mais {
+  border: 1px solid var(--wa-border);
+  background: var(--wa-bg-header);
+  color: var(--wa-text-primary);
+  font-size: 13px;
+  font-weight: 600;
+  padding: 6px 16px;
+  border-radius: 999px;
+  cursor: pointer;
+}
+
+.wa-carregar-mais:hover {
+  background: var(--wa-bg-active);
+}
+
+.wa-carregar-mais:disabled {
+  opacity: 0.6;
+  cursor: default;
+}
+
+.wa-modal-associacao {
+  width: min(480px, 92vw);
+}
+
+/* Modal "Gerar relatório" da conversa aberta. Fora do .wa-app (vai ao body), então usa as
+ * variáveis globais do tema (style.css), não as --wa-* que são escopadas à página. */
+.wa-modal-relatorio {
+  width: min(520px, 92vw);
+}
+
+.wa-relatorio-dica {
+  margin: 0 0 12px;
+  font-size: 13px;
+  color: var(--text-secondary);
+}
+
+.wa-relatorio-ia {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  cursor: pointer;
+}
+
+.wa-assoc-busca {
+  position: relative;
+}
+
+.wa-assoc-resultados {
+  position: absolute;
+  top: calc(100% + 4px);
+  left: 0;
+  right: 0;
+  z-index: 5;
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  box-shadow: var(--shadow);
+  max-height: 220px;
+  overflow-y: auto;
+}
+
+.wa-assoc-resultado-item {
+  padding: 8px 12px;
+  font-size: 13px;
+  cursor: pointer;
+  border-bottom: 1px solid var(--border);
+}
+
+.wa-assoc-resultado-item:last-child {
+  border-bottom: none;
+}
+
+.wa-assoc-resultado-item:hover {
+  background: var(--bg-hover);
+}
+
+.wa-assoc-resultado-sub {
+  font-size: 11.5px;
+  color: var(--text-secondary);
+}
+
+.wa-assoc-selecionado {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  padding: 8px 12px;
+  margin-bottom: 8px;
+  border-radius: 8px;
+  background: var(--bg-hover);
+  font-size: 13px;
+}
+
+.wa-assoc-selecionado button {
+  border: none;
+  background: transparent;
+  color: var(--text-secondary);
+  cursor: pointer;
+  font-size: 14px;
+  line-height: 1;
+}
+
+.wa-assoc-selecionado button:hover {
+  color: var(--danger);
+}
+
+/* ---------- Tema por app (página de mensageiros) ----------
+   Ativado por document.body.classList.add("tema-app") em js/whatsapp.js quando fonte=msg. As cores
+   --wa-bubble-sent / --wa-accent já vêm sobrescritas pela cor do app (inline em .wa-app); aqui só
+   garantimos legibilidade sobre a cor saturada e um filete de identidade no cabeçalho. */
+.tema-app .wa-bolha-linha.enviada .wa-bolha {
+  color: #ffffff;
+}
+.tema-app .wa-bolha-linha.enviada .wa-bolha .wa-bolha-hora,
+.tema-app .wa-bolha-linha.enviada .wa-bolha .wa-bolha-check {
+  color: rgba(255, 255, 255, 0.75);
+}
+.tema-app .wa-main-header,
+.tema-app .wa-sidebar-header {
+  border-bottom: 3px solid var(--wa-accent);
+}
+
+/* ---------- Painel único (tela estreita: janela dividida, notebook pequeno) ----------
+   Acima de 860px a lista e a conversa dividem a tela, como no WhatsApp Web. Abaixo disso não
+   cabem as duas: a fixa de 340px sobrava e a conversa ficava com ~350px, com as bolhas (65% da
+   largura) em duas palavras por linha. Aqui a tela passa a mostrar uma coisa de cada vez — a
+   lista, e a conversa quando uma é aberta, com o botão de voltar no cabeçalho.
+   A classe .conversa-aberta é posta/tirada por js/whatsapp.js. */
+@media (max-width: 860px) {
+  .wa-sidebar {
+    width: 100%;
+    border-right: none;
+  }
+
+  .wa-main {
+    display: none;
+  }
+
+  .wa-app.conversa-aberta .wa-sidebar {
+    display: none;
+  }
+
+  .wa-app.conversa-aberta .wa-main {
+    display: flex;
+  }
+
+  .wa-voltar {
+    display: inline-flex;
+  }
+
+  /* sem espaço para conviver com os chips: a busca ocupa a linha inteira, logo abaixo deles */
+  .wa-conversa-busca {
+    flex: 1 1 100%;
+    min-width: 0;
+  }
+
+  .wa-busca-resultados {
+    left: 0;
+    width: auto;
+    max-width: none;
+  }
+
+  /* margens de 6% viravam quase nada de texto útil; e a bolha pode ocupar mais da linha */
+  .wa-mensagens {
+    padding: 16px 10px;
+  }
+
+  .wa-bolha {
+    max-width: 85%;
+  }
+}

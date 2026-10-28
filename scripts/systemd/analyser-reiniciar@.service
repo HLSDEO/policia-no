@@ -1,0 +1,15 @@
+[Unit]
+Description=analyser (/%I) -- reinicia os containers a pedido da tela Desempenho
+After=docker.service
+Requires=docker.service
+
+[Service]
+Type=oneshot
+# Roda como root: precisa de docker compose e de escrever na instalacao. O systemd ja inicia
+# como root, sem sudo. /%I e o caminho da instalacao (ver comentario no .path). O script faz
+# `docker compose up -d`, espera a API voltar (/api/health) e remove o reiniciar.req (sucesso
+# ou falha), o que re-arma o .path para o proximo pedido.
+Environment=ANALYSER_DIR=/%I
+ExecStart=/usr/local/bin/analyser-update reiniciar --pedido /%I/.deploy/controle/reiniciar.req
+TimeoutStartSec=600
+Nice=10
