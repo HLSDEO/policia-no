@@ -3533,7 +3533,13 @@ def _limpar_texto_para_banco(valor):
 
 
 def _drenar_arquivos(cur, buffer: list[tuple]) -> None:
-    if canal_extracao.emitir("arquivos", (buffer,)):  # nó entrega o COPY como lote de linhas
+    if canal_extracao.emissor_ativo() is not None:
+        # nó: o COPY vira registros do canal, mas FATIADO — um registro único com 20 mil
+        # linhas (iPhone/iCloud) passa de 10 MB e o router do central aborta o upload do
+        # lote, travando a fila inteira (entrega é estritamente em ordem). 1.000 linhas
+        # ≈ 300 KB por registro mantém cada lote do tamanho de uma página web.
+        for i in range(0, len(buffer), 1000):
+            canal_extracao.emitir("arquivos", (buffer[i:i + 1000],))
         return
     """Insere um lote de arquivos do aparelho (<file>) via COPY — muito mais rápido que INSERT por
     linha, essencial porque um iPhone tem centenas de milhares deles. Cada tupla segue a ordem das

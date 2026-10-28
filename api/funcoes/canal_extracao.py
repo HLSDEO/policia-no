@@ -121,7 +121,10 @@ def _dec(o):
 # ----------------------------------------------------------------------------- canal
 
 _LOTE_REGISTROS = 2000
-_LOTE_BYTES = 8 * 1024 * 1024
+# 2 MB (e não 8): o POST da entrega sai da estação por HTTPS e o router do OpenShift
+# derruba upload lento/grande na WAN — um lote de 10 MB (visto num iPhone) trava a fila
+# inteira, que é estritamente em ordem. Lote pequeno = retry barato e conexões curtas.
+_LOTE_BYTES = 2 * 1024 * 1024
 _TIPOS_AUDIO = ("audio",)
 _TIPOS_VIDEO = ("video",)
 

@@ -132,7 +132,7 @@ def _exigir_disco(caminho: Path) -> None:
         return  # sem estatística não se trava o mundo: segue, e o vigia continua vendo
     try:
         fator = max(1, int((os.getenv("NO_FATOR_DISCO") or "2").strip()))
-        piso = max(256, int((os.getenv("NO_DISCO_MINIMO_GB") or "2").strip())) * 2**30
+        piso = max(2, int((os.getenv("NO_DISCO_MINIMO_GB") or "2").strip())) * 2**30
     except ValueError:
         fator, piso = 2, 2 * 2**30
     necessario = max(piso, tamanho * fator)
@@ -406,6 +406,33 @@ class CanalCentral(canal_extracao.CanalEntrega):
             metricas_no.incr("entrega_409")
             self._cancelar = True
             return seq
+        if r.status_code in (403, 410) or r.status_code == 404:
+            # APAGADA no meio da entrega: o único 404 do central é "extração não existe
+            # mais" (linha deletada na tela). Reenviar é 404 garantido para sempre — os
+            # 10 min de retry só encheram o log e seguraram o worker. Descarta o espólio
+            # (a linha nunca volta a existir), manda cancelar e a pipeline para limpa.
+            # 404 SEM essa causa (rota ausente num pod antigo durante deploy rolante) é
+            # transitório e continua no caminho do retry.
+            detalhe_404 = ""
+            if r.status_code == 404:
+                try:
+                    detalhe_404 = str((r.json() or {}).get("detail", ""))
+                except ValueError:
+                    detalhe_404 = ""
+            if r.status_code != 404 or "existe" in detalhe_404:
+                from funcoes import metricas_no
+                metricas_no.incr("entrega_apagada")
+                self._cancelar = True
+                try:
+                    for velho in self.pasta.glob("lote_*"):
+                        velho.unlink(missing_ok=True)
+                except OSError:
+                    pass
+                logger.error("Central não reconhece mais a extração %s (HTTP %s: %s); "
+                             "entrega abortada e espólio de .entrega/%s descartado",
+                             self.id_extracao, r.status_code,
+                             detalhe_404 or "sem detalhe", self.id_extracao)
+                return seq
         if r.status_code == 422:
             # LOTE ENVENENADO: o central nunca vai aceitar este arquivo (linha corrompida
             # ou tipo de registro que ele não conhece — nó/central de versões diferentes).
