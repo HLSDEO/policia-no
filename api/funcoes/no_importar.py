@@ -44,6 +44,27 @@ def rodando() -> list[int]:
         return sorted(_RODANDO)
 
 
+def _prevalidar(tp: str, pasta: str, opcoes: dict) -> None:
+    """Confere ANTES do 202 que a prova está mesmo neste disco (as MESMAS validações do
+    importador de cada fonte, que o worker repetirá). O central conta com o 404 do
+    POST /no/importar para desfazer a linha-pai que criou no despacho
+    (no_importacao._despachar_e_marcar_erro); com 202 + erro adiante a rif_tb01/smb_tb01/
+    ipd_tb01 ficaria 'pendente' para sempre."""
+    subpasta = (opcoes.get("delegacia_pasta") or "").strip() or None
+    if tp == "rif":
+        from funcoes.rif_utils import _validar_pasta
+
+        _validar_pasta(pasta, subpasta)
+    elif tp == "simba":
+        from funcoes.simba_utils import _validar_arquivo
+
+        _validar_arquivo(pasta, subpasta)
+    else:
+        from funcoes.iped_utils import _resolver_pasta_caso
+
+        _resolver_pasta_caso(pasta)
+
+
 def aceitar(tp: str, id_extracao: int, pasta: str, opcoes: dict, geracao: int = 0) -> dict:
     """Valida o trabalho e sobe a thread. Idempotente por (id, geração), como no_extracao.
     FileNotFoundError quando a pasta/arquivo não está no disco daqui (a rota devolve 404 e o
@@ -57,6 +78,7 @@ def aceitar(tp: str, id_extracao: int, pasta: str, opcoes: dict, geracao: int = 
         _RODANDO[id_extracao] = {"tp": tp, "pasta": pasta, "geracao": geracao,
                                  "cancelar_troca": threading.Event()}
     try:
+        _prevalidar(tp, pasta, opcoes)
         threading.Thread(target=_operario,
                          args=(tp, id_extracao, pasta, opcoes, geracao),
                          daemon=True, name=f"no-importa-{tp}-{id_extracao}").start()

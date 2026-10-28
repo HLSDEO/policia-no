@@ -415,13 +415,11 @@ def parse_sidecar(nome: str, conteudo: bytes) -> dict | None:
 
 
 def gravar_metadado(cur, id_extracao: int, dados: dict) -> None:
+    """Insere uma linha em NUV_TB01_METADADOS_ARQUIVO. `NO_ARQUIVO_ALVO` vai em minúsculas
+    porque a junção com ARQ_TB01_ARQUIVOS é por `LOWER(NO_ARQUIVO)` (índice IX203)."""
     from funcoes import canal_extracao  # tardio: só o caminho do nó lê o canal
     if canal_extracao.emitir("metadado_nuvem", (id_extracao, dados)):  # nó entrega ao central
         return
-    if canal_extracao.emitir("metadado_nuvem", (id_extracao, dados)):  # nó entrega ao central em vez de gravar
-        return
-    """Insere uma linha em NUV_TB01_METADADOS_ARQUIVO. `NO_ARQUIVO_ALVO` vai em minúsculas
-    porque a junção com ARQ_TB01_ARQUIVOS é por `LOWER(NO_ARQUIVO)` (índice IX203)."""
     cur.execute(
         """INSERT INTO investigacao.nuv_tb01_metadados_arquivo
            (id_extracao, no_arquivo_alvo, no_fonte, tx_titulo, qt_bytes, dt_criacao,

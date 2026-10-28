@@ -3,19 +3,33 @@ FROM python:3.12-slim
 WORKDIR /app
 
 # psql é usado para rodar os scripts de import (suportam meta-comandos como \set/\if).
-# ffmpeg extrai o quadro que vira miniatura dos vídeos na extração temporária da galeria
-# (funcoes/midia_temp.py) — só -frames:v 1, nunca reencode completo.
-# SEM tesseract, SEM JRE, SEM torch/transformers/faster-whisper: os modelos (Tesseract, CLIP,
-# whisper, embeddings) e o dumper do IPED vivem no nó da delegacia — o central navega e
-# reproduz resultados (docs/no_descentralizado.md).
+# tesseract-ocr (+ o pacote de português) é o motor do OCR das imagens do aparelho — roda local,
+# em CPU: nenhuma imagem de inquérito sai do servidor. O pytesseract é só o wrapper Python dele.
+# default-jre-headless roda o IpedDumper (extração Nuvem IPED, funcoes/iped_utils.py) — só
+# precisa executar bytecode Java 11 (compilado com --release 11, ver api/tools/iped_dumper/),
+# nunca compilar, por isso JRE e não JDK. O classpath em runtime usa os jars do PRÓPRIO caso
+# sendo importado (lib/*.jar), não algo instalado aqui — ver docs/extracao_java_iped.md.
 RUN apt-get update \
     && apt-get install --no-install-recommends -y \
         postgresql-client \
-        ffmpeg \
+        tesseract-ocr \
+        tesseract-ocr-por \
+        default-jre-headless \
     && rm -rf /var/lib/apt/lists/*
 
 COPY requirements.txt .
+# torch e transformers ocupam bastante, mas são necessários para o CLIP (classificação de imagens)
+RUN pip install --no-cache-dir torch==2.5.1 --extra-index-url https://download.pytorch.org/whl/cpu
 RUN pip install --no-cache-dir -r requirements.txt
+
+# ffmpeg extrai o quadro que vira miniatura dos vídeos sem thumb do IPED na extração temporária
+# da galeria (funcoes/midia_temp.py) — só -frames:v 1, nunca reencode completo. Camada PRÓPRIA,
+# DEPOIS do pip: acrescentá-lo ao apt de cima invalidaria o cache das duas camadas de pip
+# (centenas de MB de torch re-baixados em todo rebuild).
+RUN apt-get update \
+    && apt-get install --no-install-recommends -y \
+        ffmpeg \
+    && rm -rf /var/lib/apt/lists/*
 
 COPY main.py .
 # tunel_app:app é o ASGI do serviço `tunel` (túnel NAT — docs/no_descentralizado.md); a imagem é
@@ -32,8 +46,12 @@ COPY funcoes ./funcoes
 COPY rotas ./rotas
 COPY tools ./tools
 
+# cache dos modelos do faster-whisper (baixados do Hugging Face na primeira transcrição);
+# fica num volume nomeado (docker-compose.yml) pra não baixar de novo a cada rebuild
+ENV HF_HOME=/app/.cache/huggingface
+RUN mkdir -p /app/.cache/huggingface
+
 RUN useradd --no-create-home --shell /usr/sbin/nologin appuser \
-    && mkdir -p /app/.cache \
     && chown -R appuser:appuser /app/.cache
 USER appuser
 

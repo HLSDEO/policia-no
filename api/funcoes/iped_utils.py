@@ -1720,3 +1720,257 @@ def _processar_importacao_iped(id_extracao_iped: int) -> None:
     # identifica as pessoas do inquérito (contatos, ligações, contas, conversas e o dono do
     # aparelho lidos deste caso) e materializa na Mesa de Inquérito — como o UFDR já faz.
     _identificar_pessoas_do_caso(id_extracao_ponte)
+
+
+# ---------------------------------------------------------------------------
+# Importação IPED NO NÓ (no_importar.py): dumper na CPU da estação + registros pelo canal
+#
+# Espelho do laço acima em MODO ENTREGA (o mesmo desenho da extração .ufdr do nó,
+# funcoes/no_extracao.py): com o canal ativo (canal_extracao.ativar) cada writer de
+# investigacao_utils/contas_nuvem_utils entrega o registro ao central em vez de gravar — os
+# guards estão nos próprios _gravar_* e o ConnFalsa/_CursorFalso garantem que qualquer
+# consulta sem guard FALHE ALTO aqui, em vez de sumir dados em silêncio. O que o laço local
+# faz direto no banco (fase/progresso/cancelamento/status/_finalizar) vira callback do canal
+# (BatimentoPonte) e o relatório do fim volta na chave "ipd" do 'finalizar' — o central
+# aplica nas duas pontas com o MESMO _finalizar (aplicar_relatorio_importacao_no) e roda a
+# identificação de pessoas lá (varre o banco inteiro). Rodam aqui, na estação: o subprocesso
+# IpedDumper, os .db de OCR/transcrição do caso, os marcadores do perito, a detecção/
+# renomeação da conta e o organize da pasta.
+# ---------------------------------------------------------------------------
+
+
+def importar_iped_no(canal, tx_pasta: str, opcoes: dict) -> dict:
+    """Caso IPED processado NA ESTAÇÃO (funcoes/no_importar.py). `tx_pasta` é o caminho da
+    pasta em data/ DO NÓ (o mesmo relativo que o central guarda em NO_PASTA); `opcoes` traz
+    conta (confirmada na tela — pula a autodetecção) e numero_inquerito (destino do
+    organize). Devolve o relatório — que também vai no 'finalizar' do canal."""
+    from funcoes.canal_extracao import BatimentoPonte, ConnFalsa
+
+    id_extracao_ponte = canal.id_extracao  # a ponte é a chave de TODOS os registros no central
+    conta = (opcoes.get("conta") or "").strip() or None
+
+    caminho = _resolver_pasta_caso(tx_pasta)
+    pasta_modulo = _pasta_modulo_iped(caminho)
+    if pasta_modulo is None:
+        raise ValueError("A pasta não é mais um caso válido do IPED (IPEDConfig.txt/index ausente).")
+    detector = _DetectorConta(pasta_modulo) if not conta else None
+
+    caso_raiz = pasta_modulo.parent if pasta_modulo.name == "iped" else pasta_modulo
+    classpath = _classpath_dumper(pasta_modulo)
+
+    bat = BatimentoPonte(canal)
+    conn = ConnFalsa(canal)
+    cur = conn.cursor()  # guard é o que decide; o cursor falso nunca é consultado
+
+    def _fechar(status: str, *, contagens: dict | None = None, total_itens: int | None = None,
+                erro: str | None = None, no_pasta: str | None = None,
+                no_conta: str | None = None, versao: str | None = None) -> dict:
+        """Equivalente ao _finalizar local: o relatório vai no 'finalizar' do canal e o
+        central aplica nas duas pontas (ipd_tb01 + ponte) com o mesmo UPDATE."""
+        relatorio = {"audios_transcritos": 0,
+                     "ipd": {"status": status, "contagens": contagens or {},
+                             "total_itens": total_itens,
+                             "erro": (erro or None) and str(erro)[:2000],
+                             "no_pasta": no_pasta, "no_conta": no_conta, "versao": versao}}
+        canal.finalizar(relatorio)
+        return relatorio["ipd"]
+
+    bat.fase("extraindo")
+    bat.iniciar_vigia()  # caso grande leva horas na CPU da estação — a ponte não pode parecer parada
+    try:
+        try:
+            proc = subprocess.Popen(
+                [_JAVA_BIN, "-cp", classpath, "IpedDumper", str(caso_raiz)],
+                stdout=subprocess.PIPE, stderr=subprocess.PIPE,
+                text=True, encoding="utf-8", errors="replace",
+            )
+        except FileNotFoundError:
+            return _fechar("erro", erro="Java não está disponível nesta estação — não é "
+                                        "possível ler casos do IPED.")
+
+        progresso = {"lidos": 0, "docs": 0, "itens": 0}
+        log_stderr: list[str] = []
+
+        def _ler_stderr():
+            for linha in proc.stderr:
+                linha = linha.rstrip("\n")
+                if linha.startswith("PROGRESS "):
+                    partes = linha[len("PROGRESS "):].split("/")
+                    if len(partes) == 2 and partes[0].isdigit() and partes[1].isdigit():
+                        progresso["lidos"] = int(partes[0])
+                        progresso["docs"] = int(partes[1])
+                elif linha.startswith("DONE "):
+                    bruto = linha[len("DONE "):].strip()
+                    if bruto.isdigit():
+                        progresso["itens"] = int(bruto)
+                elif linha:
+                    log_stderr.append(linha)
+
+        th_stderr = threading.Thread(target=_ler_stderr, daemon=True)
+        th_stderr.start()
+
+        # criados FORA do try que os referencia no except (mesma ordem do laço local): se um
+        # deles falhar, a exceção sobe limpa para o no_importar, sem NameError por cima
+        textos = TextosDoCaso(pasta_modulo)
+        marcadores = iped_marcadores.ler(pasta_modulo, classpath)
+        roteador = Roteador(id_extracao_ponte)
+        midia_drive = _ColecaoMidiaDrive(id_extracao_ponte)
+
+        contagens = {"arquivos": 0, "emails": 0, "contatos": 0}
+        if marcadores.total:
+            contagens["marcadores"] = marcadores.total
+        buffer: list[tuple] = []
+        processados = 0
+        cancelado = False
+
+        try:
+            for linha in proc.stdout:
+                linha = linha.strip()
+                if not linha:
+                    continue
+                try:
+                    item = json.loads(linha)
+                except ValueError:
+                    continue
+                campos_item = item.get("fields") or {}
+                if not campos_item:
+                    continue
+
+                if detector is not None:
+                    detector.avaliar(campos_item)
+
+                _registrar_transcricao_audio(roteador, campos_item, textos)
+
+                categorias_iped = _valores(campos_item, "category")
+                if "Emails" in categorias_iped:
+                    email_lido = _email_de_item(campos_item, pasta_modulo)
+                    if email_lido is not None:
+                        _gravar_email(cur, id_extracao_ponte, email_lido)  # → canal (guard)
+                        contagens["emails"] += 1
+                    processados += 1
+                    continue
+
+                dominio = roteador.consumir(cur, campos_item)  # writers internos → canal
+
+                if dominio is None and ({"Locations", "Journeys"} & set(categorias_iped)):
+                    processados += 1
+                    continue
+                if dominio in _DOMINIOS_SEM_ARQUIVO:
+                    processados += 1
+                    continue
+                if dominio == "contato_sem_campos":
+                    for contato in _contatos_de_item(pasta_modulo, campos_item):
+                        _gravar_contato_agenda(cur, id_extracao_ponte, contato)
+                        contagens["contatos"] += 1
+                    processados += 1
+                    continue
+
+                if dominio is None or _tem_binario(campos_item):
+                    tupla = _item_para_arquivo(id_extracao_ponte, campos_item, textos, marcadores)
+                    if tupla is not None:
+                        buffer.append(tupla)
+                        contagens["arquivos"] += 1
+                        roteador.registrar_binario(tupla[_IDX_SHA256], tupla[_IDX_CAMINHO])
+                    _rotear_produto_google(cur, id_extracao_ponte, pasta_modulo, campos_item,
+                                           contagens)
+                    midia_drive.coletar(campos_item)
+                processados += 1
+
+                if len(buffer) >= _LOTE_ARQUIVOS:
+                    _drenar_arquivos(cur, buffer)  # → lote do canal (guard)
+                    conn.commit()
+                    buffer.clear()
+
+                if processados % _CHECKPOINT == 0:
+                    conn.commit()  # fecha o lote corrente e aciona o envio
+                    bat.progresso(progresso["lidos"] or processados,
+                                  progresso["docs"] or processados)
+                    if bat.cancelar_pedido():  # o "fl_cancelar" chega na resposta do callback
+                        cancelado = True
+                        proc.terminate()
+                        break
+
+            if buffer:
+                _drenar_arquivos(cur, buffer)
+                buffer.clear()
+
+            if roteador.tem_conversas:
+                bat.fase("gravando_conversas")
+
+            def _progresso_conversas(feitas, total):
+                bat.progresso(feitas, total)
+
+            contagens.update(roteador.finalizar(cur, commit=conn.commit,
+                                                progresso=_progresso_conversas))
+            conn.commit()  # último lote (arquivos, conversas e e-mails pendentes)
+
+            if not midia_drive.vazia:
+                contagens.update(midia_drive.gravar(cur))
+                conn.commit()
+        except Exception as exc:
+            logger.exception("IPED no nó: falha ao processar o caso %s", tx_pasta)
+            textos.fechar()
+            proc.kill()
+            th_stderr.join(timeout=5)
+            return _fechar("erro", contagens=contagens, total_itens=processados,
+                           erro=f"Falha ao processar o caso do IPED: {exc}")
+        finally:
+            roteador.fechar()
+
+        try:
+            proc.wait(timeout=30)
+        except subprocess.TimeoutExpired:
+            proc.kill()
+        th_stderr.join(timeout=5)
+
+        # a versão só pode ser lida enquanto a pasta ainda está no lugar de origem
+        versao = versao_iped(pasta_modulo)
+        textos.fechar()  # solta os SQLite de OCR/transcrição antes do rename/move
+
+        conta_final = conta or (detector.melhor_palpite() if detector is not None else None)
+        tx_pasta_final = tx_pasta
+        if conta_final:
+            _fechar_conexoes_iped(pasta_modulo)
+            tx_pasta_final = _renomear_pasta_para_conta(caminho, conta_final, tx_pasta)
+
+        total_itens = progresso["itens"] or processados
+
+        if cancelado:
+            # o cancelamento preserva o que já foi lido (os lotes entregues ficam no central)
+            return _fechar("cancelado", contagens=contagens, total_itens=processados,
+                           no_pasta=tx_pasta_final, no_conta=conta_final, versao=versao)
+
+        if proc.returncode not in (0, None):
+            erro = "Falha ao ler o caso do IPED."
+            if log_stderr:
+                erro += " Detalhe: " + " | ".join(log_stderr[-3:])
+            logger.error("IpedDumper falhou (%s): %s", tx_pasta, "\n".join(log_stderr[-20:]))
+            return _fechar("erro", contagens=contagens, total_itens=total_itens, erro=erro,
+                           no_pasta=tx_pasta_final, no_conta=conta_final, versao=versao)
+
+        # organize DENTRO da estação: a pasta sai da pasta de entrega e vai para
+        # data/<delegacia>/<inquérito>/NUVEM|CELULAR/ (o central guarda NO_PASTA com o
+        # relativo novo, que vem no relatório). Melhor esforço, como no caminho local.
+        tp_fonte = "celular" if (contagens.get("conversas") or contagens.get("senhas")
+                                 or contagens.get("redes") or contagens.get("autofill")) else "nuvem"
+        try:
+            numero = opcoes.get("numero_inquerito")
+            if numero:
+                categoria = CATEGORIA_CELULAR if tp_fonte == "celular" else CATEGORIA_NUVEM
+                _fechar_conexoes_iped(PASTA_DADOS / tx_pasta_final)
+                tx_pasta_final = (organizar(PASTA_DADOS / tx_pasta_final, numero, categoria)
+                                  or tx_pasta_final)
+        except Exception:
+            logger.exception("organizar pasta do caso IPED no nó (melhor esforço)")
+
+        return _fechar("concluido", contagens=contagens, total_itens=total_itens,
+                       no_pasta=tx_pasta_final, no_conta=conta_final, versao=versao)
+    finally:
+        bat.parar_vigia()
+
+
+def aplicar_relatorio_importacao_no(id_extracao_iped: int, id_extracao_ponte: int,
+                                    payload: dict) -> None:
+    """(paridade com o central — o relatório é aplicado no central, nunca aqui) Ver a versão
+    do central em api/funcoes/iped_utils.py."""
+    raise NotImplementedError("o fecho do IPED remoto roda só no central")

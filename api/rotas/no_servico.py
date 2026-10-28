@@ -247,6 +247,93 @@ def embed(payload: EmbedIn):
     return {"vetores": vetores}
 
 
+class ImportarIn(BaseModel):
+    tp: str = Field(..., max_length=10)
+    id_extracao: int
+    pasta: str = Field(..., max_length=3000)
+    opcoes: dict = Field(default_factory=dict)
+    # geração do despacho: id despachado de novo (watchdog) com geração nova desbanca a antiga,
+    # como no /no/extrair (funcoes/no_importar.py)
+    geracao: int = Field(default=0, ge=0)
+
+
+@router.post("/no/importar", dependencies=[Depends(exigir_token_no)])
+def importar(payload: ImportarIn):
+    """O central DELEGA o parse de RIF/SIMBA/IPED que mora nesta estação: a estação roda o
+    importador na própria CPU e devolve ao central só os registros estruturados (lotes do
+    canal — funcoes/no_importar.py); fase/progresso/cancelamento e o relatório final seguem
+    pelos callbacks de estado da ponte. Responde 202 na hora, igual ao /no/extrair. A linha-pai
+    (rif_tb01/smb_tb01/ipd_tb01) e a ponte são criadas ANTES do despacho, no central
+    (funcoes/no_importacao.py) — o id daqui é só a claim do canal. 404 = a pasta/arquivo não
+    está neste disco (o central desfaz a linha-pai); 400 = inválido/não é a fonte certa."""
+    from funcoes import no_importar
+
+    try:
+        aceito = no_importar.aceitar(payload.tp, payload.id_extracao, payload.pasta,
+                                     payload.opcoes, geracao=payload.geracao)
+    except FileNotFoundError as exc:
+        raise HTTPException(status_code=404, detail=f"Não está no disco desta estação: {exc}") from exc
+    except ValueError as exc:
+        raise HTTPException(status_code=400, detail=str(exc)) from exc
+    return {"aceito": aceito["ok"], "em_andamento": not aceito["fila"],
+            "rodando": no_importar.rodando()}
+
+
+@router.get("/no/importar", dependencies=[Depends(exigir_token_no)])
+def importar_fila():
+    """Importações (RIF/SIMBA/IPED) em andamento nesta estação — a fila é a MESMA da
+    extração (a CPU da estação faz uma grande por vez)."""
+    from funcoes import no_importar
+
+    return {"rodando": no_importar.rodando()}
+
+
+def _modulo_iped_ou_404(pasta: str):
+    """Resolve a pasta-relativa do caso (o NO_PASTA que o central guarda) no disco DAQUI e
+    confere que é módulo IPED válido — o mesmo caminho que o importador local usa."""
+    from funcoes.iped_utils import _pasta_modulo_iped, _resolver_pasta_caso
+
+    try:
+        caminho = _resolver_pasta_caso(pasta)
+    except (ValueError, FileNotFoundError) as exc:
+        raise HTTPException(status_code=404,
+                            detail=f"Caso IPED não encontrado no nó: {pasta}") from exc
+    modulo = _pasta_modulo_iped(caminho)
+    if modulo is None:
+        raise HTTPException(status_code=404, detail="A pasta não é um caso válido do IPED.")
+    return modulo
+
+
+@router.get("/no/iped-blob", dependencies=[Depends(exigir_token_no)])
+def iped_blob_rota(pasta: str, origem: str, md5: str, id: str = ""):  # noqa: A002 — id no wire do no_ponte
+    """O binário de um item do caso IPED que mora nesta estação (no_ponte.iped_blob /
+    iped_cache.ler_blob do central): o storage-N.db é LOCAL à estação e nunca é copiado — o
+    anexo que abre na tela sai daqui descompactado (a API deste lado é o bytes puro)."""
+    from funcoes.iped_cache import ler_blob
+
+    modulo = _modulo_iped_ou_404(pasta)
+    try:
+        dados = ler_blob(modulo, origem, md5, id)
+    except FileNotFoundError as exc:
+        raise HTTPException(status_code=404, detail=str(exc)) from exc
+    except ValueError as exc:
+        raise HTTPException(status_code=400, detail=str(exc)) from exc
+    return Response(content=dados, media_type="application/octet-stream")
+
+
+@router.get("/no/iped-thumb", dependencies=[Depends(exigir_token_no)])
+def iped_thumb_rota(pasta: str, md5: str):
+    """Miniatura que o próprio IPED gerou (tabela thumbs/ou view de vídeo) para o item — mesmo
+    storage local, chaveada pelo MD5 (no_ponte.iped_thumb)."""
+    from funcoes.iped_cache import ler_thumb
+
+    modulo = _modulo_iped_ou_404(pasta)
+    dados = ler_thumb(modulo, md5)
+    if dados is None:
+        raise HTTPException(status_code=404, detail="Miniatura não encontrada para este item.")
+    return Response(content=dados, media_type="image/jpeg")
+
+
 class HashIn(CaminhoIn):
     algoritmos: list[str] | None = None  # padrão: os três; o central pede ("md5","sha1") p/ UFDR
 

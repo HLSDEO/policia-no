@@ -1,0 +1,108 @@
+# Container de um NÓ descentralizado de extração (PAPEL=no) — ver docs/no_descentralizado.md.
+#
+# É o MESMO projeto/imagens do central: só muda o papel (PAPEL=no no .env) e o que sobe. Aqui
+# não há Postgres, Ollama nem nginx: o nó tem apenas a API expondo as rotas internas /no/*
+# (hash, parse, listagem e leitura por faixa da pasta data/ local) para o central chamá-la.
+#
+# Instalação numa delegacia:
+#   1. clone deste repositório na máquina da delegacia;
+#   2. copie o .env e preencha (ver .env.cp):  PAPEL=no, NO_TOKEN=<token gerado na tela
+#      Administração → Servidores do central>, CENTRAL_URL=http://<central>:<porta>, WEB_PORT;
+#   3. coloque os .ufdr/documentos da delegacia em ./data (subpasta com o nome da delegacia);
+#   4. docker compose -f docker-compose.no.yml up -d --build
+#   5. no central, clique "Testar" no registro do nó — online é o ponto verde.
+#
+# A porta publicada (NO_PORT → 3000) é a que o central alcança como TX_URL_BASE. Tráfego entre
+# central e nós leva o token no header Authorization; se a rede entre eles não for confiável,
+# termine TLS num proxy na frente desta porta.
+
+services:
+  no:
+    build: ./api
+    # Imagem PRÓPRIA de propósito: no teste local (central e nó na mesma máquina, pastas
+    # irmãs) um "up --build" do nó não pode retagar a imagem do API do central. O código é o
+    # mesmo do central — só o papel muda.
+    image: analyser-api-no
+    container_name: ${NOME_PROJETO:-analyser}-no
+    restart: unless-stopped
+    # host.docker.internal existe de graça no Docker Desktop (Windows/Mac); no Linux é isto
+    # aqui. É por ele que o nó alcança o central quando CENTRAL_URL=http://host.docker.internal:<porta>
+    # — o caso do teste local, os dois containers na mesma máquina.
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    environment:
+      PAPEL: no
+      CENTRAL_URL: ${CENTRAL_URL:-}
+      NO_TOKEN: ${NO_TOKEN:-}
+      NO_HEARTBEAT_SEGUNDOS: ${NO_HEARTBEAT_SEGUNDOS:-60}
+      NO_TIMEOUT_LEITURA_SEGUNDOS: ${NO_TIMEOUT_LEITURA_SEGUNDOS:-600}
+      PASTA_INVESTIGACAO: /app/data
+      # parse de documento no nó pode ser pesado (PDF grande) — um worker basta; o hash e o parse
+      # são uma operação por arquivo, e o central já serializa as extrações na fila dele.
+      API_WORKERS: ${API_WORKERS:-1}
+      # túnel NAT: 1 (padrão) = o nó tenta abrir o WebSocket ao central; 0 desliga este nó
+      TUNEL_NO_ATIVO: ${TUNEL_NO_ATIVO:-1}
+      # jobs de OCR/CLIP/facial que a CPU desta estação puxa do central (docs/no_descentralizado.md)
+      JOBS_NO_LIMITE: ${JOBS_NO_LIMITE:-1}
+    volumes:
+      - ./.env:/app/.env
+      - ./VERSION:/app/VERSION:ro
+      # ponte da tela Administração → Servidores (botão "Atualizar"): a API lê o disponivel.json
+      # /agente e GRAVA pedido.json em .deploy/controle — mesmo desenho do central (compose
+      # raiz): raiz read-only, só o controle/ é rw. Criado por instalar-host.sh.
+      - ./.deploy:/app/.deploy:ro
+      - ./.deploy/controle:/app/.deploy/controle:rw
+      # os arquivos da delegacia: data/<DELEGACIA>/... — a ÚNICA cópia que existe dela
+      - ./data:/app/data:rw
+      - ./logs:/app/logs:rw
+      # cache do Hugging Face (modelos do faster-whisper NA TRANSCRIÇÃO da extração e, se a
+      # delegacia usar "jobs no nó", o CLIP da classificação/comparação facial). Volume nomeado:
+      # sobrevive a rebuild; estações sem saída para o HF podem pré-semear este volume
+      # (docker cp / docs/no_descentralizado.md) — sem o modelo em cache o job do nó falha com
+      # aviso no log, nunca trava a fila.
+      - hf_cache:/app/.cache/huggingface
+      # certificado da MÍDIA DIRETA (docs/no_midia_direta.md): só para o /no/estado reportar a
+      # validade — quem termina o TLS é o no-web, que monta a mesma pasta para valer
+      - ./nginx/ssl:/app/certs:ro
+    ports:
+      - "${NO_PORT:-8090}:3000"
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:3000/no/saude', timeout=3)"]
+      interval: 15s
+      timeout: 5s
+      retries: 5
+      start_period: 15s
+    logging:
+      driver: json-file
+      options:
+        max-size: "50m"
+        max-file: "5"
+
+  # ------------------------------------------------------------------------------------------
+  # MÍDIA DIRETA (docs/no_midia_direta.md): HTTPS 8443 para o navegador da mesma LAN.
+  #
+  # O nó continua sem TLS na porta do central (8090 http, túnel) — este serviço existe só para
+  # a mídia: a página do central é https e o navegador não baixa http de jeito nenhum. A porta
+  # publica 8443 em TODOS os nós (fixo, combinado com a TI) e serve APENAS /no/saude e
+  # /no/midia?tk=<ticket>; o resto morre no 404 do nginx. Sem certificado em nginx/ssl o
+  # container fica parado avisando — o resto do nó funciona igual, e o update sempre pode subir.
+  no-web:
+    image: nginx:1.27-alpine
+    container_name: ${NOME_PROJETO:-analyser}-no-web
+    restart: unless-stopped
+    environment:
+      # origem que pode chamar (CORS/PNA): em produção é o site do central
+      NO_ALLOWED_ORIGIN: ${NO_MIDIA_ORIGIN:-https://policia-es.pf.gov.br}
+    entrypoint: ["/bin/sh", "/templates/no-midia-entrypoint.sh"]
+    volumes:
+      - ./nginx/no-midia.conf.template:/templates/no-midia.conf.template:ro
+      - ./nginx/no-midia-entrypoint.sh:/templates/no-midia-entrypoint.sh:ro
+      - ./nginx/ssl:/etc/nginx/ssl:ro
+    ports:
+      - "${NO_MIDIA_PORT:-8443}:443"
+    depends_on:
+      - no
+
+volumes:
+  hf_cache:
+

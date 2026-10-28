@@ -185,14 +185,20 @@ class Colecao:
                               "WA#### do dia."),
                 "conta": None, "status_chat": None, "estado": None,
             }
-            # idempotência (a ferramenta de backfill pode rodar de novo sem duplicar)
-            cur.execute(
-                """SELECT 1 FROM investigacao.msg_tb02_conversas
-                    WHERE id_extracao = %s AND tp_app = %s AND nu_chat_id = %s""",
-                (self._id_ponte, APP, chat["chat_id"]),
-            )
-            if cur.fetchone():
-                continue
+            # idempotência (a ferramenta de backfill pode rodar de novo sem duplicar). No MODO
+            # CANAL (nó processando a importação — docs/no_descentralizado.md) não há banco para
+            # consultar: cada importação tem uma ponte nova e o replay do central é aplicado uma
+            # única vez por lote (ack por seq), então a checagem não tem o que proteger aqui.
+            from funcoes import canal_extracao
+
+            if canal_extracao.emissor_ativo() is None:
+                cur.execute(
+                    """SELECT 1 FROM investigacao.msg_tb02_conversas
+                        WHERE id_extracao = %s AND tp_app = %s AND nu_chat_id = %s""",
+                    (self._id_ponte, APP, chat["chat_id"]),
+                )
+                if cur.fetchone():
+                    continue
             try:
                 # jid_dono de propósito ausente: com ele, toda mídia sairia como "enviada"
                 _gravar_conversa_msg(cur, self._id_ponte, APP, chat)

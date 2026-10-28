@@ -413,6 +413,8 @@ def resumo_agregados_conta(
 
 
 def _gravar_agregado_conta(cur, id_extracao: int, agregado: dict) -> None:
+    if canal_extracao.emitir("agregado_conta", (id_extracao, agregado)):  # nó entrega ao central em vez de gravar
+        return
     cur.execute(
         """INSERT INTO investigacao.acs_tb02_agregados
            (id_extracao, dt_primeira, dt_ultima, qt_dias_ativos, tp_identificador, tx_identificador,
@@ -500,6 +502,8 @@ def resumo_conexoes_conta(
 
 
 def _gravar_conexao_conta(cur, id_extracao: int, conexao: dict) -> None:
+    if canal_extracao.emitir("conexao_conta", (id_extracao, conexao)):  # nó entrega ao central em vez de gravar
+        return
     cur.execute(
         """INSERT INTO investigacao.acs_tb03_conexoes
            (id_extracao, dt_primeira, dt_ultima, tp_ident_1, tx_ident_1, tp_ident_2, tx_ident_2, no_fonte)
